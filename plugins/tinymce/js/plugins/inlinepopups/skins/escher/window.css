@@ -1,0 +1,90 @@
+/* Clearlooks 2 */
+
+/* Reset */
+.escher, .escher div, .escher span, .escher a {vertical-align:baseline; text-align:left; position:absolute; border:0; padding:0; margin:0; background:transparent; font-family:Arial,Verdana; font-size:11px; color:#000; text-decoration:none; font-weight:normal; width:auto; height:auto; overflow:hidden; display:block}
+
+/* General */
+.escher {position:absolute; direction:ltr}
+.escher .mceWrapper {position:static}
+.mceEventBlocker {position:fixed; left:0; top:0; background:url(img/horizontal.gif) no-repeat 0 -75px; width:100%; height:100%}
+.escher .mcePlaceHolder {border:1px solid #000; background:#FFF; top:0; left:0; opacity:0.5; -ms-filter:'alpha(opacity=50)'; filter:alpha(opacity=50)}
+.escher_modalBlocker {position:fixed; left:0; top:0; width:100%; height:100%; background:#000; opacity:0.33; -ms-filter:'alpha(opacity=33)'; filter:alpha(opacity=33); display:none}
+
+/* Top */
+.escher .mceTop, .escher .mceTop div {top:0; width:100%; height:25px; border-bottom: 1px solid #666; }
+.escher .mceTop div { background: #EEE url(img/titlebar-bg.png) bottom center repeat-x; border: 1px solid #666; }
+.escher .mceTop .mceLeft {
+	width:8px; height: 25px; border-right: none;
+	-webkit-border-top-left-radius: 8px; -moz-border-radius-topleft: 8px;
+}
+.escher .mceTop .mceCenter { right:8px; width:100%; height:25px; clip:rect(auto auto auto 16px); border-width: 1px 0px; }
+.escher .mceTop .mceRight {
+	right:0; width:8px; height:25px; border-left: none;
+	-webkit-border-top-right-radius: 8px; -moz-border-radius-topright: 8px;
+}
+.escher .mceTop span {color: #000; width:100%; text-align:center; vertical-align:middle; line-height:27px;}
+
+/* Middle */
+.escher .mceMiddle, .escher .mceMiddle div {top:0; background: #DDD}
+.escher .mceMiddle {width:100%; height:100%; clip:rect(26px auto auto auto)}
+.escher .mceMiddle .mceLeft {left:0; width:0px; height:100%; border-left: 1px solid #666; }
+.escher .mceMiddle span {top:23px; left:1px; width:100%; height:100%; background:#DDD}
+.escher .mceMiddle .mceRight {right:0; width:0px; height:100%; border-right: 1px solid #666; }
+
+/* Bottom */
+.escher .mceBottom, .escher .mceBottom div {height:0px; background: #AAA}
+.escher .mceBottom {left:0; bottom:0; width:100%; border-bottom: 1px solid #666}
+.escher .mceBottom div {bottom:0; height: 0px;}
+.escher .mceBottom .mceLeft {left:0; width:5px; border-left: 1px solid #666}
+.escher .mceBottom .mceCenter {left:5px; width:100%; }
+.escher .mceBottom .mceRight {right:0; width:5px; border-right: 1px solid #666}
+.escher .mceBottom span {display:none}
+.escher .mceStatusbar .mceBottom, .escher .mceStatusbar .mceBottom div {height:23px}
+.escher .mceStatusbar .mceBottom span {display:block; left:7px; font-family:Arial, Verdana; font-size:11px; line-height:23px}
+
+/* Actions */
+.escher a {width:29px; height:16px; top:5px;}
+.escher .mceClose {right:6px; background:url(img/buttons.gif) -87px 0}
+.escher .mceMin {display:none; right:68px; background:url(img/buttons.gif) 0 0}
+.escher .mceMed {display:none; right:37px; background:url(img/buttons.gif) -29px 0}
+.escher .mceMax {display:none; right:37px; background:url(img/buttons.gif) -58px 0}
+.escher .mceMove {display:none;width:100%;cursor:move;background:url(img/corners.gif) no-repeat -100px -100px}
+.escher .mceMovable .mceMove {display:block}
+.escher .mceFocus .mceClose {right:6px; background:url(img/buttons.gif) -87px -16px}
+.escher .mceFocus .mceMin {right:68px; background:url(img/buttons.gif) 0 -16px}
+.escher .mceFocus .mceMed {right:37px; background:url(img/buttons.gif) -29px -16px}
+.escher .mceFocus .mceMax {right:37px; background:url(img/buttons.gif) -58px -16px}
+.escher .mceFocus .mceClose:hover {right:6px; background:url(img/buttons.gif) -87px -32px}
+.escher .mceFocus .mceClose:hover {right:6px; background:url(img/buttons.gif) -87px -32px}
+.escher .mceFocus .mceMin:hover {right:68px; background:url(img/buttons.gif) 0 -32px}
+.escher .mceFocus .mceMed:hover {right:37px; background:url(img/buttons.gif) -29px -32px}
+.escher .mceFocus .mceMax:hover {right:37px; background:url(img/buttons.gif) -58px -32px}
+
+/* Resize */
+.escher .mceResize {top:auto; left:auto; display:none; width:5px; height:5px; background:url(img/horizontal.gif) no-repeat 0 -75px}
+.escher .mceResizable .mceResize {display:block}
+.escher .mceResizable .mceMin, .escher .mceMax {display:none}
+.escher .mceMinimizable .mceMin {display:block}
+.escher .mceMaximizable .mceMax {display:block}
+.escher .mceMaximized .mceMed {display:block}
+.escher .mceMaximized .mceMax {display:none}
+.escher a.mceResizeN {top:0; left:0; width:100%; cursor:n-resize}
+.escher a.mceResizeNW {top:0; left:0; cursor:nw-resize}
+.escher a.mceResizeNE {top:0; right:0; cursor:ne-resize}
+.escher a.mceResizeW {top:0; left:0; height:100%; cursor:w-resize;}
+.escher a.mceResizeE {top:0; right:0; height:100%; cursor:e-resize}
+.escher a.mceResizeS {bottom:0; left:0; width:100%; cursor:s-resize}
+.escher a.mceResizeSW {bottom:0; left:0; cursor:sw-resize}
+.escher a.mceResizeSE {bottom:0; right:0; cursor:se-resize}
+
+/* Alert/Confirm */
+.escher .mceButton {font-weight:bold; bottom:10px; width:80px; height:30px; background:url(img/button.gif); line-height:30px; vertical-align:middle; text-align:center; outline:0}
+.escher .mceMiddle .mceIcon {left:15px; top:35px; width:32px; height:32px}
+.escher .mceAlert .mceMiddle span, .escher .mceConfirm .mceMiddle span {background:transparent;left:60px; top:35px; width:320px; height:50px; font-weight:bold; overflow:auto; white-space:normal}
+.escher a:hover {font-weight:bold;}
+.escher .mceAlert .mceMiddle, .escher .mceConfirm .mceMiddle {background:#D6D7D5}
+.escher .mceAlert .mceOk {left:50%; top:auto; margin-left: -40px}
+.escher .mceAlert .mceIcon {background:url(img/alert.gif)}
+.escher .mceConfirm .mceOk {left:50%; top:auto; margin-left: -90px}
+.escher .mceConfirm .mceCancel {left:50%; top:auto}
+.escher .mceConfirm .mceIcon {background:url(img/confirm.gif)} 

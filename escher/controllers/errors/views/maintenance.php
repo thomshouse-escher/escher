@@ -1,0 +1,1 @@
+<?php $F($message,'decode'); ?>

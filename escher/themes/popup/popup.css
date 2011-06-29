@@ -1,0 +1,38 @@
+/* "Voodoo Child" CSS Reset by Thom Stricklin. Based on W3C defaults, YUI and work by Shaun Inman. */
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,p,blockquote,embed,object {
+	padding: 0;	margin: 0; outline: 0; }
+header,nav,article,section,aside,footer { display: block; padding: 0px; margin: 0px; outline: 0px; } /* HTML 5 */
+table,td,th { font-size: 1em; outline: 0; }
+fieldset, img, abbr { border: 0; }
+address, caption, cite, code, dfn, th, var { font-weight: normal; font-style: normal; }
+caption, th { text-align: left; }
+h1 { font-size: 2.0em; }
+h2 { font-size: 1.50em; }
+h3 { font-size: 1.17em; }
+h4, h5, h6 { font-size: 1.0em; }
+h1, h2, h3, h4, strong, b { font-weight: bolder; }
+h5 { font-weight: bold; }
+h6 { font-weight: normal; }
+q:before, q:after {	content: ''; }
+ins { text-decoration: none; }
+sub { vertical-align: bottom; font-size: 0.67em; }
+sup { vertical-align: top; font-size: 0.67em; }
+
+/* Slight Return.  These settings are more likely to change from project-to-project. */
+h1 { margin: 0.5em auto; }
+h2 { margin: 0.67em auto; }
+h3 { margin: 0.85em auto; }
+h4,h5,h6,p,blockquote,ul { margin: 1em auto; }
+h1,h2,h3,h4,h5,h6 { font-weight: normal; }
+ul, ol, blockquote, dd { margin-left: 5ex; }
+.block-list, .inline-list { margin-left: 0px; }
+.block-list li { list-style: none; }
+.inline-list li { list-style: none; display: inline; }
+label { display: inline-block; width: 12ex; }
+table.center { margin-left: auto; margin-right: auto; }
+fieldset.center { text-align: center; }
+fieldset.center label { text-align: right; width: 12ex; }
+
+/* Relativity theme styles */
+html { height: 100%; }
+body { padding: 5px; font-family: Arial, Helvetica, sans-serif; background: #FFF; }
