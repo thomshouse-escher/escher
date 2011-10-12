@@ -9,7 +9,7 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 		$fbsession = $fb->getSession();
 		if (!$fbsession) {
 			// If no FB session is found, just redirect
-			$headers->redirect();
+			return false;
 		}
 		// Facebook API uses strict error handling
 		try {
@@ -17,15 +17,13 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 			$uid = $fb->getUser();
 			$me = $fb->api('/me');
 		} catch (FacebookApiException $e) {
-			$headers->redirect();
+			return false;
 		}
 
 		// If there is a local user with this facebook uid, log them in and redirect
 		if ($user = Load::User(array('facebook_uid'=>$uid))) {
 			$_SESSION['user_id'] = $user->id;
-			$user->assignVars($this->loginVars($me));
-			$user->save();
-			$headers->redirect();
+			return true;
 		}
 		
 		// Setup registration vars (username, fullname, etc.)
@@ -34,8 +32,9 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 		// Load the fbconnect userauth, register and redirect
 		if ($user = $this->register($vars['username'],'',$vars)) {
 			$_SESSION['user_id'] = $user->id;
+			return true;
 		}
-		$headers->redirect();
+		return false;
 	}
 
 	// fbconnect userauth is very closely tied to a user's FB session, reauth is essential.
@@ -105,11 +104,58 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 			}
 	}
 
+	function onLogin() {
+		$USER = Load::User();
+		if(empty($USER->facebook_uid)) { return; }
+
+		// Let's track changes so we only save the model once!
+		$doSave = FALSE;
+
+		if ($USER->auth=='facebook') {
+			// Load FB API and session
+			$fb = loadFacebookAPI();
+			$fbsession = $fb->getSession();
+			if (!$fbsession) {
+				// If no FB session is found, just redirect
+				return false;
+			}
+			// Facebook API uses strict error handling
+			try {
+				// Attempt to get uid and "me" data
+				$uid = $fb->getUser();
+				$me = $fb->api('/me');
+			} catch (FacebookApiException $e) {
+				return false;
+			}
+
+			// If we're logged in via facebook, let's check /me for updates
+			if(empty($USER->facebook_username) && !empty($me['username'])) {
+				$USER->facebook_username = $me['username'];
+				$doSave = TRUE;
+			}
+			if ($USER->full_name==$USER->facebook_full_name) {
+				$USER->full_name = $USER->facebook_full_name = $this->formatName($me);
+				$doSave = TRUE;
+			}
+		}
+
+		// If avatar is coming from FB or doesn't exist, grab it
+		if (empty($USER->avatar_source) || $USER->avatar_source=='facebook') {
+			$USER->avatar_url = 'http://graph.facebook.com/'.(
+				$USER->facebook_username ? $USER->facebook_username : $USER->facebook_uid).'/picture';
+			$USER->avatar_source = 'facebook';
+			$doSave = TRUE;
+		}
+		if ($doSave) {
+			$USER->save();
+		}
+	}
+
 	protected function registrationVars($me) {
-		$vars = $this->loginVars($me);
-		// If the user doesn't exist, we need to register
+		$vars = array();
+		$vars['full_name'] = $vars['facebook_full_name'] = $this->formatName($me);
+		// If user has a facebook username and it doesn't exist locally, let them have it
 		if (!empty($me['username']) && !Load::User(array('username'=>$me['username']))) {
-			// If user has a facebook username and it's not already taken in the system, let them have it
 			$vars['username'] = $me['username'];
 		} else {
 			// Otherwise give them something that should be unique based on their uid
@@ -119,11 +165,19 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 		return $vars;
 	}
 
-	protected function loginVars($me) {
-		$vars = array();
-		$vars['full_name'] = $me['first_name'].' '.$me['last_name'][0];
-		if(!empty($me['username'])) { $vars['facebook_username'] = $me['username']; }
-		$vars['icon_url'] = 'http://graph.facebook.com/'.($me['username'] ? $me['username'] : $me['id']).'/picture';
-		return $vars;
+	protected function formatName($me) {
+		global $CFG;
+		$format = @$CFG['facebook_name_format'];
+		switch ($format) {
+			case 'First': $name = $me['first_name']; break;
+			case 'First Last':
+				$name = $me['first_name'].' '.$me['last_name']; break;
+			case 'First L.':
+				$name = $me['first_name'].' '.$me['last_name'][0].'.'; break;
+			case 'First L': default:
+				$name = $me['first_name'].' '.$me['last_name'][0];
+				break;
+		}
+		return $name;
 	}
 }

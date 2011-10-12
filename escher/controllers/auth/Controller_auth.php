@@ -5,6 +5,7 @@ class Controller_auth extends Controller {
 	function action_login($args) {
 		$session = Load::Session();
 		$headers = Load::Headers();
+		$hooks = Load::Hooks();
 		$session->remember_current_request = FALSE;
 		if (Load::User()) { $headers->redirect(); }
 
@@ -12,8 +13,12 @@ class Controller_auth extends Controller {
 			$userauth = Load::UserAuth($args[0]);
 			if(!$userauth || !$userauth->authenticate()) {
 				$headers->addNotification('Invalid authentication request.','error');
+				$hooks->runEvent('authenticate_failure');
+				$headers->redirect();
+			} else {
+				$hooks->runEvent('authenticate_success');
+				$headers->redirect();
 			}
-			$headers->redirect('./');
 		}
 		
 		$input = Load::Input();
@@ -23,6 +28,7 @@ class Controller_auth extends Controller {
 				if ($user) { $userauth = $user->getUserAuth(); }
 				if (!$userauth || !$userauth->login($input->post['username'],@$input->post['password'])) {
 					$headers->addNotification('Invalid username or password.','error');
+					$hooks->runEvent('login_failure');
 				} else {
 					$session->regenerate();
 					$_SESSION['user_id'] = $user->id;
@@ -30,6 +36,7 @@ class Controller_auth extends Controller {
 						$_SESSION['persist'] = 1;
 					}
 					$session->updateCookie();
+					$hooks->runEvent('login_success');
 					$headers->redirect();
 				}
 			}
@@ -53,41 +60,63 @@ class Controller_auth extends Controller {
 		$headers->redirect();
 	}
 	
-	function action_register($args) {
-		global $CFG;
+	function action_signup($args) {
 		$headers = Load::Headers();
+		if (Load::User()) { $headers->redirect(); }
+		global $CFG;
 		$input = Load::Input();
-		$data = $input->post;
+		$this->data = $data = $input->post;
 		$errors = array();
 		if (!empty($input->post)) {
-			if (in_array(strtolower($input->post['username']),$CFG['reserved_usernames']) ||
-					in_array($input->post['username'],$CFG['reserved_usernames'])) {
+			$hooks = Load::Hooks();
+			if (empty($data['username'])) {
+				$headers->addNotification('You must specify a username.','error');
+				$errors[] = 'username';
+			} elseif (in_array(strtolower($data['username']), $CFG['reserved_usernames'])
+					|| in_array($data['username'], $CFG['reserved_usernames'])) {
 				$headers->addNotification('You have selected an invalid username.','error');
 				unset($data['username']);
 				$errors[] = 'username';
-			} elseif ($user = Load::User(array('username'=>$input->post['username']))) {
+			} elseif ($user = Load::User(array('username'=>$data['username']))) {
 				$headers->addNotification('The username you have selected is already in use.
 					Please try a different username.','error');
 				unset($data['username']);
 				$errors[] = 'username';
 			}
-			if ($user = Load::User(array('email'=>$input->post['email']))) {
+			if (empty($data['email'])) {
+				$headers->addNotification('You must specify an email address.','error');
+				$errors[] = 'email';
+			} elseif ($user = Load::User(array('email'=>$data['email']))) {
 				$headers->addNotification('The email you provided is already in use.','error');
 				unset($data['email']);
 				$errors[] = 'email';
 			}
 			if (empty($data['password'])) {
-				$headers->addNotification('Please provide a password.','error');
+				$headers->addNotification('Please select a password.','error');
 				$errors[] = 'password';
-				$errors[] = 'password2';
-			} else if (isset($data['password2']) && $data['password']!=$data['password2']) {
-				$headers->addNotification('Passwords do not match.','error');
-				$errors[] = 'password';
-				$errors[] = 'password2';
 			}
+			
+			$captcha = $hooks->runEvent('captcha_verify');
+			if (!empty($captcha)) {
+				foreach($captcha as $c) {
+					if ($c===FALSE) {
+						$errors[] = 'captcha';
+					}
+				}
+			}
+
+			if (empty($data['agree_terms'])) {
+				$headers->addNotification('You must agree to the terms of service to register for this website.','error');
+				$errors[] = 'agree-terms';
+			}
+
 			if (empty($errors)) {
+				$vars = $input->post;
+				if (file_exists('terms.txt')) {
+					$vars['agreed_terms'] = md5_file('terms.txt');
+				}
 				$userauth = Load::Helper('userauth',$CFG['userauth']['default']['type'],$CFG['userauth']['default']);
-				$userauth->register($input->post['username'],$input->post['password'],$input->post);
+				$userauth->register($input->post['username'],$input->post['password'],$vars);
 				$headers->addNotification('Registration was successful.  You may now login.');
 				$headers->redirect('~/');
 			}

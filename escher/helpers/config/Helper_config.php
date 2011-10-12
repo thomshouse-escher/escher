@@ -45,9 +45,7 @@ abstract class Helper_config extends Helper implements ArrayAccess {
 	}
 
 	protected function load() {
-		if ($this->cache) {
-			$stored_cfg = $this->cache->get('escher_config');
-		}
+		$stored_cfg = $this->cache ? $this->cache->get('escher_config') : FALSE;
 		if (!$stored_cfg) {
 			$result = $this->db->getAssoc('SELECT * FROM '.$this->db->t('escher_config').' ORDER BY name ASC');
 			if (!empty($result)) {

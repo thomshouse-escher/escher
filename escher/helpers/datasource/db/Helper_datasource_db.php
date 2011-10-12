@@ -217,7 +217,7 @@ class Helper_datasource_db extends Helper_datasource {
 			$qtype = ($limit==1) ? 'getRow' : 'getAll';
 		}
 		// The DB Query
-		$result = $db->$qtype("SELECT $select FROM $m $where $order $group $sqllimit");
+		$result = $db->$qtype("SELECT $select FROM $m $where $group $order $sqllimit");
 		// If result is a single valid row and we are selecting everything, get metadata and content
 		if (is_object($model) && $qtype=='getRow' && !empty($result['id'])) {
 			$m = $db->t($model->_m());

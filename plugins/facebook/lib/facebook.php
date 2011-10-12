@@ -4,13 +4,49 @@ function loadFacebookAPI() {
 	static $facebook;
 	if (is_null($facebook)) {
 		global $CFG;
-		$facebook = new Facebook(array(
+		$facebook = new Facebook_Escher(array(
 			'appId' => $CFG['facebook_appId'],
 			'secret' => $CFG['facebook_secret'],
 			'cookie' => true
 			));
 	}
 	return $facebook;
+}
+
+class Facebook_Escher extends Facebook {
+	public function __construct($config) {
+		parent::__construct($config);
+		$CFG = Load::CFG();
+		$this->escherLoginUrl = $CFG['wwwroot'].'/login/facebook/';
+		$this->escherLogoutUrl = $CFG['wwwroot'].'/logout/';
+	}
+	public function getLoginUrl($params=array()) {
+		$currentUrl = $this->getCurrentUrl();
+		return $this->getUrl(
+			'www',
+			'login.php',
+			array_merge(array(
+				'api_key'         => $this->getAppId(),
+				'cancel_url'      => $currentUrl,
+				'display'         => 'page',
+				'fbconnect'       => 1,
+				'next'            => $this->escherLoginUrl,
+				'return_session'  => 1,
+				'session_version' => 3,
+				'v'               => '1.0',
+			), $params)
+		);
+	}
+	public function getLogoutUrl($params=array()) {
+		return $this->getUrl(
+			'www',
+			'logout.php',
+			array_merge(array(
+				'next'         => $this->escherLogoutUrl,
+				'access_token' => $this->getAccessToken(),
+			), $params)
+		);
+	}
 }
 
 /**

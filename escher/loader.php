@@ -57,12 +57,21 @@ class Load {
 	public function Model($name,$key=NULL) {
 		global $CFG;
 		if (is_array($name)) {
-			array_map('strtolower',$name);
-			if (Load::req($CFG['fileroot'].'/plugins/'.$name[0].'/models/'.$name[1].'/Model_'.$name[1].'.php')
-				&& class_exists("Plugin_{$name[0]}_Model_{$name[1]}")) {
-					$classname = "Plugin_{$name[0]}_Model_{$name[1]}";
+			if (is_null($name[0])) {
+				$name = strtolower($name[1]);
+				if (Load::req(dirname(__FILE__).'/models/'.$name.'/Model_'.$name.'.php') && class_exists("Model_$name")) {
+					$classname = "Model_$name";
+				} else {
+					return false;
+				}	
 			} else {
-				return false;
+				array_map('strtolower',$name);
+				if (Load::req($CFG['fileroot'].'/plugins/'.$name[0].'/models/'.$name[1].'/Model_'.$name[1].'.php')
+					&& class_exists("Plugin_{$name[0]}_Model_{$name[1]}")) {
+						$classname = "Plugin_{$name[0]}_Model_{$name[1]}";
+				} else {
+					return false;
+				}
 			}
 		} else {
 			$name = strtolower($name);

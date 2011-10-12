@@ -1,8 +1,14 @@
-<h1>Login</h1>
+<h1>Sign In</h1>
 <form method="POST" class="logregform loginform">
 	<fieldset>
-		<div><label>Username:</label><input type="text" name="username" /></div>
-		<div><label>Password:</label><input type="password" name="password" /></div>
-		<div><input class="no-label" type="submit" value="Login" /></div>
+		<div class="inputs">
+			<label>Username:</label>
+			<div class="input"><input type="text" name="username" /></div>
+		</div>
+		<div class="inputs">
+			<label>Password:</label>
+			<div class="input"><input type="password" name="password" /></div>
+		</div>
+		<div class="actions"><input class="btn primary" type="submit" value="Sign in" /></div>
 	</fieldset>
 </form>

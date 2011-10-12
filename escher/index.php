@@ -12,6 +12,7 @@ $hooks->loadPluginHooks($CFG['active_plugins']);
 
 if (isset($CFG['session']['type']) && $CFG['session']['type']!='none') {
 	Load::Session();
+	$hooks->runEvent('session_start');
 }
 
 if ($CFG['maintenance_mode']) {

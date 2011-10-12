@@ -8,6 +8,7 @@ abstract class Helper_headers extends Helper {
 	protected $link_tags = array();
 	protected $meta_tags = array();
 	protected $do_query = false;
+	protected $page_titles = array();
 
 	function addHTTP($string,$replace=TRUE,$response_code=NULL) {
 		$this->http_headers[] = array($string,$replace,$response_code);
@@ -46,6 +47,19 @@ abstract class Helper_headers extends Helper {
 		}
 		$session = Load::Session();
 		$session->setFlash('header_notifications',json_encode(array($string,$status)),TRUE);
+	}
+
+	function addPageTitle($title) {
+		if(is_scalar($title)) {
+			$this->page_titles[] = $title;
+		}
+	}
+
+	function setPageTitle($title) {
+		$this->page_titles = array();
+		if(is_scalar($title)) {
+			$this->page_titles[] = $title;
+		}
 	}
 
 	function getFooters() {
@@ -134,6 +148,30 @@ abstract class Helper_headers extends Helper {
 		$notifications = $session->getFlash('header_notifications',$keep);
 		if (empty($notifications)) { return false; }
 		return array_map('json_decode',array_unique($notifications));
+	}
+
+	function getTitle($order=array('page','site','subtitle'),
+			$del=' | ',$pagedel=' &raquo; ',$reversepages=FALSE) {
+		global $CFG;
+		$titles = array();
+		foreach($order as $t) {
+			switch ($t) {
+				case 'site':
+					if (!empty($CFG['title'])) { $titles[] = $CFG['title']; }
+					break;
+				case 'subtitle':
+					if (!empty($CFG['subtitle'])) { $titles[] = $CFG['subtitle']; }
+					break;
+				case 'page':
+					if (!empty($this->page_titles)) {
+						$pts = $this->page_titles;
+						if ($reversepages) { $pts = array_reverse($pts); }
+						$titles[] = implode($pagedel,$pts);
+					}
+					break;
+			}
+		}
+		return implode($del,$titles);
 	}
 
 	function loadJQuery() {

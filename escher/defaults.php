@@ -31,7 +31,7 @@ $CFG['reserved_usernames'] = array_merge($CFG['reserved_usernames'],
 $CFG['predefined_routes'] = array(
 	'login' => array('controller' => 'auth','action' => 'login'),
 	'logout' => array('controller' => 'auth','action' => 'logout'),
-	'register' => array('controller' => 'auth','action' => 'register'),
+	'signup' => array('controller' => 'auth','action' => 'signup'),
 	'lockout' => array('controller' => 'auth','action' => 'lockout'),
 	'uploads' => array('controller' => 'uploads')
 );

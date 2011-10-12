@@ -1,0 +1,107 @@
+Please read the following terms and conditions ("Terms of Service") carefully.
+
+These Terms of Service govern your access to and use of this website ("Website"), including any content, information, products or services ("Services") therein. This is a legal agreement between you and the operator(s) of the Website (hereafter "we", "us", "our", "Operator") and applies to you whether you are a registered user of the Website ("Member") or a non-registered user just browsing (collectively "Users").
+
+YOU UNDERSTAND THAT BY USING THE WEBSITE, SERVICES (INCLUDING ANY CONTENT PROVIDED THEREIN), OR YOUR ACCOUNT, YOU ARE AGREEING TO BE BOUND BY THESE TERMS OF SERVICE. IF YOU DO NOT ACCEPT THESE TERMS OF SERVICE IN THEIR ENTIRETY, YOU MAY NOT ACCESS OR USE THE WEBSITE OR SERVICES.
+
+1. Modification of the Website or Terms of Service.
+
+The Operator of this Website reserves the right, in its sole discretion, at any time to modify, discontinue or terminate the Website and Services, or modify these Terms of Service without notice. All modified terms and conditions will be effective after they are posted on the Website (unless a longer notice period is required by applicable law). If any modified terms and conditions are not acceptable to you, your sole remedy is to cease using the Website and Services, and if applicable, cancel your account. By continuing to access or use the Website and Services after any such modification is made, you agree to be bound by the revised Terms of Service.
+
+2. Software Limitation of Liability.
+
+This Website is powered by the Escher PHP framework software (hereinafter "Escher", "framework", "software") which is a web application framework released under the General Public License ("GPL") and MIT Licenses. The Escher software only facilitates Internet-based communication. The software and its developers are not responsible for what the Operator of this Website allows and/or disallows as permissible content and/or conduct.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT WILL THE SOFTWARE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE TO YOU OR TO THE WEBSITE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING WITHOUT LIMITATION, INDIRECT, INCIDENTAL, SPECIAL, PUNITIVE OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF THE WEBSITE, SERVICES AND CONTENT AND USER SUBMISSIONS (DEFINED BELOW) WHETHER THE DAMAGES ARE FORESEEABLE AND WHETHER OR NOT ESCHER OR ITS DEVELOPERS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. THE FOREGOING LIMITATION OF LIABILITY WILL APPLY TO THE FULLEST EXTENT PERMITTED BY LAW IN THE APPLICABLE JURISDICTION.
+
+3. Registration and Eligibility.
+
+a. To become a Member you must be at least 13 years old. In order to access certain features of the Website and Services, and to post User Submissions (defined below), you will have to become a Member and set up an account with the Website ("Account"). Your Account will permit you to access certain secure areas of the Website only available to Members.
+
+b. You are responsible for safeguarding and maintaining the confidentiality of your username, password and corresponding Account information. You agree not to disclose your password to anyone. You agree that you are entirely and solely responsible for any and all activities or actions that occur under your Account, whether or not you have authorized such activities or actions. You agree to notify the Operator of this Website of any unauthorized use of your Account or any other breach of security within twenty-four (24) hours of such use being known to you. In the event that your user name or password is lost or stolen, please notify the Operator of this Website immediately so that a new user name or password can be created. 
+
+c. If you become a Member, you will provide true, accurate and complete registration information and will maintain as current and promptly update relevant personal information provided to the Website. You will not use false identities or impersonate any other person or use a name that you are not authorized to use.
+
+d. If you become a Member and create an Account, you consent to the use of: (a) electronic means to complete these Terms of Service and to provide you with any notices given pursuant to these Terms of Service; and (b) electronic records.
+
+4. Content.
+
+Certain types of content are made available through the Website. "Site Content" as used in these Terms of Service means, collectively, the text, data, graphics, images, photos and video files made available through the Website, excluding User Submissions. "User Submissions" as used in these Terms of Service means, collectively, the text, data, graphics, images, photos and other content and information which Members post, upload and otherwise submit to the Website. THE OPERATOR OF THIS WEBSITE RESERVES THE RIGHT TO REMOVE AND PERMANENTLY DELETE ANY SITE CONTENT OR USER SUBMISSIONS FROM THE WEBSITE WITHOUT NOTICE.
+
+5. Your Obligations in Using the Website and Services.
+
+The Website and Services may be used and accessed for lawful and non-commercial purposes only. You agree to abide by all applicable local, state, national and foreign laws, treatises and regulations in connection with your use of the Website and Services. In addition, without limitation, you agree that you will not do any of the following while using or accessing the Website or Services:
+
+a. Circumvent, disable or otherwise interfere with security related features of the Website or features that prevent or restrict use or copying of any Site Content;
+
+b. Upload, post, email or otherwise transmit (i) any User Submission to which you do not have the lawful right to copy, transmit and display (including any User Submission that would violate any confidentiality or fiduciary obligations that you might have with respect to the User Submission); (ii) any User Submission for which you do not have the consent or permission of each identifiable person in the User Submission to use the name, voice, signature, photograph, or likeness of each such person (to the extent each is implicated by the User Submission) and such consent or permission is necessary; or (iii) any User Submission that infringes the intellectual property rights or violates the privacy rights of any third party (including without limitation copyright, trademark, patent, trade secret, or other intellectual property right, or moral right or right of publicity);
+
+c. Upload, post, email or otherwise transmit any unsolicited or unauthorized advertising, promotional materials, junk mail, spam, chain letters, "pyramid schemes" or any other form of solicitation;
+
+d. Forge any TCP/IP packet header or any part of the header information in any posting or in any way use the Website or Services to send altered, deceptive or false source-identifying information; 
+
+e. Upload, post, email, or otherwise transmit, via the Website or Services, any User Submissions that are unlawful, obscene, harmful, threatening, harassing, defamatory or hateful or that contain objects or symbols of hate, invade the privacy of any third party, contain nudity (including without limitation any pornography, erotica, child pornography or child erotica), are deceptive, threatening, abusive, inciting of unlawful action, defamatory, libelous, vulgar or violent or constitute hate speech, are in violation of any laws be it of your country, the country where "phpBB.com" is hosted or International Law, or are otherwise objectionable in the opinion of the Operator of this Website;
+
+f. Upload, post, email, or otherwise transmit any User Submissions that contain software viruses or any other computer code, files, or programs designed to (i) interrupt, destroy or limit the functionality of any computer software; or (ii) interfere with the access of any Users, host or network, including without limitation sending a virus, overloading, flooding, spamming or mail-bombing the Website or its Operator;
+
+g. Upload, post, email or otherwise transmit any User Submissions that include code that is hidden or otherwise surreptitiously contained within the User Submissions that is unrelated to the immediate nature of the User Submissions;
+
+h. Interfere with or disrupt (or attempt to interfere with or disrupt) any web pages available at the Website, servers or networks connected to the Website or the technical delivery systems of the Website's providers or disobey any requirements, procedures, policies or regulations of networks connected to the Website;
+
+i. Attempt to probe, scan or test the vulnerability of any system or network related to the Website, or to breach, impair or circumvent any security or authentication measures protecting the Website or Services;
+
+j. Attempt to decipher, decompile, disassemble or reverse engineer any of the software used to provide the Website or Services;
+
+k. Attempt to access, search or meta-search the Website with any engine, software, tool, agent, device or mechanism other than software and/or search agents provided by the Website or other generally available third party web browsers (such as Microsoft Internet Explorer, Mozilla Firefox, Safari, or Opera), including without limitation any software that sends queries to the Website to determine how a website or web page ranks.
+
+l. Collect or store personal data about other Users without their express permission;
+
+m. Impersonate or misrepresent your affiliation with any person or entity, through pretexting or some other form of social engineering or otherwise commit fraud;
+
+n. Use the Website or Services in any manner not permitted by this Agreement; or
+
+o. Encourage or instruct any other individual to do any of the foregoing or to violate any term of these Terms of Service.
+
+6. Termination; Cancellation.
+
+a. We may immediately terminate or suspend your access to the Website and Services and remove any material (including User Submissions) from the Website or our servers, in the event that you breach these Terms of Service. Notwithstanding the foregoing, we also reserve the right to terminate the Website, Services or your access thereto at any time and for any reason. After such a termination, you understand and acknowledge that we will have no further obligation to provide the Services. Upon termination, all licenses and other rights granted to you by these Terms of Service will immediately cease. This Website and its Operator are not liable to you or any third party for termination of the Services or termination of your use of the Services. UPON ANY TERMINATION OR SUSPENSION, ANY INFORMATION (INCLUDING USER SUBMISSIONS) THAT YOU HAVE SUBMITTED ON THE WEBSITE OR THAT WHICH IS RELATED TO YOUR ACCOUNT MAY NO LONGER BE ACCESSED BY YOU. Furthermore, the Operator of the Website will have no obligation to maintain any information stored in our database related to your Account or to forward any information to you or any third party. 
+
+b. You may terminate your Account at any time and for any via the Account management interfaces provided by the Website. Upon any termination by a Member, the related Account will no longer be accessible. 
+
+c. Any suspension, termination or cancellation will not affect your obligations to the Website under these Terms of Service (including but not limited to ownership, indemnification and limitation of liability), which by their sense and context are intended to survive such suspension, termination or cancellation.
+
+7. Third Party Links.
+
+The Website may provide links to third party websites or resources from the Website. You acknowledge and agree that the Website is not responsible or liable for the availability or accuracy of, and the Website does not endorse, such websites or resources or the content, products, or services on or available from such websites or resources. You acknowledge sole responsibility for and assume all risk arising from your use of any such websites or resources.
+
+8. Intellectual Property Rights and Ownership.
+
+a. Content. You may access and use the Website, Services, Site Content and User Submissions for your own personal non-commercial use. You will not remove, alter or conceal any copyright, trademark, service mark or other proprietary rights notices incorporated in or accompanying the Website, Site Content, User Submissions or related products and services and you will not reproduce, modify, adapt, prepare derivative works based on, perform, display, publish, distribute, transmit, broadcast, sell, license or otherwise exploit the Website, Site Content, User Submissions (other than your User Submissions). The Operator of this Website and its licensors own all right, title and interest, including all worldwide intellectual property rights in the Website, Site Content and the trademarks, service marks and logos contained therein other than your User Submissions. 
+
+b. User Submissions. 
+
+(i) License Grant. This Website does not claim ownership rights in your User Submissions. However, by uploading, posting, emailing or otherwise transmitting any User Submission to the Website or Services, you hereby grant the Website and its Operator a non-exclusive, worldwide, royalty-free, sublicensable, perpetual and irrevocable right and license to use, reproduce, modify, adapt, prepare derivative works based on, perform, display, publish, distribute, transmit, broadcast and otherwise exploit such User Submissions in any form, medium or technology now known or later developed, including without limitation on the Website and third party websites. You represent and warrant that you own or have the necessary licenses, rights, consents and permissions to grant the foregoing licenses to the Website. The Operator of this Website will own all right, title and interest in and to all derivative works and compilations of User Submissions that are created by the Website, including all worldwide intellectual property rights therein. You agree to execute and deliver such documents and provide all assistance reasonably requested by the Website to give to the Website the full benefit of the rights granted to the Website by you.
+
+(ii) Limitations. You acknowledge and agree that the Website may, at the opinion of its Operator, establish limits concerning User Submissions, including without limitation the maximum amount of time that User Submissions will remain on the Website, the maximum size of any files that may be stored on or uploaded to the Website, and the maximum disk space that will be allotted to you for the storage of User Submissions on the Website's servers. The Website and its Operator will have no responsibility or liability for and you are solely responsible for creating back-ups of your User Submissions. 
+
+(iii) Disclaimer. The Operator of this Website has no ability to control the User Submissions that are uploaded, posted, emailed or otherwise transmitted using the Website or Services and does not have any obligation to monitor such User Submissions for any purpose and, as a result, is not responsible for the accuracy, completeness, appropriateness, legality or applicability of the User Submissions or anything said, depicted or written by Members, including without limitation any information obtained by using the the Website. This Website and its Operator do not endorse any User Submission or any opinion, recommendation, or advice expressed therein and you agree to waive, and hereby do waive, any legal or equitable rights or remedies you have or may have against the Website or its Operator with respect thereto.
+
+9. Copyrighted Materials: No Unauthorized Use.
+
+YOU WILL NOT USE THE WEBSITE OR SERVICES TO TRANSMIT, ROUTE, PROVIDE CONNECTIONS TO OR STORE ANY MATERIAL THAT INFRINGES COPYRIGHTED WORKS OR OTHERWISE VIOLATES OR PROMOTES THE VIOLATION OF THE INTELLECTUAL PROPERTY RIGHTS OF ANY THIRD PARTY. The Operator of Website may terminate the Accounts of Members who infringe or are believed to be infringing the rights of copyright holders.
+
+10. Disclaimer of Warranties.
+
+YOUR USE OF THE WEBSITE, SERVICES, SITE CONTENT AND USER SUBMISSIONS IS AT YOUR SOLE DISCRETION AND RISK. THE WEBSITE, SERVICES, SITE CONTENT AND USER SUBMISSIONS, AND ALL MATERIALS, INFORMATION, PRODUCTS AND SERVICES INCLUDED THEREIN, ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT WARRANTIES OF ANY KIND. THE OPERATOR OF THIS WEBSITE EXPRESSLY DISCLAIMS ALL WARRANTIES OF ANY KIND, EXPRESS, IMPLIED OR STATUTORY, RELATING TO THE WEBSITE, SERVICES, SITE CONTENT AND USER SUBMISSIONS, INCLUDING WITHOUT LIMITATION THE WARRANTIES OF TITLE, MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT OF PROPRIETARY RIGHTS, COURSE OF DEALING OR COURSE OF PERFORMANCE. THE OPERATOR OF THIS WEBSITE DISCLAIMS ANY WARRANTIES: (I) REGARDING THE SECURITY, ACCURACY, RELIABILITY, TIMELINESS AND PERFORMANCE OF THE WEBSITE; OR (II) THAT THE WEBSITE, SERVICES, SITE CONTENT AND USER SUBMISSIONS WILL BE ERROR-FREE OR THAT ANY ERRORS WILL BE CORRECTED. NO ADVICE OR INFORMATION, WHETHER ORAL OR WRITTEN, OBTAINED BY YOU FROM THE WEBSITE, WILL CREATE ANY WARRANTY NOT EXPRESSLY STATED IN THIS AGREEMENT. SOME STATES OR JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF CERTAIN WARRANTIES. ACCORDINGLY, SOME OF THE ABOVE EXCLUSIONS MAY NOT APPLY TO YOU.
+
+11. Limitation of Liability.
+
+IN NO EVENT WILL THE WEBSITE, ITS OPERATOR, OFFICERS, DIRECTORS, EMPLOYEES OR AGENTS, BE LIABLE TO YOU FOR ANY DAMAGES WHATSOEVER, INCLUDING WITHOUT LIMITATION, INDIRECT, INCIDENTAL, SPECIAL, PUNITIVE OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF THE WEBSITE, SERVICES, SITE CONTENT AND USER SUBMISSIONS WHETHER THE DAMAGES ARE FORESEEABLE AND WHETHER OR NOT THE OPERATOR OF THE WEBSITE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. THE FOREGOING LIMITATION OF LIABILITY WILL APPLY TO THE FULLEST EXTENT PERMITTED BY LAW IN THE APPLICABLE JURISDICTION AND IN NO EVENT WILL THE OPERATOR'S CUMULATIVE LIABILITY TO YOU EXCEED THE MINIMUM AMOUNT PROVIDED BY LAW.
+
+12. Indemnification.
+
+You agree to defend, indemnify, and hold the Website, its operator, officers, directors, employees and agents, harmless from and against any claims, liabilities, damages, losses, and expenses, including without limitation reasonable attorney's fees and costs, arising out of or in any way connected with (i) your access to or use of the Website, Services, Site Content and User Submissions; (ii) your violation of these Terms of Service; (iii) your violation of any third party right, including without limitation any intellectual property right, publicity, confidentiality, property or privacy right; or (iv) any claim that one of your User Submissions caused damage to a third party, including without limitation claims that your User Submissions are infringing.
+
+13. General.
+
+This Terms of Service shall be governed by and interpreted in accordance with the laws of the state of the Operator's residence, without regard to conflict of law principles. Any legal action or proceeding arising under this Terms of Service will be brought exclusively in courts located in the state and nearest jurisdiction of the Operator's residence and the parties hereby irrevocably consent to the personal jurisdiction and venue therein. In the event that any provision in these Terms of Service is held to be invalid or unenforceable, the remaining provisions will remain in full force and effect. The failure of a party to enforce any right or provision of these Terms of Service will not be deemed a waiver of such right or provision. The relationship of the parties under this Terms of Service is that of independent contractors, and this Terms of Service will not be construed to imply that either party is the agent, employee, or joint venturer of the other. You agree that this Terms of Service and the rules, restrictions and policies contained herein, and the Website's enforcement thereof, are not intended to confer and do not confer any rights or remedies upon any person other than you and the Operator of the Website. These Terms of Service together with the rules and policies of the Website constitutes the entire agreement between the Website and you with respect to the subject matter hereof. Any notice or other communication to be given hereunder will be in writing and given (a) by the Website via email (in each case to the address that you provide), (b) as a posting on the Website, or (c) by you via email to contact addresses as the Website may specify in writing. The date of receipt shall be deemed the date on which such notice is transmitted.

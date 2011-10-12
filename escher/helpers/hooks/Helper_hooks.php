@@ -16,7 +16,7 @@ abstract class Helper_hooks extends Helper {
 	}
 	
 	function runEvent($event,$args=array()) {
-		if (!array_key_exists($event,$this->events)) { return true; }
+		if (!array_key_exists($event,$this->events)) { return array(); }
 		$callbacks = $this->events[$event];
 		ksort($callbacks);
 		$result = array();

@@ -38,9 +38,11 @@ class Helper_session_datasource extends Helper_session {
 		$so = Load::Model('session');
 		$sessions = $so->find(array(
 			'mtime'=>array('<'=>date('Y-m-d H:i:s',strtotime("-$lifetime seconds",NOW)))));
-		foreach($sessions as $s) {
-			$s = Load::Model('session',$s['id']);
-			$s->delete();
+		if(!empty($sessions)) {
+			foreach($sessions as $s) {
+				$s = Load::Model('session',$s['id']);
+				$s->delete();
+			}
 		}
 	}
 	function regenerate() {

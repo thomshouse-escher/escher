@@ -1,11 +1,13 @@
 <?php Load::HelperClass('userauth'); Load::lib(array('twitter','twitteroauth.php'));
 
 class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
+	protected $me = NULL;
+
 	function authenticate() {
 		if(empty($_REQUEST['oauth_verifier']) || empty($_REQUEST['oauth_token'])) {
-			$this->oauth_request();
+			return $this->oauth_request();
 		} else {
-			$this->oauth_verify();
+			return $this->oauth_verify();
 		}
 	}
 
@@ -25,20 +27,18 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		$_SESSION['tw_oauth_token_secret'] = $request_token['oauth_token_secret'];
 		 
 		/* If last connection failed don't display authorization link. */
-		switch ($connection->http_code) {
-			case 200:
-				/* Build authorize URL and redirect user to Twitter. */
-				$url = $connection->getAuthorizeURL($token);
-				$headers->redirect($url);
-				break;
-			default:
-				/* (Don't) Show notification if something went wrong. */
-				$headers->redirect();
+		if ($connection->http_code==200) {
+			/* Build authorize URL and redirect user to Twitter. */
+			$url = $connection->getAuthorizeURL($token);
+			$headers->redirect($url);
 		}
+		return false;
 	}
 	
 	protected function oauth_verify() {
 		$headers = Load::Headers();
+
+		global $CFG;
 
 		/* If the oauth_token is old redirect to the connect page. */
 		if ($_SESSION['tw_oauth_token'] !== $_REQUEST['oauth_token']) {
@@ -52,22 +52,20 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		$access_token = $connection->getAccessToken($_REQUEST['oauth_verifier']);
 
 		/* Remove no longer needed request tokens */
-		//unset($_SESSION['tw_oauth_token']);
-		//unset($_SESSION['tw_oauth_token_secret']);
+		unset($_SESSION['tw_oauth_token']);
+		unset($_SESSION['tw_oauth_token_secret']);
 
 		/* If HTTP response is 200 continue otherwise send to connect page to retry */
 		if ($connection->http_code != 200) {
-			$headers->redirect();
+			return false;
 		}
 
-		$me = (array)$connection->get('account/verify_credentials');
+		$this->me = $me = (array)$connection->get('account/verify_credentials');
 
 		// If there is a local user with this facebook uid, log them in and redirect
 		if ($user = Load::User(array('twitter_uid'=>$me['id']))) {
 			$_SESSION['user_id'] = $user->id;
-			$user->assignVars($this->loginVars($me));
-			$user->save();
-			$headers->redirect();
+			return true;
 		}
 		
 		// Setup registration vars (username, fullname, etc.)
@@ -78,8 +76,9 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		$userauth = Load::Helper('userauth',array('twitter','oauth'));
 		if ($user = $userauth->register($vars['username'],'',$vars)) {
 			$_SESSION['user_id'] = $user->id;
+			return true;
 		}
-		$headers->redirect();
+		return false;
 	}
 	
 	function register($username,$password=NULL,$vars=array()) {
@@ -104,10 +103,10 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 	}
 
 	protected function registrationVars($me) {
-		$vars = $this->loginVars($me);
-		// If the user doesn't exist, we need to register
+		$vars = array();
+		$vars['full_name'] = $vars['twitter_full_name'] = $me['name'];
+		// If the user's twitter account name does not exist as a username, let them have it
 		if (!empty($me['screen_name']) && !Load::User(array('username'=>$me['screen_name']))) {
-			// If user has a facebook username and it's not already taken in the system, let them have it
 			$vars['username'] = $me['screen_name'];
 		} else {
 			// Otherwise give them something that should be unique based on their uid
@@ -117,9 +116,45 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		return $vars;
 	}
 
-	protected function loginVars($me) {
-		$vars = array('full_name' => $me['name'],'icon_url' => $me['profile_image_url']);
-		if(!empty($me['screen_name'])) { $vars['twitter_username'] = $me['screen_name']; }
-		return $vars;
+	function onLogin() {
+		$USER = Load::User();
+		if(empty($USER->twitter_uid)) { return; }
+
+		// Let's track changes so we only save the model once!
+		$doSave = FALSE;
+
+		// If we have a twitter token, check credentials for updates
+		if (!empty($USER->twitter_token)) {
+			$CFG = Load::CFG();
+			if (is_null($this->me)) {
+				$connection = new TwitterOAuth($CFG['twitter_key'],$CFG['twitter_secret'], 
+					$USER->twitter_token['oauth_token'], 
+					$USER->twitter_token['oauth_token_secret']);
+				$me = (array)$connection->get('account/verify_credentials');
+			} else {
+				$me = $this->me;
+			}
+
+			if(!empty($me['screen_name']) && @$USER->twitter_username!=$me['screen_name']) {
+				$USER->twitter_username = $me['screen_name'];
+				$doSave = TRUE;
+			}
+			if ($USER->full_name==$USER->twitter_full_name) {
+				$USER->full_name = $USER->twitter_full_name = $me['name'];
+				$doSave = TRUE;
+			}
+
+			// If avatar is coming from Twitter or doesn't exist, grab it
+			if (empty($USER->avatar_source) || $USER->avatar_source=='twitter') {
+				$USER->avatar_url = $me['profile_image_url'];
+				$USER->avatar_source = 'twitter';
+				$doSave = TRUE;
+			}
+		}
+
+		if ($doSave) {
+			$USER->save();
+		}
+
 	}
 }
