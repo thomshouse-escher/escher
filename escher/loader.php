@@ -377,7 +377,8 @@ class Load {
 		} else {
 			$args['path'] = '';
 		}
-		unset($_GET['_PATH_INFO'],$_REQUEST['_PATH_INFO']);
+		unset($_GET['_PATH_INFO']);
+		unset($_REQUEST['_PATH_INFO']);
 		$args['root'] = $CFG['root'];
 		if (is_null($path)) {
 			self::$internalCall = true;
