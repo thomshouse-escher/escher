@@ -40,7 +40,7 @@ abstract class Controller_Series extends Controller {
 	function action_page($args) {
 		if (empty($args[0]) || !is_numeric($args[0]) || intval($args[0])<2) {
 			$headers = Load::Headers();
-			$headers->redirect($this->path->current.'/');
+			$headers->redirect('./');
 		}
 		$this->calledAction = 'index';
 		return $this->action_index(array(intval($args[0])));
@@ -53,14 +53,14 @@ abstract class Controller_Series extends Controller {
 		if ($lockout->isLocked($page)) {
 			$headers = Load::Headers();
 			$headers->addNotification('This page is currently being edited by another user.','error');
-			$headers->redirect($this->path->current.'/');
+			$headers->redirect('./');
 		}
 		if (!empty($input->post)) {
 			$headers = Load::Headers();
 			$page->parseFormData($input->post);
 			$page->touch();
 			if ($page->save()) {
-				$headers->redirect($this->path->current.'/');
+				$headers->redirect('./');
 			} else {
 				$headers->addNotification('Page data could not be saved.','error');
 			}
@@ -115,7 +115,7 @@ abstract class Controller_Series extends Controller {
 				$series->touch(); $series->save();
 				$headers = Load::Headers();
 				$headers->addNotification('The entry was successfully deleted.','success');
-				$headers->redirect($this->path->current.'/');
+				$headers->redirect('./');
 			}
 			$model->touch(); $model->save();
 			$this->parseEntryDataFromModel($entry,$model);
@@ -125,14 +125,14 @@ abstract class Controller_Series extends Controller {
 			$series = Load::Model($this->seriesType,$this->id);
 			$series->touch(); $series->save();
 			$headers = Load::Headers();
-			$headers->redirect($this->path->current.'/entry/'.$entry->id);
+			$headers->redirect('./entry/'.$entry->id);
 		}
 		$model = Load::Model($entry->model_type,$entry->model_id);
 		$lockout = Load::Lockout();
 		if ($lockout->isLocked($entry)) {
 			$headers = Load::Headers();
 			$headers->addNotification('This entry is currently being edited by another user.','error');
-			$headers->redirect($this->path->current.'/entry/'.$entry->id);
+			$headers->redirect('./entry/'.$entry->id);
 		}
 		if (!empty($entry->id)) { $lockout->lock($entry); }
 		$this->data['entry_form'] = $entry->display('edit');

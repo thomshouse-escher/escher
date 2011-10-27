@@ -191,24 +191,13 @@ abstract class Helper_headers extends Helper {
 		$session = Load::Session();
 		$session->remember_current_request = FALSE;
 		$session->preserveFlash = TRUE;
-		if (is_null($url)) {
-			if ($lastreq = $session->getFlash('last_request_url')) {
-				$url = $lastreq;
-			} else {
-				global $CFG;
-				$url = $CFG['wwwroot'];
-			}
-		} elseif (preg_match('#^~(/.*)#',$url,$match)) {
-			global $CFG;
-			$url = $CFG['wwwroot'].$match[1];
-		} elseif (preg_match('#^\.(/.*)#',$url,$match)) {
-			$r = Load::Router();
-			$p = $r->getPath();
-			$url = $p->current.$match[1];
-		} elseif (preg_match('#^\.\.(/.*)#',$url,$match)) {
-			$r = Load::Router();
-			$p = $r->getPath();
-			$url = $p->parent.$match[1];
+		$router = Load::Router();
+		if (!empty($url)) {
+			$url = $router->resolvePath($url);
+		} elseif ($lastreq = $session->getFlash('last_request_url')) {
+			$url = $lastreq;
+		} else {
+			$url = $router->getSitePath();
 		}
 		if ($qsa && !empty($_SERVER['QUERY_STRING'])) {
 			if (preg_match('/\?/',$url)) {

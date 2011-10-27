@@ -9,44 +9,106 @@ abstract class Helper_router extends Helper {
 		parent::__construct($args);
 		$this->findRoute();
 	}
-	
-	function getPath($absolute=TRUE) {
+
+	function getArgs() {
+		if (!empty($this->args)) {
+			return $this->args;
+		}
+		return array();
+	}
+
+	function getCurrentPath($absolute=TRUE, $args=FALSE) {
 		if ($absolute) {
-			global $CFG;
+			$CFG = Load::CFG();
 			$root = $CFG['wwwroot'];
 		} else {
 			$root = '';
 		}
-		$path;
-		$path->current = $root;
+		$current = $root;
 		if (!empty($this->current_path)) {
-			$path->current .= '/'.$this->current_path;
+			$current .= '/'.$this->current_path;
 		}
-		if (isset($this->parent_path)) {
-			$path->parent = $root;
-			if(!empty($this->parent_path)) {
-				$path->parent .= '/'.$this->parent_path;
-			}
+		if ($args) {
+			$current .= '/'.implode('/',$this->args);
+		}
+		return $current;
+	}
+
+	function getParentPath($absolute=TRUE) {
+		if ($absolute) {
+			$CFG = Load::CFG();
+			$root = $CFG['wwwroot'];
 		} else {
-			$path->parent = NULL;
+			$root = '';
 		}
-		return $path;
+		$parent = $root;
+		if(!empty($this->parent_path)) {
+			$parent .= '/'.$this->parent_path;
+		}
+		return $parent;
+	}
+
+	function getRootPath($absolute=TRUE) {
+		if ($absolute) {
+			$CFG = Load::CFG();
+			return $CFG['wwwroot'];
+		} else {
+			return '';
+		}
+	}
+
+	function getSitePath($absolute=TRUE) {
+		if (!empty($this->site) && strpos($this->site,'~')===FALSE) {
+			return $this->resolvePath($this->site,$absolute);
+		} else {
+			return $this->getRootPath($absolute);
+		}
+	}
+
+	function getPathByInstance($controller,$id=NULL,$absolute=TRUE) {
+		if (empty($controller)) { return false; }
+		if (!empty($id) && !is_numeric($id)) {
+			$action = $id; $id = NULL;
+		} else { $action = NULL; };
+		$routes = $routes = $this->getStaticRoutes();
+		foreach ($routes as $key => $route) {
+			if ($controller == $route['controller']) {
+				if (preg_match('/(\[[^]]+\]|\*)/',$key)) { continue; }
+				if ((!empty($action) || !empty($route['action'])) && $action!=$route['action']) { continue; }
+				if ((!empty($id) || !empty($route['id'])) && $id!=$route['id']) { continue; }
+				return $this->getRootPath($absolute)."/$key";
+			}
+		}
+		return false;
+	}
+
+	function getRoute() {
+		return $this->route;
+	}
+
+	function resolvePath($url,$absolute=TRUE) {
+		if ($absolute && preg_match('#^(/.*)#',$url,$match)) {
+			return $this->getRootPath().$match[1];
+		} elseif (preg_match('#^~(/.*)#',$url,$match)) {
+			return $this->getSitePath($absolute).$match[1];
+		} elseif (preg_match('#^\.\.(/.*)#',$url,$match)) {
+			return $this->getParentPath($absolute).$match[1];
+		} elseif (preg_match('#^\.(/.*)#',$url,$match)) {
+			return $this->getCurrentPath($absolute).$match[1];
+		} elseif (strpos($url,':')===FALSE) {
+			return $this->getCurrentPath($absolute)."/$url";
+		} else {
+			return $url;
+		}
 	}
 	
 	function getContext() {
-		return $this->context;
+		return $this->route;
 	}
 
 	protected function findRoute() {
-		global $CFG;
-		$routes = (array)@$this->static_routes;
-		if (empty($routes)) {
-			$hooks = Load::Hooks();
-			$routes = array_merge($CFG['static_routes'],$hooks->getStaticRoutes());
-		}
-		if (is_array($CFG['predefined_routes'])) {
-			$routes = array_merge($CFG['predefined_routes'],$routes);
-		}
+		$CFG = Load::CFG();
+		$routes = $this->getStaticRoutes();
 		$route = array();
 		if (!empty($this->path)) {
 			foreach($routes as $key => $route) {
@@ -60,7 +122,6 @@ abstract class Helper_router extends Helper {
 			}
 		}
 		if (empty($matches)) {
-			global $CFG;
 			$args = preg_split('#/#',$this->path,-1,PREG_SPLIT_NO_EMPTY);
 			$route = $CFG['root'];
 			$route['current_path'] = '';
@@ -92,7 +153,20 @@ abstract class Helper_router extends Helper {
 			$route['args'] = $matches;
 		}
 		$this->assignVars($route);
-		$this->context = Load::Model('route_static','/'.$this->current_path);
+		$this->route = Load::Model('route_static','/'.$this->current_path);
 		return true;
+	}
+
+	protected function getStaticRoutes() {
+		$CFG = Load::CFG();
+		$routes = (array)@$this->static_routes;
+		if (empty($routes)) {
+			$hooks = Load::Hooks();
+			$routes = array_merge($CFG['static_routes'],$hooks->getStaticRoutes());
+		}
+		if (is_array($CFG['predefined_routes'])) {
+			$routes = array_merge($CFG['predefined_routes'],$routes);
+		}
+		return $routes;
 	}
 }

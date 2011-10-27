@@ -11,12 +11,6 @@ abstract class Helper_output extends Helper {
 	function __construct($args=array()) {
 		parent::__construct($args);
 		$this->headers = Load::Headers();
-		$r = Load::Router();
-		$this->path = $r->getPath();
-	}
-	
-	function setPath($path) {
-		$this->path = $path;
 	}
 	
 	function assign($name,$val) {
@@ -30,14 +24,14 @@ abstract class Helper_output extends Helper {
 	}
 	
 	function assignReservedVars() {
-		global $CFG;
-		$this->assign('www',$CFG['wwwroot']);
+		$router = Load::Router();
+		$useragent = Load::Helper('useragent','default');
+		$this->assign('www',$router->getRootPath());
 		Load::UserAgent();
-		$this->assign('useragent_classes',implode(' ',Helper_useragent::getClasses()));
+		$this->assign('useragent_classes',implode(' ',$useragent->getClasses()));
 		$this->assign('USER',Load::User());
-		$this->assign('current_path',@$this->path->current);
-		$this->assign('parent_path',@$this->path->parent);
-		$this->assign('PATH',@$this->path);
+		$this->assign('current_path',$router->getCurrentPath());
+		$this->assign('parent_path',$router->getParentPath());
 	}
 	
 	function getAssignedVars() {
@@ -50,7 +44,7 @@ abstract class Helper_output extends Helper {
 	}
 
 	function displayControllerView($controller,$view) {
-		global $CFG;
+		$CFG = Load::CFG();
 		if (is_a($controller,'Controller')) {
 			$plugin = @$controller->_plugin();
 			$controller = $controller->_c();
@@ -73,7 +67,7 @@ abstract class Helper_output extends Helper {
 	}	
 	
 	function displayModelView($model,$view) {
-		global $CFG;
+		$CFG = Load::CFG();
 		if (is_a($model,'Model')) {
 			$plugin = @$model->_plugin();
 			$model = $model->_m();
@@ -96,7 +90,7 @@ abstract class Helper_output extends Helper {
 	}	
 	
 	function displayTheme($theme,$content) {
-		global $CFG;
+		$CFG = Load::CFG();
 		if (is_array($theme)) {
 			$plugin = $theme[0];
 			$theme = $theme[1];

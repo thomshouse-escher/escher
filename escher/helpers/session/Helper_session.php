@@ -111,9 +111,8 @@ abstract class Helper_session extends Helper {
 			$this->pruneFlash();
 		}
 		if ($this->remember_current_request && empty($_POST)) {
-			global $CFG;
 			$router = Load::Router();
-			$lastreq = $CFG['wwwroot'].$router->path;
+			$lastreq = $router->getCurrentPath(FALSE,TRUE);
 			if (!empty($_SERVER['QUERY_STRING'])) {
 				$lastreq .= '?'.$_SERVER['QUERY_STRING'];
 			}

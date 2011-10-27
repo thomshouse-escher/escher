@@ -13,7 +13,7 @@ class Controller_uploads extends Controller {
 				$upload->saveUploadedFile($f);
 			}
 			$headers = Load::Headers();
-			$headers->redirect($this->path->current.'/?'.($popup?'popup=true&':'')."type=$type");
+			$headers->redirect('./?'.($popup?'popup=true&':'')."type=$type");
 		}
 		if ($popup) {
 			$ui = Load::UI();

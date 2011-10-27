@@ -127,7 +127,6 @@ class Controller extends EscherObject {
 			$type = $this->output_type;
 		}
 		$out = Load::Output($type,$this);
-		$out->setPath(@$this->path);
 		$out->assignVars($data);
 		if (!$themed) {
 			return $out->displayControllerView($this,$view);

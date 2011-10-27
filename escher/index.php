@@ -30,7 +30,6 @@ if (!isset($router->controller)) {
 	Load::Error('404');
 }
 $controller = Load::Controller($router->controller,@$router->args);
-$controller->path = $router->getPath();
 $controller->router = $router;
 if (!$controller->execute() && empty($controller->data)) {
 	Load::Error('404');

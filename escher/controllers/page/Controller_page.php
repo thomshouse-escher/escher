@@ -18,7 +18,7 @@ class Controller_page extends Controller {
 		if ($lockout->isLocked($page)) {
 			$headers = Load::Headers();
 			$headers->addNotification('This page is currently being edited by another user.','error');
-			$headers->redirect($this->path->current);
+			$headers->redirect('./');
 		}
 		if (!empty($input->post)) {
 			$headers = Load::Headers();
@@ -26,7 +26,7 @@ class Controller_page extends Controller {
 				unset($page->draft);
 				$page->save();
 				$headers->addNotification('Saved draft for this page has been discarded.');
-				$headers->redirect($this->path->current.'/edit/');
+				$headers->redirect('./edit/');
 			}
 			if (!empty($input->post['save_draft'])) {
 				$draft = clone($page);
@@ -39,7 +39,7 @@ class Controller_page extends Controller {
 			}
 			$page->touch();
 			if ($page->save()) {
-				$headers->redirect($this->path->current.'/');
+				$headers->redirect('./');
 			} else {
 				$headers->addNotification('Page data could not be saved.','error');
 			}

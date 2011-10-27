@@ -281,7 +281,6 @@ abstract class Model extends EscherObject {
 		}
 		if (is_null($type)) { $type = $this->_output_type; }
 		$out = Load::Output($type,$this);
-		$out->setPath(@$this->path);
 		$out->assignVars($data);
 		return $out->displayModelView($this,$view);
 	}

@@ -40,7 +40,7 @@ class Controller_blog extends Controller_Series {
 		}
 		if (!empty($entry->permalink) && !preg_match('#^entry/'.$entry->id.'$#',$entry->permalink)) {
 			$headers = Load::Headers();
-			$headers->redirect($this->path->current.'/'.$entry->permalink.'/');
+			$headers->redirect('./'.$entry->permalink.'/');
 		}
 		parent::action_entry($args);
 	}
