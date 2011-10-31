@@ -1,8 +1,8 @@
 <?php if(!defined('CFG_LOADED')) { header('Location: ../'); die(); }
 
-require_once('environment.php');
-require_once('defaults.php');
-require_once('loader.php');
+require_once($CFG['fileroot'].'/escher/environment.php');
+require_once($CFG['fileroot'].'/escher/defaults.php');
+require_once($CFG['fileroot'].'/escher/loader.php');
 Load::core('EscherObject.php','Controller.php','Helper.php','Model.php','patterns/Model_File.php');
 
 if (!$CFG['maintenance_mode']) { $CFG = Load::Config(); } // Protects init CFG
