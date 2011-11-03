@@ -1,10 +1,6 @@
 <?php
 
 abstract class Helper_router extends Helper {
-	protected $path, $root, $controller, $action, $args;
-	protected $current_path, $parent_path, $type;
-	protected $router;
-
 	function __construct($args='') {
 		// If we only receive one argument and it is scalar, force it to array form
 		if (is_scalar($args)) {
@@ -30,15 +26,14 @@ abstract class Helper_router extends Helper {
 		$this->route = Load::Model('route_static','/'.$this->current_path);
 	}
 
-	function __get($name) {
+	function g__get($name) {
 		if (isset($this->$name)) {
 			return $this->$name;
 		}
-		return false;
 	}
 
-	function __set($name,$value) {
-		// Protected properties are read-only
+	function g__set($name,$value) {
+		$this->$name = $value;
 	}
 
 	function getArgs() {
