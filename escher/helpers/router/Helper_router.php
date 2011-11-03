@@ -26,16 +26,6 @@ abstract class Helper_router extends Helper {
 		$this->route = Load::Model('route_static','/'.$this->current_path);
 	}
 
-	function g__get($name) {
-		if (isset($this->$name)) {
-			return $this->$name;
-		}
-	}
-
-	function g__set($name,$value) {
-		$this->$name = $value;
-	}
-
 	function getArgs() {
 		if (!empty($this->args)) {
 			return $this->args;
