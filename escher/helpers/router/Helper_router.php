@@ -1,13 +1,44 @@
 <?php
 
 abstract class Helper_router extends Helper {
+	protected $path, $root, $controller, $action, $args;
+	protected $current_path, $parent_path, $type;
+	protected $router;
 
-	function __construct($args) {
+	function __construct($args='') {
+		// If we only receive one argument and it is scalar, force it to array form
 		if (is_scalar($args)) {
+			// ...snd assume the scalar value is our path
 			$args = array('path' => $args);	
 		}
 		parent::__construct($args);
-		$this->findRoute();
+		// Attempt to find a route based on the path
+		$route = $this->findRoute();
+		// If we can't find a route, use the root/config values
+		if (!$route) {
+			$CFG = Load::CFG();
+			$args = preg_split('#/#',$this->path,-1,PREG_SPLIT_NO_EMPTY);
+			$route = $CFG['root'];
+			$route['current_path'] = '';
+			if (isset($route['args']) && is_array($route['args'])) {
+				$route['args'] = array_merge($route['args'],$args);
+			} else {
+				$route['args'] = $args;
+			}
+		}
+		$this->assignVars($route);
+		$this->route = Load::Model('route_static','/'.$this->current_path);
+	}
+
+	function __get($name) {
+		if (isset($this->$name)) {
+			return $this->$name;
+		}
+		return false;
+	}
+
+	function __set($name,$value) {
+		// Protected properties are read-only
 	}
 
 	function getArgs() {
@@ -107,7 +138,6 @@ abstract class Helper_router extends Helper {
 	}
 
 	protected function findRoute() {
-		$CFG = Load::CFG();
 		$routes = $this->getStaticRoutes();
 		$route = array();
 		if (!empty($this->path)) {
@@ -122,14 +152,7 @@ abstract class Helper_router extends Helper {
 			}
 		}
 		if (empty($matches)) {
-			$args = preg_split('#/#',$this->path,-1,PREG_SPLIT_NO_EMPTY);
-			$route = $CFG['root'];
-			$route['current_path'] = '';
-			if (isset($route['args']) && is_array($route['args'])) {
-				$route['args'] = array_merge($route['args'],$args);
-			} else {
-				$route['args'] = $args;
-			}
+			return false;
 		} else {
 			if (!isset($route['current_path'])) {
 				$pattr = preg_split('#/#',preg_replace('#/((\[[^\]]\]|\*)/?)$#','/',
@@ -152,9 +175,7 @@ abstract class Helper_router extends Helper {
 			}
 			$route['args'] = $matches;
 		}
-		$this->assignVars($route);
-		$this->route = Load::Model('route_static','/'.$this->current_path);
-		return true;
+		return $route;
 	}
 
 	protected function getStaticRoutes() {
