@@ -4,7 +4,7 @@ abstract class Helper_router extends Helper {
 	function __construct($args='') {
 		// If we only receive one argument and it is scalar, force it to array form
 		if (is_scalar($args)) {
-			// ...snd assume the scalar value is our path
+			// ...and assume the scalar value is our path
 			$args = array('path' => $args);	
 		}
 		parent::__construct($args);
@@ -21,9 +21,9 @@ abstract class Helper_router extends Helper {
 			} else {
 				$route['args'] = $args;
 			}
+			$route['route'] = Load::Model('route_static','/');
 		}
 		$this->assignVars($route);
-		$this->route = Load::Model('route_static','/'.$this->current_path);
 	}
 
 	function getArgs() {
@@ -74,8 +74,8 @@ abstract class Helper_router extends Helper {
 	}
 
 	function getSitePath($absolute=TRUE) {
-		if (!empty($this->site) && strpos($this->site,'~')===FALSE) {
-			return $this->resolvePath($this->site,$absolute);
+		if (!empty($this->site_path) && strpos($this->site_path,'~')===FALSE) {
+			return $this->getRootPath($absolute).'/'.$this->site_path;
 		} else {
 			return $this->getRootPath($absolute);
 		}
@@ -105,11 +105,11 @@ abstract class Helper_router extends Helper {
 	function resolvePath($url,$absolute=TRUE) {
 		if ($absolute && preg_match('#^(/.*)#',$url,$match)) {
 			return $this->getRootPath().$match[1];
-		} elseif (preg_match('#^~(/.*)#',$url,$match)) {
+		} elseif (preg_match('#^~(/.*|)#',$url,$match)) {
 			return $this->getSitePath($absolute).$match[1];
-		} elseif (preg_match('#^\.\.(/.*)#',$url,$match)) {
+		} elseif (preg_match('#^\.\.(/.*|)#',$url,$match)) {
 			return $this->getParentPath($absolute).$match[1];
-		} elseif (preg_match('#^\.(/.*)#',$url,$match)) {
+		} elseif (preg_match('#^\.(/.*|)#',$url,$match)) {
 			return $this->getCurrentPath($absolute).$match[1];
 		} elseif (strpos($url,':')===FALSE) {
 			return $this->getCurrentPath($absolute)."/$url";
@@ -138,28 +138,28 @@ abstract class Helper_router extends Helper {
 		}
 		if (empty($matches)) {
 			return false;
-		} else {
-			if (!isset($route['current_path'])) {
-				$pattr = preg_split('#/#',preg_replace('#/((\[[^\]]\]|\*)/?)$#','/',
-					$route['pattern']),-1,PREG_SPLIT_NO_EMPTY);
-				$pathr = preg_split('#/#',$this->path,-1,PREG_SPLIT_NO_EMPTY);
-				$route['current_path'] = implode('/',array_slice($pathr,0,sizeof($pattr)));
-			}
-			if (!isset($route['parent_path'])) {
-				$route['parent_path'] = implode('/',array_slice(explode('/',$route['current_path']),0,-1));
-			}
-
-			array_shift($matches);
-			if (empty($matches[0])) { array_shift($matches); }
-			if (!empty($matches)) {
-				if (strpos($matches[sizeof($matches)-1],'/')!==FALSE) {
-					$remaining_args = array_pop($matches);
-					$remaining_args = preg_split('#/#',$remaining_args,-1,PREG_SPLIT_NO_EMPTY);
-					$matches = array_merge($matches,$remaining_args);
-				}
-			}
-			$route['args'] = $matches;
 		}
+		if (!isset($route['current_path'])) {
+			$pattr = preg_split('#/#',preg_replace('#/((\[[^\]]\]|\*)/?)$#','/',
+				$route['pattern']),-1,PREG_SPLIT_NO_EMPTY);
+			$pathr = preg_split('#/#',$this->path,-1,PREG_SPLIT_NO_EMPTY);
+			$route['current_path'] = implode('/',array_slice($pathr,0,sizeof($pattr)));
+		}
+		if (!isset($route['parent_path'])) {
+			$route['parent_path'] = implode('/',array_slice(explode('/',$route['current_path']),0,-1));
+		}
+
+		array_shift($matches);
+		if (empty($matches[0])) { array_shift($matches); }
+		if (!empty($matches)) {
+			if (strpos($matches[sizeof($matches)-1],'/')!==FALSE) {
+				$remaining_args = array_pop($matches);
+				$remaining_args = preg_split('#/#',$remaining_args,-1,PREG_SPLIT_NO_EMPTY);
+				$matches = array_merge($matches,$remaining_args);
+			}
+		}
+		$route['args'] = $matches;
+		$route['route'] = Load::Model('route_static','/'.$route['current_path']);
 		return $route;
 	}
 
