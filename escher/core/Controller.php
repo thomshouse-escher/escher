@@ -13,7 +13,7 @@
  * Controller base class
  * @package Escher
  */
-class Controller extends EscherObject {
+class EscherController extends EscherObject {
 	protected $defaultAction = 'index';
 	protected $defaultAllowArgs = FALSE;
 	protected $args = NULL;

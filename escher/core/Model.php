@@ -1,6 +1,6 @@
 <?php
 
-abstract class Model extends EscherObject {
+abstract class EscherModel extends EscherObject {
 	protected $_schema = array();
 	protected $_cache_keys = array();
 	protected $_metadata = FALSE;

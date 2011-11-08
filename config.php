@@ -33,6 +33,3 @@ $CFG['static_routes'] = array(
 
 // Determines "active" plugins for running hooks
 $CFG['active_plugins'] = array('tinymce');
-
-// Automatically sets the root file path of this installation
-$CFG['fileroot'] = dirname(__FILE__);
