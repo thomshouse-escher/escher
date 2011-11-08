@@ -14,17 +14,20 @@ the appropriate elements:
 
 	<?php
 	/**
-	* Short description of the file (required)
-	*
-	* You may place a longer description for the file here if you wish.
-	* This description may be multiple lines or paragraphs long.
-	*
-	* Separate multiple paragraphs with blank lines
-	*
-	* @author Original Author <author@example.com>
-	* @author Another Author <another@example.com>
-	* @package [ Escher | Plugin Name ]
-	* @subpackage [ Controllers | Models | Helpers ]
+	 * Short description of the file (required)
+	 *
+	 * You may place a longer description for the file here if you wish.
+	 * This description may be multiple lines or paragraphs long.
+	 *
+	 * Separate multiple paragraphs with blank lines
+	 *
+	 * All long DocBlock long descriptions in Escher may contain MarkDown.
+	 * _This is an example of MarkDown-italicized text._
+	 *
+	 * @author Original Author <author@example.com>
+	 * @author Another Author <another@example.com>
+	 * @package [ Escher | Plugin Name ]
+	 * @subpackage [ Controllers | Models | Helpers ]
 	*/
 
 ## Class
@@ -38,7 +41,7 @@ the appropriate elements:
 	 * Separate multiple paragraphs with blank lines
 	 *
 	 * @author Original Author <author@example.com>
-	 * @author Another Author <another@example.com>
+	 * @author Another Author <another@example.com> (optional)
 	 * @package [ Escher | Plugin Name ]
 	 * @subpackage [ Controllers | Models | Helpers ]
 	 */
@@ -52,6 +55,7 @@ the appropriate elements:
 	 * You may place a longer description for the function here.
 	 * This description may be multiple lines or paragraphs long.
 	 *
+	 * @author Function Author <author@example.com> (optional)
 	 * @param type Description of param1
 	 * @param type Description of param2
 	 * @return type Description of return value
