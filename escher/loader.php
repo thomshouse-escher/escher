@@ -263,11 +263,18 @@ class Load {
 	
 	/**
 	 * Shorthand for loading the config helper.
+	 * @param bool Protect the config by always loading the persistent helper
 	 * @return object Returns the config helper.
 	 */
-	public function Config() {	
-		self::$internalCall = true;
-		return Load::PersistentHelper('config','default','global');
+	public function Config($protect=FALSE) {
+		static $protected;
+		if ($protect) { $protected = TRUE; }
+		if ($protected) {
+			self::$internalCall = true;
+			return Load::PersistentHelper('config','default','global');
+		} else {
+			return Load::Helper('config','default');
+		}
 	}
 	public function CFG() { return self::Config(); } // Shorthand
 
