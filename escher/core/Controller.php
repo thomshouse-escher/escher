@@ -34,7 +34,11 @@ class EscherController extends EscherObject {
 		if (!is_null($args)) {
 			$this->args = (array)$args;
 		}
+
+		// Convenient access for commonly used objects
+		$this->headers = Load::Headers();
 		$this->input = Load::Input();
+		$this->USER = Load::User();
 	}
 	
 	/**

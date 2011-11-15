@@ -420,7 +420,10 @@ class Load {
 	
 	public function User($keys=NULL) {
 		if(is_null($keys)) {
-			$keys = @$_SESSION['user_id'];
+			if (empty($_SESSION['user_id'])) {
+				return false;
+			}
+			$keys = $_SESSION['user_id'];
 		}
 		$user = Load::Model('user',$keys);
 		if (!isset($user->id)) {
