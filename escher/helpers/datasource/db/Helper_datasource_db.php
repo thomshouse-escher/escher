@@ -213,6 +213,8 @@ class Helper_datasource_db extends Helper_datasource {
 		// If $fetch is provided, use fetcy type.  Otherwise, if our limit is one, get the row, else get all results
 		if (!empty($fetch) && in_array($fetch,array('one','row','col','all','assoc'))) {
 			$qtype = 'get'.ucfirst(strtolower($fetch));
+		} elseif (!preg_match('/[,*]/',$select)) {
+			$qtype = ($limit==1) ? 'getOne' : 'getCol';
 		} else {
 			$qtype = ($limit==1) ? 'getRow' : 'getAll';
 		}

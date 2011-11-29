@@ -88,7 +88,7 @@ class Helper_datasource_arrcache extends Helper_datasource {
 			return false;
 		}
 		// Unset the id
-		unset($this->cache[$m.'_id_'.$attrs['id']]);
+		unset($this->cache[$m.'_id_'.$id]);
 		// Unset the other keys, if provided and valid
 		if (is_object($model)) {
 			foreach($model->_cache_keys() as $c) {
