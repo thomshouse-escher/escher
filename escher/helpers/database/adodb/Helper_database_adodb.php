@@ -15,6 +15,7 @@ class Helper_database_adodb extends Helper_database {
 				$this->adodb->SetFetchMode(ADODB_FETCH_ASSOC);
 				$this->adodb->Execute('SET collation_connection="utf8_general_ci", collation_server="utf8_general_ci", character_set_client="utf8",
 					character_set_connection="utf8", character_set_results="utf8", character_set_server="utf8"');
+				$ADODB_COUNTRECS = FALSE;
 			}
 		}
 		$this->adodb->debug = $this->debug;

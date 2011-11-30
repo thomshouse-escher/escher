@@ -182,7 +182,7 @@ class Helper_datasource_db extends Helper_datasource {
 			if (!$conditions = $this->traverseConditions($conditions)) {
 				return false;
 			}
-			$where = "WHERE ".$conditions;
+			$where = "WHERE ".$conditions[0];
 		}
 		// Interpret array notation of order
 		if (is_array($order)) {
@@ -219,7 +219,7 @@ class Helper_datasource_db extends Helper_datasource {
 			$qtype = ($limit==1) ? 'getRow' : 'getAll';
 		}
 		// The DB Query
-		$result = $db->$qtype("SELECT $select FROM $m $where $group $order $sqllimit");
+		$result = $db->$qtype("SELECT $select FROM $m $where $group $order $sqllimit",$conditions[1]);
 		// If result is a single valid row and we are selecting everything, get metadata and content
 		if (is_object($model) && $qtype=='getRow' && !empty($result['id'])) {
 			$m = $db->t($model->_m());
@@ -269,27 +269,32 @@ class Helper_datasource_db extends Helper_datasource {
 		if (is_numeric(key($cond)) && $first=='NOT') {
 			array_shift($cond);
 			if ($result = $this->traverseConditions($cond)) {
-				return 'NOT ('.$result.')';
+				return array('NOT ('.$result[0].')',$result[1]);
 			} else { return false; }
 		} elseif (is_numeric(key($cond)) && in_array($first,array('AND','&&','OR','||','XOR'))) {
 			array_shift($cond);
 			if ($result = $this->traverseConditions($cond,$first)) {
-				return '('.$result.')';
+				return array('('.$result[0].')',$result[1]);
 			} else { return false; }
 		}
 		$pieces = array();
+		$params = array();
 		foreach($cond as $k => $v) {
 			if(is_numeric($k)) {
 				if (is_array($v)) {
-					$pieces[] = '('.$this->traverseConditions($v).')';
+					$result = $this->traverseConditions($v);
+					$pieces[] = '('.$result[0].')';
+					$params = array_merge($params,$result[1]);
 				} else { return false; } // No other cases should have a numeric index
 			} elseif ($k=='SQL') {
 				$pieces[] = "($v)";
 			} else {
-				$pieces[] = $this->evalConditions($k,$v);	
+				$result = $this->evalConditions($k,$v);	
+				$pieces[] = $result[0];
+				$params = array_merge($params,$result[1]);
 			}
 		}
-		return implode(" $glue ",$pieces);
+		return array(implode(" $glue ",$pieces),$params);
 	}
 	
 	function evalConditions($key,$value,$glue='AND') {
@@ -299,56 +304,60 @@ class Helper_datasource_db extends Helper_datasource {
 		$db = $this->db;
 		if (is_scalar($value)) {
 			if (is_string($value) && in_array($value,array('IS NULL','IS NOT NULL'))) {
-				return "$qkey $value";
+				return array("$qkey $value",array());
 			} else {
-				return "$qkey = {$db->q($value)}";
+				return array("$qkey = ?",array($value));
 			}
 		} elseif (is_array($value)) {
 			$first = reset($value);
 			if (is_numeric(key($value)) && $first == 'NOT') {
 				array_shift($value);
-				return 'NOT ('.$this->evalConditions($key,$value).')';
+				$result = $this->evalConditions($key,$value);
+				return array('NOT ('.$result[0].')',$result[1]);
 			} elseif (is_numeric(key($value)) && in_array($first,array('AND','&&','OR','||','XOR'))) {
 				array_shift($value);
 				return $this->evalConditions($key,$value,$first);
 			} elseif (!array_diff(array_keys($value),array_keys(array_values($value)))) {
-				$in = array();
-				foreach ($value as $v) {
-					$in[] = $db->q($v);
-				}
-				return "$qkey IN(".implode(',',$in).")";
+				$in = array_fill(0,sizeof($value),'?');
+				return array("$qkey IN(".implode(',',$in).")",$value);
 			} else {
 				$results = array();
+				$params = array();
 				foreach($value as $k => $v) {
 					if (is_numeric($k) && in_array($v,array('IS NULL','IS NOT NULL'))) {
 						$results[] = "$qkey $v";
 					} elseif(is_numeric($k) && is_array($v)) {
-						$results[] = $this->evalConditions($key,$v);
+						$result = $this->evalConditions($key,$v);
+						$results = $result[0];
+						$params = array_merge($params,$result[1]);
 					} elseif (in_array($k,array('IN','NOT IN')) && is_array($v)) {
-						$in = array();
-						foreach ($v as $v2) {
-							$in[] = $db->q($v2);
-						}
+						$in = array_fill(0,sizeof($v),'?');
 						$results[] = "$qkey $k(".implode(',',$in).')';
+						$params = array_merge($params,$v);
 					} elseif (in_array($k,array('BETWEEN','NOT BETWEEN')) && is_array($v) && sizeof($v)==2) {
 						$v = array_values($v);
-						$results[] = "($qkey $k {$db->q($v[0])} AND {$db->q($v[1])})";
+						$results[] = "($qkey $k ? AND ?)";
+						$params[] = $v[0];
+						$params[] = $v[1];
 					} elseif(in_array($k,array('=','!=','<','<=','>','>=','<=>','<>','LIKE')) && is_scalar($v)) {
-						$results[] = "$qkey $k ".$db->q($v);	
+						$results[] = "$qkey $k ?";
+						$params[] = $v;
 					} elseif(in_array($k,array('IS','IS NOT')) && in_array($v,array('TRUE','FALSE','UNKNOWN',true,false))) {
 						if (is_bool($v)) {
 							$v = $v ? "TRUE" : "FALSE";
 						}
 						$results[] = "$qkey $k $v";	
 					} elseif ($k=='date') {
-						$results[] = $db->q($db->date($v));
+						$results[] = '?';
+						$params[] = $db->date($v);
 					} elseif ($k=='time') {
-						$results[] = $db->q($db->time($v));
+						$results[] = '?';
+						$params[] = $db->time($v);
 					} elseif ($k=='SQL') {
 						$results[] = "($v)";
 					} else { return false; } // There are some more cases we can account for...  later.
 				}
-				return '('.implode(" $glue ",$results).')';
+				return array('('.implode(" $glue ",$results).')',$params);
 			}
 		}
 	}
