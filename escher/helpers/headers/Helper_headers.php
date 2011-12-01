@@ -192,6 +192,15 @@ abstract class Helper_headers extends Helper {
 		$session->remember_current_request = FALSE;
 		$session->preserveFlash = TRUE;
 		$router = Load::Router();
+		if (preg_match('/^:([\w-]+)/',$url,$match)) {
+			$input = Load::Input();
+			$get = $input->get($match[1]);
+			if (!empty($get) && !preg_match('/[@:]/',$get)) {
+				$url = $get;
+			} else {
+				unset($url);
+			}
+		}
 		if (!empty($url)) {
 			$url = $router->resolvePath($url);
 		} elseif ($lastreq = $session->getFlash('last_request_url')) {
@@ -200,11 +209,8 @@ abstract class Helper_headers extends Helper {
 			$url = $router->getSitePath();
 		}
 		if ($qsa && !empty($_SERVER['QUERY_STRING'])) {
-			if (preg_match('/\?/',$url)) {
-				$url .= "&{$_SERVER['QUERY_STRING']}";
-			} else {
-				$url .= "?{$_SERVER['QUERY_STRING']}";
-			}
+			$url .= ((strpos($url,'?')===FALSE) ? '?' : '&')
+				.$_SERVER['QUERY_STRING'];
 		}
 		$this->addHTTP("Location: $url");
 		$this->sendHTTP();

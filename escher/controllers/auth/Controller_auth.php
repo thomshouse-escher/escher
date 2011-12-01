@@ -11,12 +11,12 @@ class Controller_auth extends Controller {
 
 		if(!empty($args)) {
 			$userauth = Load::UserAuth($args[0]);
-			if(!$userauth || !$userauth->authenticate()) {
+			if(!empty($userauth) && !$userauth->authenticate()) {
+				$hooks->runEvent('authenticate_success');
+				$this->postLoginRedirect();
+			} else {
 				$headers->addNotification('Invalid authentication request.','error');
 				$hooks->runEvent('authenticate_failure');
-				$headers->redirect();
-			} else {
-				$hooks->runEvent('authenticate_success');
 				$headers->redirect();
 			}
 		}
@@ -25,11 +25,8 @@ class Controller_auth extends Controller {
 		if (!empty($input->post)) {
 			if (!empty($input->post['username'])) {
 				$user = Load::Model('user',array('username'=>$input->post['username']));
-				if ($user) { $userauth = $user->getUserAuth(); }
-				if (!$userauth || !$userauth->login($input->post['username'],@$input->post['password'])) {
-					$headers->addNotification('Invalid username or password.','error');
-					$hooks->runEvent('login_failure');
-				} else {
+				if (!empty($user)) { $userauth = $user->getUserAuth(); }
+				if (!empty($userauth) && $userauth->login($input->post['username'],@$input->post['password'])) {
 					$session->regenerate();
 					$_SESSION['user_id'] = $user->id;
 					if (!empty($args['persist'])) {
@@ -37,11 +34,14 @@ class Controller_auth extends Controller {
 					}
 					$session->updateCookie();
 					$hooks->runEvent('login_success');
-					$headers->redirect();
+					$this->postLoginRedirect();
+				} else {
+					$headers->addNotification('Invalid username or password.','error');
+					$hooks->runEvent('login_failure');
 				}
 			}
 		}
-		$this->display('login');
+		return true;
 	}
 	
 	function action_logout($args) {
@@ -128,5 +128,19 @@ class Controller_auth extends Controller {
 		$lockout = Load::Lockout();
 		$USER = Load::User();
 		$lockout->lock($args,$USER);
+	}
+
+	function postLoginRedirect() {
+		$continue = $this->input->get('continue');
+		if (!empty($continue)
+			&& is_array($_SESSION['post_login_urls'])
+			&& in_array($continue,$_SESSION['post_login_urls'])
+		) {
+			unset($_SESSION['post_login_urls'][array_search($continue,
+				$_SESSION['post_login_urls'])]);
+			$this->headers->redirect($continue);
+		} else {
+			$this->headers->redirect();
+		}
 	}
 }

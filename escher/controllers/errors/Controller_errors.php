@@ -31,7 +31,12 @@ class Controller_errors extends Controller {
 		
 		// Build the redirect string
 		$router = Load::Router();
-		$redirect_back = urlencode($router->getCurrentPath(FALSE,TRUE));
+		$redirect_back = $router->getCurrentPath(FALSE,TRUE);
+
+		if (!isset($_SESSION['post_login_urls'])) {
+			$_SESSION['post_login_urls'] = array();
+		}
+		$_SESSION['post_login_urls'][] = $redirect_back;
 		
 		// Check the login path. If the login path is not set in the config, default to static login.
 		$login = !empty($CFG['login_url']) ? $login = $CFG['login_url'] : '/login/';
@@ -40,6 +45,6 @@ class Controller_errors extends Controller {
 		$qstr = (strpos($login,'?')===FALSE) ? '?' : '&';
 		
 		// Redirect to login with redirect set.
-		$this->headers->redirect($login.$qstr.'continue='.$redirect_back);
+		$this->headers->redirect($login.$qstr.'continue='.urlencode($redirect_back));
 	}
 }
