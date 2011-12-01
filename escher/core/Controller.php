@@ -85,29 +85,12 @@ class EscherController extends EscherObject {
 		// If our action requires access, do an ACL check
 		if (in_array($action,$this->ACLRestrictedActions)) {
 			$acl = Load::ACL();
-			if (!$acl->check(NULL,$action)) {
-				$session = Load::Session();
-				if ($session->getFlash('logout_complete')) {
-					// If the user has just logged out, redirect to the site root
-					global $CFG;
-					header("Location: {$CFG['wwwroot']}"); exit;
-				} else {
-					// Or else permission denied
-					Load::Error('403');
-				}
-			}
+			// If ACL check fails, request is unauthorized
+			if (!$acl->check(NULL,$action)) { Load::Error('401'); }
 		// If our context requires access, do all the same checks as above.
 		} elseif ($this->isACLRestricted==TRUE) {
 			$acl = Load::ACL();
-			if (!$acl->check()) {
-				$session = Load::Session();
-				if ($session->getFlash('logout_complete')) {
-					global $CFG;
-					header("Location: {$CFG['wwwroot']}"); exit;
-				} else {
-					Load::Error('403');
-				}
-			}
+			if (!$acl->check()) { Load::Error('401'); }
 		}
 		// Tell the controller we are calling the action, and call it!
 		$this->calledAction = $action;
