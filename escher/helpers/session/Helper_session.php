@@ -31,6 +31,7 @@ abstract class Helper_session extends Helper {
 		}
 		// Set the session name, gc, and start!
 		session_name($this->cookieName);
+		session_set_cookie_params(0,$this->cookiePath,$this->cookieDomain);
 		ini_set('session.gc_maxlifetime',$this->daysToPersist*24*60*60);
 		session_start();
 		/* Note: if you really are using PHP's default sessions (really?),
