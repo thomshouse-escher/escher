@@ -11,7 +11,7 @@ class Controller_auth extends Controller {
 
 		if(!empty($args)) {
 			$userauth = Load::UserAuth($args[0]);
-			if(!empty($userauth) && !$userauth->authenticate()) {
+			if(!empty($userauth) && $userauth->authenticate()) {
 				$hooks->runEvent('authenticate_success');
 				$this->postLoginRedirect();
 			} else {
