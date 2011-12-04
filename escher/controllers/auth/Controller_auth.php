@@ -29,7 +29,7 @@ class Controller_auth extends Controller {
 				if (!empty($userauth) && $userauth->login($input->post['username'],@$input->post['password'])) {
 					$session->regenerate();
 					$_SESSION['user_id'] = $user->id;
-					if (!empty($args['persist'])) {
+					if (!empty($input->post['persist'])) {
 						$_SESSION['persist'] = 1;
 					}
 					$session->updateCookie();
