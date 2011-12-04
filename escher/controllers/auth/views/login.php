@@ -10,8 +10,12 @@
 			<div class="input"><input type="password" name="password" /></div>
 		</div>
 		<div class="inputs">
-			<label>Remember:</label>
-			<div class="input"><input type="checkbox" name="persist" value="1" /></div>
+			<div class="input">
+				<label>
+					<input type="checkbox" name="persist" value="1" />
+					<span>Stay signed in</span>
+				</label>
+			</div>
 		</div>
 		<div class="actions"><input class="btn primary" type="submit" value="Sign in" /></div>
 	</fieldset>
