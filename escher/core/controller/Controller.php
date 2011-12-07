@@ -70,12 +70,18 @@ class EscherController extends EscherObject {
 			// Priority 2: 2nd Argument in case of valid $argPrecedesActions
 			$action = $args[1];
 			array_splice($args,1,1);
-		} elseif (isset($args[0])
-			&& method_exists($this,'action_'.$args[0])
+		} elseif (isset($args[0]) && method_exists($this,'manage_'.$args[0])
 			&& $args[0]!=$this->defaultAction
 		) {
-			// Priority 3: 1st Argument in case of valid method
+			// Priority 3: 1st Argument in case of valid manage function
 			$action = array_shift($args);
+			$functype = "manage";
+		} elseif (isset($args[0]) && method_exists($this,'action_'.$args[0])
+			&& $args[0]!=$this->defaultAction
+		) {
+			// Priority 3: 1st Argument in case of valid action
+			$action = array_shift($args);
+			$functype = "action";
 		} else {
 			// Priority 4: Default argument if valid
 			$action = $this->defaultAction;
@@ -83,13 +89,15 @@ class EscherController extends EscherObject {
 			if (!empty($args) && !$this->defaultAllowArgs) { return false; }
 		}
 
-		// Determine whether the intended action is valid 
-		if (method_exists($this,"manage_$action")) {
-			$functype = "manage";
-		} elseif (method_exists($this,"action_$action")) {
-			$functype = "action";
-		} else {
-			return false;
+		if (empty($functype)) {
+			// Determine whether the intended action is valid 
+			if (method_exists($this,"manage_$action")) {
+				$functype = "manage";
+			} elseif (method_exists($this,"action_$action")) {
+				$functype = "action";
+			} else {
+				return false;
+			}
 		}
 
 		// If our action requires access, do an ACL check

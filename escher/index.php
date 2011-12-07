@@ -161,7 +161,8 @@ class EscherInit {
 	 * Initialize core classes
 	 */
 	protected function initClasses() {
-		Load::core('EscherObject.php','Controller.php','Helper.php','Model.php');
+		Load::core('EscherObject.php','controller/Controller.php',
+			'model/Model.php','Helper.php');
 
 		// Using class aliases provides simpler extensibility
 		class_alias('EscherController','Controller');
