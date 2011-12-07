@@ -1,7 +1,6 @@
 <?php
 
 class Controller_page extends Controller {
-	protected $ACLRestrictedActions = array('edit');
 	
 	function action_index($args) {
 		if (empty($this->id)) { Load::Error('500'); }
@@ -11,7 +10,7 @@ class Controller_page extends Controller {
 		$this->data['title'] = @$page->title;
 	}
 	
-	function action_edit($args) {
+	function manage_edit($args) {
 		$page = Load::Model('page',@$this->id);
 		$input = Load::Input();
 		$lockout = Load::Lockout();
