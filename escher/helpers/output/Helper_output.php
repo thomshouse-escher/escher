@@ -102,8 +102,8 @@ abstract class Helper_output extends Helper {
 
 		// Assign variables
 		$out->assignVars($this->getAssignedVars());
-		$out->assign('plugin_dir',$CFG['fileroot'].$plugin_dir);
-		$out->assign('theme_dir',$CFG['fileroot'].$theme_dir);
+		$out->assign('plugin_dir',$CFG['wwwroot'].$plugin_dir);
+		$out->assign('theme_dir',$CFG['wwwroot'].$theme_dir);
 		$out->assign('CONTENT',$content);
 
 		// Assign notifications if present
