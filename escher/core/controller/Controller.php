@@ -79,11 +79,11 @@ class EscherController extends EscherObject {
 		} elseif (isset($args[0]) && method_exists($this,'action_'.$args[0])
 			&& $args[0]!=$this->defaultAction
 		) {
-			// Priority 3: 1st Argument in case of valid action
+			// Priority 4: 1st Argument in case of valid action
 			$action = array_shift($args);
 			$functype = "action";
 		} else {
-			// Priority 4: Default argument if valid
+			// Priority 5: Default argument if valid
 			$action = $this->defaultAction;
 			// If $args are present and not allowed, can't execute
 			if (!empty($args) && !$this->defaultAllowArgs) { return false; }
