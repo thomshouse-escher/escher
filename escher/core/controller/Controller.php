@@ -46,6 +46,11 @@ class EscherController extends EscherObject {
 	 * @param array $args An array of arguments to execute on.
 	 */
 	function execute($args=NULL) {
+		// If this controller requires access, do an ACL check.
+		if ($this->isACLRestricted==TRUE) {
+			$acl = Load::ACL();
+			if (!$acl->check()) { Load::Error('401'); }
+		}
 
 		// Set $this->id to $router->instance_id if present
 		if (!empty($this->router->instance_id)) {
@@ -57,9 +62,11 @@ class EscherController extends EscherObject {
 		$args = (array)$args;
 
 		// Determine the intended action
+		// Priority 1: Action specified by the router
 		if (isset($this->router->action)) {
-			// Priority 1: Action specified by the router
 			$action = $this->router->action;
+
+		// Priority 2: 2nd Argument in case of valid $argPrecedesActions
 		} elseif (isset($args[1])
 			&& ($this->argPrecedesActions===TRUE
 				|| (is_array($this->argPrecedesActions)
@@ -67,30 +74,38 @@ class EscherController extends EscherObject {
 			&& method_exists($this,'action_'.$args[1])
 			&& $args[1]!=$this->defaultAction
 		) {
-			// Priority 2: 2nd Argument in case of valid $argPrecedesActions
 			$action = $args[1];
 			array_splice($args,1,1);
+
+		// Priority 3: 1st Argument in case of valid manage function
 		} elseif (isset($args[0]) && method_exists($this,'manage_'.$args[0])
 			&& $args[0]!=$this->defaultAction
 		) {
-			// Priority 3: 1st Argument in case of valid manage function
 			$action = array_shift($args);
 			$functype = "manage";
+
+		// Priority 4: 1st Argument in case of valid action
 		} elseif (isset($args[0]) && method_exists($this,'action_'.$args[0])
 			&& $args[0]!=$this->defaultAction
 		) {
-			// Priority 4: 1st Argument in case of valid action
 			$action = array_shift($args);
 			$functype = "action";
+
+		// Priority 5: Default argument if valid
 		} else {
-			// Priority 5: Default argument if valid
 			$action = $this->defaultAction;
-			// If $args are present and not allowed, can't execute
-			if (!empty($args) && !$this->defaultAllowArgs) { return false; }
 		}
 
+		// Don't execute default action if $args are present & not allowed
+		if ($action==$this->defaultAction
+			&& !$this->defaultAllowArgs
+			&& !empty($args)
+		) {
+			return false;
+		}
+
+		// Determine whether the intended action is valid 
 		if (empty($functype)) {
-			// Determine whether the intended action is valid 
 			if (method_exists($this,"manage_$action")) {
 				$functype = "manage";
 			} elseif (method_exists($this,"action_$action")) {
@@ -103,12 +118,7 @@ class EscherController extends EscherObject {
 		// If our action requires access, do an ACL check
 		if ($functype=="manage" || in_array($action,$this->ACLRestrictedActions)) {
 			$acl = Load::ACL();
-			// If ACL check fails, request is unauthorized
 			if (!$acl->check(NULL,$action)) { Load::Error('401'); }
-		// If our context requires access, do all the same checks as above.
-		} elseif ($this->isACLRestricted==TRUE) {
-			$acl = Load::ACL();
-			if (!$acl->check()) { Load::Error('401'); }
 		}
 
 		// Record which action we are calling, and call it

@@ -138,7 +138,7 @@ abstract class Helper_router extends Helper {
 				$rpreg = preg_replace(
 					array('#/?\[(num|id)\]/?#','#/?\[word\]/?#','#/?\[tag\]/?#','#/\*/?$#','#\*/?#','#/$#','#^/#'),
 					array('/(\d+)/','/([a-zA-Z]+)/','/([\w-]+)/','(/.+)?','([^\/])/','',''),$key);
-				if (preg_match("@^/?{$rpreg}(/?.*)/?$@",$this->path,$matches)) {
+				if (preg_match("@^/?{$rpreg}(/.*|)$@",$this->path,$matches)) {
 					$route['pattern'] = $key;
 					break;
 				}
@@ -181,6 +181,7 @@ abstract class Helper_router extends Helper {
 		if (is_array($CFG['predefined_routes'])) {
 			$routes = array_merge($CFG['predefined_routes'],$routes);
 		}
+		krsort($routes);
 		return $routes;
 	}
 }
