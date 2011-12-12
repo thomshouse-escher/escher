@@ -7,6 +7,7 @@ abstract class Helper_ui extends Helper {
 	protected $siteSubtitle = '';
 	protected $menus = array();
 	protected $nullUrl = '#';
+	protected $inputStatus = array();
 	
 	function __construct($args=array()) {
 		parent::__construct($args);
@@ -86,5 +87,21 @@ abstract class Helper_ui extends Helper {
 		if (is_null($out)) { $out = $this->directOutput; }
 		if ($out) { echo $this->siteTitle; }
 		return $this->siteTitle;
+	}
+	function setInputStatus($name,$type,$message) {
+		$this->inputStatus[$name] = array('type'=>$type,'message'=>$message);
+	}
+	function getInputStatus($fields=array(),$format=NULL) {
+		if (!empty($fields) && is_array($fields)) {
+			$results = array_intersect_key($this->inputStatus,array_flip($fields));
+		} else {
+			$results = $this->inputStatus;
+		}
+
+		if ($format == 'json') {
+			$results = json_encode($results);
+		}
+
+		return $results;
 	}
 }
