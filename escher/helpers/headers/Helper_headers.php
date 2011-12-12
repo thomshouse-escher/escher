@@ -222,4 +222,17 @@ abstract class Helper_headers extends Helper {
 			header($h[0],$h[1],$h[2]);
 		}
 	}
+
+	function isAJAX() {
+		// Checks HTTP_X_REQUESTED_WITH to determine if a request is AJAX.
+		if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])
+			&& strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') 
+		{
+			// The request is AJAX.
+			return true;
+		}
+
+		 // The request is NOT AJAX.
+		return false;
+	}
 }
