@@ -174,6 +174,11 @@ abstract class Helper_headers extends Helper {
 		return implode($del,$titles);
 	}
 
+	function isAJAX() {
+		return isset($_SERVER['HTTP_X_REQUESTED_WITH'])
+			&& strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+	}
+
 	function loadJQuery() {
 		$args = func_get_args();
 		if (empty($args) && !is_array($this->jquery)) {
@@ -221,18 +226,5 @@ abstract class Helper_headers extends Helper {
 		foreach($this->http_headers as $h) {
 			header($h[0],$h[1],$h[2]);
 		}
-	}
-
-	function isAJAX() {
-		// Checks HTTP_X_REQUESTED_WITH to determine if a request is AJAX.
-		if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])
-			&& strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') 
-		{
-			// The request is AJAX.
-			return true;
-		}
-
-		 // The request is NOT AJAX.
-		return false;
 	}
 }
