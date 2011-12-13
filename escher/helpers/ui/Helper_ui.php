@@ -89,7 +89,7 @@ abstract class Helper_ui extends Helper {
 		return $this->siteTitle;
 	}
 
-	function setInputStatus($name,$status='message',$message='') {
+	function setInputStatus($name,$status='message',$message=NULL) {
 		$this->inputStatus[$name] = array('status' => $status);
 		if (is_string($message)) {
 			$this->inputStatus[$name]['message'] = $message;
