@@ -88,9 +88,14 @@ abstract class Helper_ui extends Helper {
 		if ($out) { echo $this->siteTitle; }
 		return $this->siteTitle;
 	}
-	function setInputStatus($name,$type,$message) {
-		$this->inputStatus[$name] = array('type'=>$type,'message'=>$message);
+
+	function setInputStatus($name,$status='message',$message='') {
+		$this->inputStatus[$name] = array('status' => $status);
+		if (is_string($message)) {
+			$this->inputStatus[$name]['message'] = $message;
+		}
 	}
+
 	function getInputStatus($fields=array(),$format=NULL) {
 		if (!empty($fields) && is_array($fields)) {
 			$results = array_intersect_key($this->inputStatus,array_flip($fields));
@@ -99,9 +104,9 @@ abstract class Helper_ui extends Helper {
 		}
 
 		if ($format == 'json') {
-			$results = json_encode($results);
+			return json_encode($results);
+		} else {
+			return $results;
 		}
-
-		return $results;
 	}
 }
