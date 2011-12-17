@@ -63,7 +63,7 @@ class Controller_auth extends Controller {
 	function action_signup($args) {
 		$headers = Load::Headers();
 		if (Load::User()) { $headers->redirect(); }
-		global $CFG;
+		$CFG = Load::Config();
 		$input = Load::Input();
 		$this->data = $data = $input->post;
 		$errors = array();

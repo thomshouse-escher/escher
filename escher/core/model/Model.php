@@ -247,7 +247,7 @@ abstract class EscherModel extends EscherObject {
 		if (isset($this->_datasource)) {
 			$sources = array($this->_datasource);
 		} else {
-			global $CFG;
+			$CFG = Load::Config();
 			if (isset($CFG['datasource_order'][$this->_m()])) {
 				$sources = $CFG['datasource_order'][$this->_m()];
 			} else {
@@ -259,7 +259,7 @@ abstract class EscherModel extends EscherObject {
 
 	// Get the cache datasources for this object
 	protected function _getCacheDatasources() {
-		global $CFG;
+		$CFG = Load::Config();
 		if (isset($CFG['datasource_cache_order'][$this->_m()])) {
 			$sources = $CFG['datasource_cache_order'][$this->_m()];
 		} elseif (isset($CFG['datasource_cache_order']['all'])) {

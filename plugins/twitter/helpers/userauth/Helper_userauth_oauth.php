@@ -14,7 +14,7 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 	protected function oauth_request() {
 		$headers = Load::Headers();
 		
-		global $CFG;
+		$CFG = Load::Config();
 
 		/* Build TwitterOAuth object with client credentials. */
 		$connection = new TwitterOAuth($CFG['twitter_key'],$CFG['twitter_secret']);
@@ -38,7 +38,7 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 	protected function oauth_verify() {
 		$headers = Load::Headers();
 
-		global $CFG;
+		$CFG = Load::Config();
 
 		/* If the oauth_token is old redirect to the connect page. */
 		if ($_SESSION['tw_oauth_token'] !== $_REQUEST['oauth_token']) {

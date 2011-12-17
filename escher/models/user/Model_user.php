@@ -11,7 +11,7 @@ class Model_user extends Model {
 	);
 
 	function getUserAuth() {
-		global $CFG;
+		$CFG = Load::Config();
 		if (array_key_exists($this->auth,$CFG['userauth'])) {
 			$auth = $CFG['userauth'][$this->auth];
 			return Load::Helper('userauth',$auth['type'],$auth);

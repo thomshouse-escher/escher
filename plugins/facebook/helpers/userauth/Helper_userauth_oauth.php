@@ -10,7 +10,7 @@ class Plugin_facebook_Helper_userauth_oauth extends Helper_userauth {
 		// If user authorized site, query string will include "code"
 		$input = Load::Input();
 		if(!empty($input->get['code'])) {
-			global $CFG;
+			$CFG = Load::Config();
 			// Attempt to get Oauth access token using the provided code
 			$response = @file_get_contents('https://graph.facebook.com/oauth/access_token?client_id='.$CFG['facebook_appId'].
 				'&redirect_uri='.urlencode($CFG['wwwroot'].'/login/facebook/').
@@ -53,7 +53,7 @@ class Plugin_facebook_Helper_userauth_oauth extends Helper_userauth {
 	function reauthenticate($force=FALSE) {
 		if ($force || empty($_SESSION['facebook_expires']) || $_SESSION['facebook_expires']<NOW) {
 			unset($_SESSION['user_id']);
-			global $CFG;
+			$CFG = Load::Config();
 			$headers = Load::Headers();
 			$headers->redirect('https://www.facebook.com/dialog/oauth?client_id='.$CFG['facebook_appId'].
 				'&redirect_uri='.urlencode($CFG['wwwroot'].'/login/facebook/'));
@@ -138,7 +138,7 @@ class Plugin_facebook_Helper_userauth_oauth extends Helper_userauth {
 	}
 
 	protected function formatName($me) {
-		global $CFG;
+		$CFG = Load::Config();
 		$format = @$CFG['facebook_name_format'];
 		switch ($format) {
 			case 'First': $name = $me['first_name']; break;

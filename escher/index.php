@@ -141,7 +141,7 @@ class EscherInit {
 		 * @global array $CFG
 		 * @deprecated Use Load::CFG() instead.
 		 */
-		global $CFG;
+		$CFG = Load::Config();
 		$CFG = $this->CFG;
 	}
 

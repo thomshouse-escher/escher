@@ -1,6 +1,6 @@
 <?php
 
-global $CFG;
+$CFG = Load::Config();
 if (empty($CFG['twitter_key']) || empty($CFG['twitter_secret'])) { return; }
 
 $hooks = Load::Hooks();
@@ -20,6 +20,6 @@ function __twitter_onlogin() {
 
 // Oauth-Based Facebook Authentication
 function __twitter_oauth_link() {
-	global $CFG;
+	$CFG = Load::Config();
 	return '<a class="twitter-login-button" href="'.$CFG['wwwroot'].'/login/twitter/"><img src="'.$CFG['wwwroot'].'/plugins/twitter/images/sign-in-with-twitter.png" alt="Sign in with Twitter" style="border: 0px;" width="151" height="22" /></a>';
 }

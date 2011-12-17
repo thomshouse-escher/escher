@@ -11,7 +11,7 @@ abstract class File extends Model {
 		parent::__construct($key);
 		// If this model handles image resizing and no sizes are provided, get the default from $CFG
 		if ($this->doImageResizing && (empty($this->resized_images) || !is_array($this->resized_images))) {
-			global $CFG;
+			$CFG = Load::Config();
 			$this->resize_parameters = $CFG['resized_images'];
 		}
 	}
@@ -84,13 +84,13 @@ abstract class File extends Model {
 
 	// Get the file-accessible path of the current file object
 	function getFilePath() {
-		global $CFG;
+		$CFG = Load::Config();
 		return $CFG['fileroot'].'/'.$CFG['uploadpath'].'/uploads/'.$this->getPath();
 	}
 	
 	// Get the web-accessible path of the current file object
 	function getWWWPath() {
-		global $CFG;
+		$CFG = Load::Config();
 		return $CFG['wwwroot'].'/'.$CFG['uploadpath'].'/uploads/'.$this->getPath();
 	}
 	

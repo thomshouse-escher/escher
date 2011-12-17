@@ -183,7 +183,7 @@ abstract class Helper_hooks extends Helper {
 	
 	function loadPluginHooks($plugins) {
 		if (!is_array($plugins)) return false;
-		global $CFG;
+		$CFG = Load::Config();
 		foreach($plugins as $p) {
 			Load::inc($CFG['fileroot'].'/plugins/'.$p.'/hooks.php');
 		}

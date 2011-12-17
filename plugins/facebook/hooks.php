@@ -1,6 +1,6 @@
 <?php
 
-global $CFG;
+$CFG = Load::Config();
 if (empty($CFG['facebook_appId']) || empty($CFG['facebook_secret'])) { return; }
 
 $hooks = Load::Hooks();
@@ -33,7 +33,7 @@ function __facebook_onlogin() {
 /* Oauth-Based Facebook Authentication */
 
 function __facebook_oauth_link() {
-	global $CFG;
+	$CFG = Load::Config();
 	$browser = Load::Helper('useragent','default');
 	return '<a class="facebook-login-button" href="https://www.facebook.com/dialog/oauth?client_id='.$CFG['facebook_appId'].'&amp;redirect_uri='.urlencode($CFG['wwwroot'].'/login/facebook/').($browser->match('mobile') ? '&amp;display=touch' : '').'"><img src="'.$CFG['wwwroot'].'/plugins/facebook/images/sign-in-with-facebook.png" alt="Sign in with Facebook" style="border: 0px;" width="151" height="22" /></a>';
 }
@@ -43,7 +43,7 @@ function __facebook_oauth_link() {
 /* JS-Based Facebook "Connect" Login */
 
 function __facebook_js_init() {
-	global $CFG;
+	$CFG = Load::Config();
 	$USER = Load::User();
 	return "<div id=\"fb-root\"></div>
 	<script>

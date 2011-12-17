@@ -33,7 +33,7 @@ abstract class Helper_cache extends Helper {
 	function __construct($args) {
 		parent::__construct($args);
 		if (empty($this->prefix)) {
-			global $CFG;
+			$CFG = Load::Config();
 			$this->prefix = md5($CFG['wwwroot']);
 		}
 	}
@@ -59,7 +59,7 @@ abstract class Helper_cache extends Helper {
 	* @return void
 	*/
 	function getSuffix() {
-		global $CFG;
+		$CFG = Load::Config();
 		$suffix = $this->get('cache.internal.keysuffix', FALSE);
 		if(empty($suffix)) {
 			$suffix = date('ymdhisa');

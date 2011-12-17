@@ -11,7 +11,7 @@ abstract class Helper_ui extends Helper {
 	
 	function __construct($args=array()) {
 		parent::__construct($args);
-		global $CFG;
+		$CFG = Load::Config();
 		if (isset($args['menus'])) {
 			$this->menus = $args['menus'];
 		}
@@ -59,7 +59,7 @@ abstract class Helper_ui extends Helper {
 		return $result.$postMenu;
 	}
 	function menuLoadFromRoutes($menu) {
-		global $CFG;
+		$CFG = Load::Config();
 		if (!isset($this->menus[$menu])) { $this->menus[$menu] = array(); }
 		if (!empty($CFG['root']['title'])) {
 			$this->menus[$menu][] = array('title'=>$CFG['root']['title'],'url'=>$CFG['wwwroot'].'/');

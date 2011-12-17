@@ -33,7 +33,7 @@ class Helper_lockout_default extends Helper_lockout {
 		// Header Check... Unless this is an AJAX request, we need to add a javascript timer
 		$input = Load::Input();
 		if (!$input->isAjax()) {
-			global $CFG;
+			$CFG = Load::Config();
 			$headers = Load::Headers();
 			$headers->addHeadHTML(
 /* Javascript function */'

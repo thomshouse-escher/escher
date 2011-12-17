@@ -3,7 +3,7 @@
 function loadFacebookAPI() {
 	static $facebook;
 	if (is_null($facebook)) {
-		global $CFG;
+		$CFG = Load::Config();
 		$facebook = new Facebook_Escher(array(
 			'appId' => $CFG['facebook_appId'],
 			'secret' => $CFG['facebook_secret'],

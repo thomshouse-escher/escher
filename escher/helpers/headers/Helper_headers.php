@@ -152,7 +152,7 @@ abstract class Helper_headers extends Helper {
 
 	function getTitle($order=array('page','site','subtitle'),
 			$del=' | ',$pagedel=' &raquo; ',$reversepages=FALSE) {
-		global $CFG;
+		$CFG = Load::Config();
 		$titles = array();
 		foreach($order as $t) {
 			switch ($t) {

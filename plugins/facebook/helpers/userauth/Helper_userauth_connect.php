@@ -166,7 +166,7 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 	}
 
 	protected function formatName($me) {
-		global $CFG;
+		$CFG = Load::Config();
 		$format = @$CFG['facebook_name_format'];
 		switch ($format) {
 			case 'First': $name = $me['first_name']; break;

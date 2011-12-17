@@ -8,7 +8,7 @@ $hooks->registerEvent('rte_file_popup','__tinymce_file_popup',0,0);
 function __tinymce_init_classname($modifiers=NULL) {
 	static $inits; if (is_null($inits)) { $inits = array(); }
 	static $uploadcode;
-	global $CFG;
+	$CFG = Load::Config();
 	$headers = Load::Headers();
 	
 	// Plugins and Buttons
@@ -107,7 +107,7 @@ function escher_mce_upload(field_name,url,type,win) {
 }
 
 function __tinymce_file_popup() {
-	global $CFG;
+	$CFG = Load::Config();
 	$headers = Load::Headers();
 	$headers->addJS("{$CFG['wwwroot']}/plugins/tinymce/js/tiny_mce_popup.js");
 	$headers->addFootHTML(
