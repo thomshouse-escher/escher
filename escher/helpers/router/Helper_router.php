@@ -8,13 +8,29 @@ abstract class Helper_router extends Helper {
 			$args = array('path' => $args);	
 		}
 		parent::__construct($args);
+
+		// Get the root from the config
+		$CFG = Load::CFG();
+		$root = $CFG['root'];
+
+		// Maintenance mode changes the routes that get loaded
+		if (!empty($CFG['maintenance_mode'])) {
+			// ...but not if we have special permissions
+			$acl = Load::ACL();
+			// We have to load the route model to prevent a loop
+			$context = Load::Model('route_static','/');
+			if (!$acl->req('all',array('maintenance_mode','sysadmin'),$context)) {
+				$root = $CFG['maintenance_root'];
+				$this->static_routes = $CFG['maintenance_routes'];
+			}
+		} // End maintenance mode
+
 		// Attempt to find a route based on the path
 		$route = $this->findRoute();
 		// If we can't find a route, use the root/config values
 		if (!$route) {
-			$CFG = Load::CFG();
 			$args = preg_split('#/#',$this->path,-1,PREG_SPLIT_NO_EMPTY);
-			$route = $CFG['root'];
+			$route = $root;
 			$route['current_path'] = '';
 			if (isset($route['args']) && is_array($route['args'])) {
 				$route['args'] = array_merge($route['args'],$args);
@@ -177,9 +193,6 @@ abstract class Helper_router extends Helper {
 		if (empty($routes)) {
 			$hooks = Load::Hooks();
 			$routes = array_merge($CFG['static_routes'],$hooks->getStaticRoutes());
-		}
-		if (is_array($CFG['predefined_routes'])) {
-			$routes = array_merge($CFG['predefined_routes'],$routes);
 		}
 		krsort($routes);
 		return $routes;

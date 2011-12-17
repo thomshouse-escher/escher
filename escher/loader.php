@@ -28,7 +28,7 @@ class Load {
 	 * @return object|false Returns an instance of the controller, or false on failure.
 	 */
 	public function Controller($name,$args=NULL) {
-		global $CFG;
+		$CFG = Load::Config();
 		if (is_array($name)) {
 			array_map('strtolower',$name);
 			if (Load::req($CFG['fileroot'].'/plugins/'.$name[0].'/controllers/'.$name[1].'/Controller_'.$name[1].'.php')
@@ -55,7 +55,7 @@ class Load {
 	 * @return object|false Returns an instance of the model, or false on failure.
 	 */
 	public function Model($name,$key=NULL) {
-		global $CFG;
+		$CFG = Load::Config();
 		if (is_array($name)) {
 			if (is_null($name[0])) {
 				$name = strtolower($name[1]);
@@ -112,7 +112,7 @@ class Load {
 	public function HelperClass($name,$type=NULL) {
 		$name = strtolower($name);
 		if (is_array($type)) {
-			global $CFG;
+			$CFG = Load::Config();
 			array_map('strtolower',$type);
 			if (Load::inc($CFG['fileroot'].'/plugins/'.$type[0].'/helpers/'.$name.'/Helper_'.$name.'_'.$type[1].'.php')
 				&& class_exists("Plugin_{$type[0]}_Helper_{$name}_{$type[1]}")) {
@@ -233,7 +233,7 @@ class Load {
 		} else {
 			// If loading a single file, attempt and return the result
 			if (is_array($arg)) {
-				global $CFG;
+				$CFG = Load::Config();
 				return Load::req($CFG['fileroot'].'/plugins/'.$arg[0].'/lib/'.$arg[1]);
 			} else {
 				return Load::req(dirname(__FILE__).'/lib/'.$arg);
@@ -255,7 +255,7 @@ class Load {
 	 * @return object|bool Returns the cache helper object, or false on failure.
 	 */
 	public function Cache($name='default') {
-		global $CFG;
+		$CFG = Load::Config();
 		if (empty($CFG['cache'])) { return false; }
 		$cache = $CFG['datasource'][$CFG['cache']];
 		return Load::PersistentHelper('cache',$cache['type'],$name,$cache['settings']);
@@ -263,18 +263,11 @@ class Load {
 	
 	/**
 	 * Shorthand for loading the config helper.
-	 * @param bool Protect the config by always loading the persistent helper
 	 * @return object Returns the config helper.
 	 */
-	public function Config($protect=FALSE) {
-		static $protected;
-		if ($protect) { $protected = TRUE; }
-		if ($protected) {
-			self::$internalCall = true;
-			return Load::PersistentHelper('config','default','global');
-		} else {
-			return Load::Helper('config','default');
-		}
+	public function Config() {
+		self::$internalCall = true;
+		return Load::PersistentHelper('config','default','global');
 	}
 	public function CFG() { return self::Config(); } // Shorthand
 
@@ -283,7 +276,7 @@ class Load {
 	 * @return object|bool Returns the database helper object, or false on failure.
 	 */
 	public function DB($name='default') {
-		global $CFG;
+		$CFG = Load::Config();
 		$args = $CFG['database'][$name];
 		unset($args['type']);
 		return Load::PersistentHelper('database',$CFG['database'][$name]['type'],$name,$args);
@@ -294,7 +287,7 @@ class Load {
 	 * @return object Returns the Datasource object.
 	 */
 	public function Datasource($definition='db') {
-		global $CFG;
+		$CFG = Load::Config();
 		if ($definition=='db' && !isset($CFG['datasource']['db'])) {
 			return Load::PersistentHelper('datasource','db','db');
 		} elseif ($definition=='arrcache' && !isset($CFG['datasource']['arrcache'])) {
@@ -372,7 +365,7 @@ class Load {
 	 * @return object|bool Returns the router helper object, or false on failure.
 	 */
 	public function Router($path=NULL) {
-		global $CFG;
+		$CFG = Load::Config();
 		$args = $CFG['router'];
 		unset($args['type']);
 		if (!is_null($path)) {
@@ -400,7 +393,7 @@ class Load {
 	 * @return object|bool Returns the session helper object, or false on failure.
 	 */
 	public function Session() {
-		global $CFG;
+		$CFG = Load::Config();
 		$args = $CFG['session'];
 		unset($args['type']);
 		self::$internalCall = true;
@@ -412,7 +405,7 @@ class Load {
 	 * @return object|bool Returns the UI helper object, or false on failure.
 	 */
 	public function UI() {
-		global $CFG;
+		$CFG = Load::Config();
 		$args = @$CFG['ui'];
 		self::$internalCall = true;
 		return Load::PersistentHelper('ui','default','global',$args);
@@ -445,7 +438,7 @@ class Load {
 	 * @return object Returns the UserAuth object.
 	 */
 	public function UserAuth($name='default') {
-		global $CFG;
+		$CFG = Load::Config();
 		if (array_key_exists($name,$CFG['userauth'])) {
 			$auth = $CFG['userauth'][$name];
 			return Load::Helper('userauth',$auth['type'],$auth);

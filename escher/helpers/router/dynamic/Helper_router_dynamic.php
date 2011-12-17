@@ -5,7 +5,18 @@ class Helper_router_dynamic extends Helper_router {
 	protected function findRoute() {
 		if ($result = parent::findRoute()) { return $result; }
 
+		// Load the config
 		$CFG = Load::CFG();
+
+		// Dynamic routes don't work in maintenance mode
+		if (!empty($CFG['maintenance_mode'])) {
+			// ...unless we have special permissions
+			$acl = Load::ACL();
+			if (!$acl->req('all',array('maintenance_mode','sysadmin'),'/')) {
+				return false;
+			}
+		} // End maintenance mode
+
 		$route['id'] = $CFG['root']['id'];
 		$current = $parent = $site = array();
 		$args = explode('/',$this->path);

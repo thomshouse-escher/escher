@@ -10,6 +10,11 @@
  */
 
 /**
+ * File path of this Escher installation
+ */
+define('ESCHER_FILE_PATH',dirname(__FILE__));
+
+/**
  * Class definition for initialization object
  *
  * An EscherInit object provides two options for initialization. The first
@@ -38,8 +43,8 @@ class EscherInit {
 	 * Class constructor
 	 * @param string File-system root of Escher installation
 	 */
-	function __construct($fileroot) {
-		$this->fileroot = $fileroot;
+	function __construct() {
+		$this->fileroot = ESCHER_DOCUMENT_ROOT;
 	}
 
 	/**
@@ -54,7 +59,6 @@ class EscherInit {
 	function main() {
 		$this->initCommon();
 		$this->initSession();
-		$this->initMaintenanceMode();
 
 		$router = Load::Router();
 		if (!isset($router->controller)) {
@@ -130,24 +134,15 @@ class EscherInit {
 	 * @global array Global $CFG provided for backwards-compatibility
 	 */
 	protected function initConfig() {
+		$this->CFG = Load::Config(TRUE);
+		$this->CFG->loadSettings();
 
 		/**
 		 * @global array $CFG
 		 * @deprecated Use Load::CFG() instead.
 		 */
 		global $CFG;
-		$CFG = array();
-
-		// Populate $CFG from install config, fileroot, and defaults
-		require_once($this->fileroot.'/config.php');
-		$CFG['fileroot'] = $this->fileroot;
-		require_once($this->fileroot.'/escher/defaults.php');
-
-		// $this->CFG still needed for some initialization cases
-		$this->CFG = $CFG;
-
-		// Under normal operations, convert $CFG to helper (protects values)
-		if (!$CFG['maintenance_mode']) { $CFG = Load::Config(TRUE); }
+		$CFG = $this->CFG;
 	}
 
 	/**
@@ -194,35 +189,5 @@ class EscherInit {
 			$hooks = Load::Hooks();
 			$hooks->runEvent('session_start');
 		}
-	}
-
-	/**
-	 * Initialize maintenance mode
-	 *
-	 * @global array Global $CFG provided for backwards-compatibility
-	 */
-	protected function initMaintenanceMode() {
-		// Only perform maintenance logic if we're in maintenance mode
-		if (empty($this->CFG['maintenance_mode'])) { return; }
-
-		// Don't override routes if we have sysadmin maintenance permissions
-		$acl = Load::ACL();
-		if (!$acl->req('all',array('maintenance_mode','sysadmin'),'/')) {
-			$this->CFG['root'] = array(
-				'controller'=>'errors',
-				'action'=>'maintenance',
-				'args'=>array('message'=>$this->CFG['maintenance_message']),
-			);
-			$this->CFG['static_routes'] = array();
-			$this->CFG['predefined_routes'] = $this->CFG['maintenance_mode_routes'];
-		}
-
-		/**
-		 * @global array $GLOBALS['CFG']
-		 * @name $CFG
-		 * @deprecated Use Load::CFG() instead.
-		 */
-		$GLOBALS['CFG'] = $this->CFG;
-		Load::Config(TRUE);
 	}
 }
