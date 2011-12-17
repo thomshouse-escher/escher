@@ -1,7 +1,6 @@
 <?php
 
 abstract class Controller_Series extends Controller {
-	protected $ACLRestrictedActions = array('edit','add_entry','edit_entry','delete_entry');
 	protected $allowedModelTypes = array();
 	protected $seriesType;
 	protected $entryType;
@@ -46,7 +45,7 @@ abstract class Controller_Series extends Controller {
 		return $this->action_index(array(intval($args[0])));
 	}
 	
-	function action_edit($args) {
+	function manage_edit($args) {
 		$page = Load::Model($this->seriesType,@$this->id);
 		$input = Load::Input();
 		$lockout = Load::Lockout();
@@ -81,7 +80,7 @@ abstract class Controller_Series extends Controller {
 		$this->data['resource'] = array($this->seriesType,$this->id);
 	}
 	
-	function action_add_entry($args) {
+	function manage_add_entry($args) {
 		if (!isset($args[0]) || !in_array($args[0],$this->allowedModelTypes)) {
 			if (sizeof($this->allowedModelTypes)==1) {
 				$args[0] = $this->allowedModelTypes[0];
@@ -98,7 +97,7 @@ abstract class Controller_Series extends Controller {
 		$this->display('edit_entry',$this->data);
 	}
 	
-	function action_edit_entry($args) {
+	function manage_edit_entry($args) {
 		$input = Load::Input();
 		$entry = Load::Model($this->entryType,@$args[0]);
 		if (!empty($entry->series_type) && !empty($entry->series_id) && ($entry->series_type != $this->seriesType || $entry->series_id != $this->id)) {
