@@ -30,7 +30,7 @@ class Load {
 	public function Controller($name,$args=NULL) {
 		if (is_array($name)) {
 			array_map('strtolower',$name);
-			if (Load::req(ESCHER_DOCUMENT_ROOT.'/plugins/'.$name[0].'/controllers/'.$name[1].'/Controller_'.$name[1].'.php')
+			if (Load::req(ESCHER_DOCUMENT_ROOT.'/plugins/'.$name[0].'/controllers/'.$name[1].'/controller.'.$name[1].'.php')
 				&& class_exists("Plugin_{$name[0]}_Controller_{$name[1]}")) {
 					$classname = "Plugin_{$name[0]}_Controller_{$name[1]}";
 			} else {
@@ -38,7 +38,7 @@ class Load {
 			}
 		} else {
 			$name = strtolower($name);
-			if (Load::req(ESCHER_REAL_PATH.'/controllers/'.$name.'/Controller_'.$name.'.php') && class_exists("Controller_$name")) {
+			if (Load::req(ESCHER_REAL_PATH.'/controllers/'.$name.'/controller.'.$name.'.php') && class_exists("Controller_$name")) {
 				$classname = "Controller_$name";
 			} else {
 				return false;
@@ -57,7 +57,7 @@ class Load {
 		if (is_array($name)) {
 			if (is_null($name[0])) {
 				$name = strtolower($name[1]);
-				if (Load::req(ESCHER_REAL_PATH.'/models/'.$name.'/Model_'.$name.'.php') && class_exists("Model_$name")) {
+				if (Load::req(ESCHER_REAL_PATH.'/models/'.$name.'/model.'.$name.'.php') && class_exists("Model_$name")) {
 					$classname = "Model_$name";
 				} else {
 					return false;
@@ -65,7 +65,7 @@ class Load {
 			} else {
 				array_map('strtolower',$name);
 				if (Load::req(ESCHER_DOCUMENT_ROOT.'/plugins/'.$name[0].'/models/'
-						.$name[1].'/Model_'.$name[1].'.php')
+						.$name[1].'/model.'.$name[1].'.php')
 					&& class_exists("Plugin_{$name[0]}_Model_{$name[1]}")) {
 						$classname = "Plugin_{$name[0]}_Model_{$name[1]}";
 				} else {
@@ -76,14 +76,14 @@ class Load {
 			$name = strtolower($name);
 			$hooks = Load::Hooks();
 			if ($plugin = $hooks->getModelPlugin($name)) {
-				if (Load::req(ESCHER_DOCUMENT_ROOT.'/plugins/'.$plugin.'/models/'.$name.'/Model_'.$name.'.php')
+				if (Load::req(ESCHER_DOCUMENT_ROOT.'/plugins/'.$plugin.'/models/'.$name.'/model.'.$name.'.php')
 					&& class_exists("Plugin_{$plugin}_Model_{$name}")) {
 						$classname = "Plugin_{$plugin}_Model_{$name}";
 				} else {
 					return false;
 				}
 			} else {
-				if (Load::req(ESCHER_REAL_PATH.'/models/'.$name.'/Model_'.$name.'.php') && class_exists("Model_$name")) {
+				if (Load::req(ESCHER_REAL_PATH.'/models/'.$name.'/model.'.$name.'.php') && class_exists("Model_$name")) {
 					$classname = "Model_$name";
 				} else {
 					return false;
@@ -112,18 +112,18 @@ class Load {
 		$name = strtolower($name);
 		if (is_array($type)) {
 			array_map('strtolower',$type);
-			if (Load::inc(ESCHER_DOCUMENT_ROOT.'/plugins/'.$type[0].'/helpers/'.$name.'/Helper_'.$name.'_'.$type[1].'.php')
+			if (Load::inc(ESCHER_DOCUMENT_ROOT.'/plugins/'.$type[0].'/helpers/'.$name.'/helper.'.$name.'_'.$type[1].'.php')
 				&& class_exists("Plugin_{$type[0]}_Helper_{$name}_{$type[1]}")) {
 					return "Plugin_{$type[0]}_Helper_{$name}_{$type[1]}";
 			} else {
 				return false;
 			}
 		} elseif (is_null($type)) {
-			return Load::inc(ESCHER_REAL_PATH.'/helpers/'.$name.'/Helper_'.$name.'.php');
+			return Load::inc(ESCHER_REAL_PATH.'/helpers/'.$name.'/helper.'.$name.'.php');
 		} else {
 			$type = strtolower($type);
-			if (Load::inc(ESCHER_REAL_PATH.'/helpers/'.$name.'/Helper_'.$name.'.php')
-				&& Load::inc(ESCHER_REAL_PATH.'/helpers/'.$name.'/'.$type.'/Helper_'.$name.'_'.$type.'.php')
+			if (Load::inc(ESCHER_REAL_PATH.'/helpers/'.$name.'/helper.'.$name.'.php')
+				&& Load::inc(ESCHER_REAL_PATH.'/helpers/'.$name.'/'.$type.'/helper.'.$name.'.'.$type.'.php')
 				&& class_exists("Helper_{$name}_{$type}")) {
 					return "Helper_{$name}_{$type}";
 			} else {

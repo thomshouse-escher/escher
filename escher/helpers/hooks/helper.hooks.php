@@ -9,9 +9,9 @@ abstract class Helper_hooks extends Helper {
 	protected $models = array();
 	protected $staticroutes = array();
 
-	function registerEvent($event,$funcname,$priority=0,$args=-1) {
+	function registerEvent($event,$callback,$priority=0) {
 		$priority = (int)$priority;
-		$this->events[$event][$priority][$funcname] = $args;
+		$this->events[$event][$priority][] = $callback;
 		return true;
 	}
 	
@@ -20,21 +20,24 @@ abstract class Helper_hooks extends Helper {
 		$callbacks = $this->events[$event];
 		ksort($callbacks);
 		$result = array();
-		foreach($callbacks as $pr) {
-			foreach($pr as $call => $maxargs) {
-				$arg = $args;
-				if ($maxargs>=0) {
-					$arg = array_slice($arg,0,$maxargs);
+		foreach($callbacks as $priority) {
+			foreach($priority as $callback) {
+				$callname = $callback;
+				if (is_array($callname)) {
+					if (is_object($callname[0])) {
+						$callname[0] = get_class($callname[0]);
+					}
+					$callname = implode('::',$callname);
 				}
-				$result[$call] = call_user_func_array($call,$arg);
+				$result[$callname] = call_user_func_array($callback);
 			}
 		}
 		return $result;
 	}
 
-	function registerFilter($filter,$funcname,$priority=0) {
+	function registerFilter($filter,$callback,$priority=0) {
 		$priority = (int)$priority;
-		$this->filters[$filter][$priority][] = $funcname;
+		$this->filters[$filter][$priority][] = $callback;
 		return true;
 	}
 	
@@ -43,8 +46,8 @@ abstract class Helper_hooks extends Helper {
 		$callbacks = $this->filters[$filter];
 		ksort($callbacks);
 		foreach($callbacks as $pr) {
-			foreach($pr as $call) {
-				$value = call_user_func($call,$value);
+			foreach($pr as $callback) {
+				$value = call_user_func($callback,$value);
 			}
 		}
 		return $value;
@@ -143,11 +146,11 @@ abstract class Helper_hooks extends Helper {
 		} else { return false; }
 	}
 	
-	function registerOutputFunction($varname,$funcname) {
-		if(!is_string($varname) || !is_string($funcname)) {
+	function registerOutputFunction($funcname,$realname) {
+		if(!is_string($funcname) || !is_string($funcname)) {
 			return false;
 		}
-		$this->outputFunctions[$varname] = $funcname;
+		$this->outputFunctions[$funcname] = $realname;
 		return true;
 	}
 		

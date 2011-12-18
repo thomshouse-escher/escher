@@ -156,8 +156,8 @@ class EscherInit {
 	 * Initialize core classes
 	 */
 	protected function initClasses() {
-		Load::core('EscherObject.php','controller/Controller.php',
-			'model/Model.php','Helper.php');
+		Load::core('escher.object.php','controller/controller.php',
+			'model/model.php','helper.php');
 
 		// Using class aliases provides simpler extensibility
 		class_alias('EscherController','Controller');
@@ -169,7 +169,7 @@ class EscherInit {
 	 * Initialize common pattern classes
 	 */
 	protected function initPatterns() {
-		Load::core('patterns/Model_File.php');
+		Load::core('patterns/model.file.php');
 	}
 
 	/**
