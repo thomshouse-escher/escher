@@ -185,7 +185,7 @@ abstract class Helper_hooks extends Helper {
 		if (!is_array($plugins)) return false;
 		$CFG = Load::Config();
 		foreach($plugins as $p) {
-			Load::inc($CFG['fileroot'].'/plugins/'.$p.'/hooks.php');
+			Load::inc($CFG['document_root'].'/plugins/'.$p.'/hooks.php');
 		}
 	}
 }

@@ -41,7 +41,7 @@ abstract class Helper_config extends Helper implements ArrayAccess {
 	 * merging/reconciliation of default and specified values.
 	 */
 	function __construct() {
-		include(ESCHER_FILE_PATH.'/defaults.php');
+		include(ESCHER_REAL_PATH.'/defaults.php');
 		$this->static = get_defined_vars();
 		$this->settings = $this->static;
 	}

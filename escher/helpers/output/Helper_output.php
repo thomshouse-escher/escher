@@ -97,7 +97,7 @@ abstract class Helper_output extends Helper {
 		$CFG = Load::Config();
 
 		// Get the real output helper
-		include_once($CFG['fileroot']."$theme_dir/theme.php");
+		include_once($CFG['document_root']."$theme_dir/theme.php");
 		$out = Load::Output($type);
 
 		// Assign variables
@@ -114,7 +114,7 @@ abstract class Helper_output extends Helper {
 		$out->assign('notifications',$notifications);
 
 		// Display
-		return $out->display($CFG['fileroot']."$theme_dir/index");
+		return $out->display($CFG['document_root']."$theme_dir/index");
 	}	
 	
 	function doEcho($text,$default='') {

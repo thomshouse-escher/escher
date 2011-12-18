@@ -12,7 +12,7 @@
 /**
  * File path of this Escher installation
  */
-define('ESCHER_FILE_PATH',dirname(__FILE__));
+define('ESCHER_REAL_PATH',dirname(__FILE__));
 
 /**
  * Class definition for initialization object

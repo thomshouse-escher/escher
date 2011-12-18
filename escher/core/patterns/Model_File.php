@@ -85,7 +85,7 @@ abstract class File extends Model {
 	// Get the file-accessible path of the current file object
 	function getFilePath() {
 		$CFG = Load::Config();
-		return $CFG['fileroot'].'/'.$CFG['uploadpath'].'/uploads/'.$this->getPath();
+		return $CFG['document_root'].'/'.$CFG['uploadpath'].'/uploads/'.$this->getPath();
 	}
 	
 	// Get the web-accessible path of the current file object

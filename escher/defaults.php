@@ -75,3 +75,7 @@ if (!isset($cache)
 ) {
 	$cache = $datasource_cache_order['all'][0];
 }
+
+// Document root and Escher path
+$document_root = ESCHER_DOCUMENT_ROOT;
+$escher_path = ESCHER_REAL_PATH;
