@@ -112,7 +112,7 @@ class Load {
 		$name = strtolower($name);
 		if (is_array($type)) {
 			array_map('strtolower',$type);
-			if (Load::inc(ESCHER_DOCUMENT_ROOT.'/plugins/'.$type[0].'/helpers/'.$name.'/helper.'.$name.'_'.$type[1].'.php')
+			if (Load::inc(ESCHER_DOCUMENT_ROOT.'/plugins/'.$type[0].'/helpers/'.$name.'/helper.'.$name.'.'.$type[1].'.php')
 				&& class_exists("Plugin_{$type[0]}_Helper_{$name}_{$type[1]}")) {
 					return "Plugin_{$type[0]}_Helper_{$name}_{$type[1]}";
 			} else {

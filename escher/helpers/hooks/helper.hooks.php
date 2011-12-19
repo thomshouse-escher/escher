@@ -147,7 +147,7 @@ abstract class Helper_hooks extends Helper {
 	}
 	
 	function registerOutputFunction($funcname,$realname) {
-		if(!is_string($funcname) || !is_string($funcname)) {
+		if(!is_string($funcname) || !is_string($realname)) {
 			return false;
 		}
 		$this->outputFunctions[$funcname] = $realname;
@@ -188,7 +188,12 @@ abstract class Helper_hooks extends Helper {
 		if (!is_array($plugins)) return false;
 		$CFG = Load::Config();
 		foreach($plugins as $p) {
-			Load::inc($CFG['document_root'].'/plugins/'.$p.'/hooks.php');
+			Load::inc($CFG['document_root']."/plugins/$p/plugin.$p.php");
+			$classname = "Plugin_$p";
+			if (class_exists($classname)) {
+				$po = new $classname;
+				$po->loadHooks();
+			}
 		}
 	}
 }

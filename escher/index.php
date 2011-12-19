@@ -157,12 +157,13 @@ class EscherInit {
 	 */
 	protected function initClasses() {
 		Load::core('escher.object.php','controller/controller.php',
-			'model/model.php','helper.php');
+			'model/model.php','helper.php','plugin.php');
 
 		// Using class aliases provides simpler extensibility
 		class_alias('EscherController','Controller');
 		class_alias('EscherHelper','Helper');
 		class_alias('EscherModel','Model');
+		class_alias('EscherPlugin','Plugin');
 	}
 
 	/**
