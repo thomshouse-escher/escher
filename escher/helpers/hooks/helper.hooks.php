@@ -29,7 +29,7 @@ abstract class Helper_hooks extends Helper {
 					}
 					$callname = implode('::',$callname);
 				}
-				$result[$callname] = call_user_func_array($callback);
+				$result[$callname] = call_user_func_array($callback,$args);
 			}
 		}
 		return $result;
