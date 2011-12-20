@@ -107,10 +107,14 @@ abstract class Helper_router extends Helper {
 			if ($controller == $route['controller']) {
 				if (preg_match('/(\[[^]]+\]|\*)/',$key)) { continue; }
 				if ((!empty($action) || !empty($route['action']))
-					&& $action!=$route['action']
+					&& (empty($action) || empty($route['action'])
+						|| $action!=$route['action']
+					)
 				) { continue; }
 				if ((!empty($id) || !empty($route['instance_id']))
-					&& $id!=$route['instance_id']
+					&& (empty($id) || empty($route['instance_id'])
+						|| $id!=$route['instance_id']
+					)
 				) { continue; }
 				return $this->getRootPath($absolute)."/$key";
 			}
@@ -133,8 +137,14 @@ abstract class Helper_router extends Helper {
 			return $this->getCurrentPath($absolute).$match[1];
 		} elseif (preg_match('#^@(\w+)(?:\:(\w+)|)(?:>(\w+|\d+)|)(/.*|)#',$url,$match)) {
 			$controller = !empty($match[2]) ? array($match[1],$match[2]) : $match[1];
-			return $this->getPathByInstance($controller,$match[3],$absolute)
-				.$match[4];
+			$args = $match[4];
+			$result = $this->getPathByInstance($controller,$match[3],$absolute);
+			if (empty($result) && !empty($match[3])) {
+				$result = $this->getPathByInstance($controller,NULL,$absolute);
+				$args = '/'.$match[3].$args;
+			}
+			if (empty($result)) { return false; }
+			return $result.$args;
 		} elseif (strpos($url,':')===FALSE) {
 			return $this->getCurrentPath($absolute)."/$url";
 		} else {

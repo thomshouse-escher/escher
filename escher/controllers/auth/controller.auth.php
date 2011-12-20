@@ -4,9 +4,9 @@ class Controller_auth extends Controller {
 	
 	function action_login($args) {
 		$session = Load::Session();
-		$headers = Load::Headers();
 		$hooks = Load::Hooks();
 		$session->remember_current_request = FALSE;
+		$this->headers->addLink('canonical',$this->router->resolvePath('@auth>login/',FALSE));
 		if (Load::User()) { $headers->redirect(); }
 
 		if(!empty($args)) {
@@ -15,9 +15,9 @@ class Controller_auth extends Controller {
 				$hooks->runEvent('authenticate_success');
 				$this->postLoginRedirect();
 			} else {
-				$headers->addNotification('Invalid authentication request.','error');
+				$this->headers->addNotification('Invalid authentication request.','error');
 				$hooks->runEvent('authenticate_failure');
-				$headers->redirect();
+				$this->headers->redirect();
 			}
 		}
 		
@@ -36,7 +36,7 @@ class Controller_auth extends Controller {
 					$hooks->runEvent('login_success');
 					$this->postLoginRedirect();
 				} else {
-					$headers->addNotification('Invalid username or password.','error');
+					$this->headers->addNotification('Invalid username or password.','error');
 					$hooks->runEvent('login_failure');
 				}
 			}
@@ -56,8 +56,7 @@ class Controller_auth extends Controller {
 		$session->remember_current_request = FALSE;
 		$session->updateCookie();
 		$session->setFlash('logout_complete',TRUE);
-		$headers = Load::Headers();
-		$headers->redirect();
+		$this->headers->redirect();
 	}
 	
 	function action_signup($args) {

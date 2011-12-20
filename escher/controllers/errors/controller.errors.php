@@ -15,6 +15,7 @@ class Controller_errors extends Controller {
 		if (empty($error)) {
 			$error = '404';
 		}
+		$this->headers->addMeta('robots','noindex');
 		if ($error=='401') { $this->unauthorized($args); }
 		$this->display($error,$args);
 	}
