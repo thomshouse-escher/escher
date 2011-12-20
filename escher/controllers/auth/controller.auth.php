@@ -6,7 +6,6 @@ class Controller_auth extends Controller {
 		$session = Load::Session();
 		$hooks = Load::Hooks();
 		$session->remember_current_request = FALSE;
-		$this->headers->addLink('canonical',$this->router->resolvePath('@auth>login/',FALSE));
 		if (Load::User()) { $headers->redirect(); }
 
 		if(!empty($args)) {
@@ -22,6 +21,9 @@ class Controller_auth extends Controller {
 		}
 		
 		$input = Load::Input();
+		if (!empty($input->get)) {
+			$this->headers->addMeta('robots','noindex');
+		}
 		if (!empty($input->post)) {
 			if (!empty($input->post['username'])) {
 				$user = Load::Model('user',array('username'=>$input->post['username']));
