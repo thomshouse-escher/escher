@@ -10,6 +10,14 @@ abstract class Helper_headers extends Helper {
 	protected $do_query = false;
 	protected $page_titles = array();
 
+	protected $meta_comma_separated = array('robots','googlebot','msnbot');
+	protected $meta_html5 = array('charset');
+	protected $meta_http_equiv = array(
+		'accept','allow','cache-control','content-encoding','content-language',
+		'content-length','content-type','date','expires','last-modified','location',
+		'pragma','refresh','set-cookie','window-target','www-authenticate',
+	);
+
 	function addHTTP($string,$replace=TRUE,$response_code=NULL) {
 		$this->http_headers[] = array($string,$replace,$response_code);
 	}
@@ -37,7 +45,12 @@ abstract class Helper_headers extends Helper {
 	}
 	
 	function addMeta($name,$content) {
-		$this->meta_tags[$name] = $content;
+		$name = strtolower($name);
+		if (!empty($this->meta_tags[$name]) && in_array($name,$this->meta_comma_separated)) {
+			$this->meta_tags[$name] .= ",$content";
+		} else {
+			$this->meta_tags[$name] = $content;
+		}
 	}
 	
 	function addNotification($string,$status='message') {
@@ -73,7 +86,12 @@ abstract class Helper_headers extends Helper {
 	}
 
 	function getHeaders() {
-		return $this->getLinkTags().$this->getMetaTags().$this->getJS(TRUE).$this->getHeadHTML().$this->getJQuery();
+		return $this->getLinkTags()
+			. $this->getMetaTags()
+			. $this->getJS(TRUE)
+			. $this->getHeadHTML()
+			. $this->getJQuery()
+		;
 	}
 
 	function getHeadHTML() {
@@ -86,16 +104,21 @@ abstract class Helper_headers extends Helper {
 		$CFG = Load::CFG();
 		$ua = Load::UserAgent();
 		if (!$this->jquery) { return false; }
-		$response = '<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>';
+		$response = '<script type="text/javascript" '
+			. 'src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js">'
+			. "</script>\n";
 		if (!is_array($this->jquery)) {
 			$this->jquery = FALSE;
 			return $response;
 		}
 		if (in_array('ui',$this->jquery)) {
-			$response .= '<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1/jquery-ui.min.js"></script>';
+			$response .= '<script type="text/javascript" '
+			. 'src="http://ajax.googleapis.com/ajax/libs/jqueryui/1/jquery-ui.min.js">'
+			. "</script>\n";
 		}
 		if (in_array('theme',$this->jquery)) {
-			$response .= '<link rel="stylesheet" href="'.$CFG['wwwroot'].'/public/jquery/css/escher/jquery-ui.css" />';
+			$response .= '<link rel="stylesheet" href="' . $CFG['wwwroot']
+				. '/public/jquery/css/escher/jquery-ui.css" />' . "\n";
 		}
 		$this->jquery = FALSE;
 		return $response;
@@ -137,7 +160,13 @@ abstract class Helper_headers extends Helper {
 	function getMetaTags() {
 		$response = '';
 		foreach($this->meta_tags as $name => $content) {
-			$response .= "<meta name=\"$name\" content=\"$content\" />";
+			if (in_array($name,$this->meta_html5)) {
+				$response .= "<meta {$name}=\"$content\" />\n";
+			} elseif (in_array($name,$this->meta_http_equiv)) {
+				$response .= "<meta http-equiv=\"$name\" content=\"$content\" />\n";
+			} else {
+				$response .= "<meta name=\"$name\" content=\"$content\" />\n";
+			}
 		}
 		$this->meta_tags = array();
 		return $response;
