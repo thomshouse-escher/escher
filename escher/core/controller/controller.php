@@ -128,6 +128,38 @@ class EscherController extends EscherObject {
 		// Return true if result is true or data is non-empty
 		return (bool)($result || !empty($this->data));
 	}
+
+	final protected function dispatch($path,$args=array(),$options=array(),$display=FALSE) {
+		if (is_string($path)) {
+			$path = preg_split('#/#',$path,-1,PREG_SPLIT_NO_EMPTY);
+		}
+		if (is_string($args)) {
+			$args = preg_split('#/#',$args,-1,PREG_SPLIT_NO_EMPTY);
+		}
+		$base = $path;
+		$dispatch = array_pop($base);
+		$base = implode('/',$base);
+		$controller = Load::Controller($dispatch,$args);
+		if (!empty($options)) { $controller->assignVars($options); }
+		$controller->router = Load::Helper('router','dispatch',
+			array(
+				'router' => $this->router,
+				'dispatch' => $dispatch,
+				'base' => $base,
+				'args' => $args
+			)
+		);
+		$result = $controller->execute();
+		if ($display) {
+			if (!$result && empty($controller->data)) {
+				Load::Error('404');
+			} else {
+				$controller->display($controller->getCalledAction(),$controller->data);
+			}
+		} else {
+			return $controller->render($controller->getCalledAction(),$controller->data);
+		}			
+	}
 	
 	// Display the specified view for this controller with the data provided
 	final function display($view,$data=array(),$themed=TRUE,$type=NULL) {
