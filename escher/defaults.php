@@ -49,6 +49,9 @@ $maintenance_routes = array(
 	'maintenance' => array('controller' => 'auth','action' => 'login')
 );
 
+// Placeholder for static routes
+$static_routes = array();
+
 include(ESCHER_DOCUMENT_ROOT.'/config.php');
 
 // Predefined static routes...  Changing these might break expected system behavior

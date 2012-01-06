@@ -1,6 +1,7 @@
 <?php
 
 abstract class Helper_hooks extends Helper {
+	protected $dispatches = array();
 	protected $metadata = array();
 	protected $content = array();
 	protected $outputFunctions = array();
@@ -8,6 +9,20 @@ abstract class Helper_hooks extends Helper {
 	protected $events = array();
 	protected $models = array();
 	protected $staticroutes = array();
+
+	function registerDispatch($dispatch,$controller) {
+		if (array_key_exists($dispatch,$this->dispatches)) {
+			Load::Error('500');
+		}
+		$this->dispatches[$dispatch] = $controller;
+	}
+
+	function getDispatch($dispatch) {
+		if (array_key_exists($dispatch,$this->dispatches)) {
+			return $this->dispatches[$dispatch];
+		}
+		return false;
+	}
 
 	function registerEvent($event,$callback,$priority=0) {
 		$priority = (int)$priority;

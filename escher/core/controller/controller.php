@@ -139,6 +139,11 @@ class EscherController extends EscherObject {
 		$base = $path;
 		$dispatch = array_pop($base);
 		$base = implode('/',$base);
+		if (strpos($dispatch,':')===0) {
+			$hooks = Load::Hooks();
+			$dispatch = $hooks->getDispatch(substr($dispatch,1));
+			if (empty($dispatch)) { Load::Error('404'); }
+		}
 		$controller = Load::Controller($dispatch,$args);
 		if (!empty($options)) { $controller->assignVars($options); }
 		$controller->router = Load::Helper('router','dispatch',
