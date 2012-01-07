@@ -6,7 +6,7 @@ class Controller_auth extends Controller {
 		$session = Load::Session();
 		$hooks = Load::Hooks();
 		$session->remember_current_request = FALSE;
-		if (Load::User()) { $headers->redirect(); }
+		if (Load::User()) { $this->postLoginRedirect(); }
 
 		if(!empty($args)) {
 			$userauth = Load::UserAuth($args[0]);
