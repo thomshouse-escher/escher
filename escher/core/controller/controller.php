@@ -52,19 +52,14 @@ class EscherController extends EscherObject {
 			if (!$acl->check()) { Load::Error('401'); }
 		}
 
-		// Set $this->id to $router->instance_id if present
-		if (!empty($this->router->instance_id)) {
-			$this->id = $this->router->instance_id;
-		}
-
 		// Clean up args
 		if (is_null($args)) { $args = $this->args; }
 		$args = (array)$args;
 
 		// Determine the intended action
-		// Priority 1: Action specified by the router
-		if (isset($this->router->action)) {
-			$action = $this->router->action;
+		// Priority 1: Action specified as property
+		if (isset($this->action)) {
+			$action = $this->action;
 
 		// Priority 2: 2nd Argument in case of valid $argPrecedesActions
 		} elseif (isset($args[1])

@@ -61,11 +61,7 @@ class EscherInit {
 		$this->initSession();
 
 		$router = Load::Router();
-		if (!isset($router->controller)) {
-			Load::Error('404');
-		}
-		$controller = Load::Controller($router->controller,@$router->args);
-		$controller->router = $router;
+		$controller = $router->getController();
 		if (!$controller->execute() && empty($controller->data)) {
 			Load::Error('404');
 		}
