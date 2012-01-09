@@ -19,7 +19,7 @@ class Helper_output_php extends Helper_output {
 		// Setup Function Shorthands
 		$E = $_echo = 'escher_echo';
 		$F = $_filter = 'escher_filter';
-		$H = $_hook = 'escher_event';
+		$H = $_hook = 'escher_run_event';
 		$U = $_url = 'escher_resolve_path';
 		$L = $_lang = $E; //Temporary, until localizations are implemented
 		$_browser = 'escher_match_browser';
