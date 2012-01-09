@@ -11,6 +11,9 @@ abstract class Helper_output extends Helper {
 	function __construct($args=array()) {
 		parent::__construct($args);
 		$this->headers = Load::Headers();
+		if (empty($this->router)) {
+			$this->router = Load::Router();
+		}
 	}
 	
 	function assign($name,$val) {
@@ -24,14 +27,13 @@ abstract class Helper_output extends Helper {
 	}
 	
 	function assignReservedVars() {
-		$router = Load::Router();
 		$useragent = Load::Helper('useragent','default');
-		$this->assign('www',$router->getRootPath());
+		$this->assign('www',$this->router->getRootPath());
 		Load::UserAgent();
 		$this->assign('useragent_classes',implode(' ',$useragent->getClasses()));
 		$this->assign('USER',Load::User());
-		$this->assign('current_path',$router->getCurrentPath());
-		$this->assign('parent_path',$router->getParentPath());
+		$this->assign('current_path',$this->router->getCurrentPath());
+		$this->assign('parent_path',$this->router->getParentPath());
 	}
 	
 	function getAssignedVars() {

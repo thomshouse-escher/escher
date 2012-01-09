@@ -103,7 +103,7 @@ abstract class Helper_headers extends Helper {
 	function getJQuery() {
 		$CFG = Load::CFG();
 		$ua = Load::UserAgent();
-		if (!$this->jquery) { return false; }
+		if (empty($this->jquery)) { return false; }
 		$response = '<script type="text/javascript" '
 			. 'src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js">'
 			. "</script>\n";
@@ -126,6 +126,7 @@ abstract class Helper_headers extends Helper {
 
 	function getJS($atHeader=FALSE) {
 		$ua = Load::UserAgent();
+		$response = '';
 		$tags = $atHeader ? 'head_js_tags' : 'js_tags';
 		foreach($this->$tags as $js) {
 			$response .= '<script type="text/javascript" src="'.$js."\" ></script>\n";
