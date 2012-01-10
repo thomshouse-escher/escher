@@ -2,8 +2,10 @@
 
 abstract class Helper_headers extends Helper {
 	protected $head_html = '';
+	protected $foot_html = '';
 	protected $head_js_tags = array();
 	protected $http_headers = array();
+	protected $jquery = FALSE;
 	protected $js_tags = array();
 	protected $link_tags = array();
 	protected $meta_tags = array();
