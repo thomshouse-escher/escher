@@ -250,4 +250,19 @@ abstract class Helper_headers extends Helper {
 			header($h[0],$h[1],$h[2]);
 		}
 	}
+
+	function close($response='') {
+		$size = mb_strlen($response);
+		if ($size < 256) {
+			$response .= str_repeat(' ',256-$size);
+			$size = 256;
+		}
+		ignore_user_abort(true);
+		$this->addHTTP('Connection: close');
+		$this->addHTTP('Content-Length: '.$size);
+		$this->sendHTTP();
+		echo $response;
+		while(ob_get_level()) { ob_end_flush(); }
+		flush();
+	}
 }
