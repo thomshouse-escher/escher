@@ -13,7 +13,7 @@
  * ACL (Access Control List) Helper base class
  * @package Escher
  */
-abstract class Helper_acl extends Helper {
+class Helper_acl extends Helper {
 	/**
 	 * Checks if an entity has access (generic or specific) to a resource.
 	 * Wrapper for req() providing default options where applicable.

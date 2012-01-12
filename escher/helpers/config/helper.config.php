@@ -17,7 +17,7 @@
  * @package Escher
  * @subpackage Helpers
  */
-abstract class Helper_config extends Helper implements ArrayAccess {
+class Helper_config extends Helper implements ArrayAccess {
 	/**
 	 * Configuration settings from the database/cache
 	 * @var array

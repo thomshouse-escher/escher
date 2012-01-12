@@ -1,6 +1,6 @@
 <?php
 
-abstract class Helper_ui extends Helper {
+class Helper_ui extends Helper {
 	protected $theme;
 	protected $directOutput = FALSE;
 	protected $siteTitle = 'Untitled Website';

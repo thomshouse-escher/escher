@@ -105,27 +105,35 @@ class Load {
 	/**
 	 * Loads a the class files for an interface in Escher.
 	 * @param string|array $name The name of the interface to load.
-	 * @param string|array $type The type of interface to load, or an array containing the plugin name and interface type, respectively.
+	 * @param string|array $flavor The type of interface to load, or an array containing the plugin name and interface type, respectively.
 	 * @return string|false Returns the name of the interface class, or false on failure.
 	 */
-	public function HelperClass($name,$type=NULL) {
-		$name = strtolower($name);
-		if (is_array($type)) {
-			array_map('strtolower',$type);
-			if (Load::inc(ESCHER_DOCUMENT_ROOT.'/plugins/'.$type[0].'/helpers/'.$name.'/helper.'.$name.'.'.$type[1].'.php')
-				&& class_exists("Plugin_{$type[0]}_Helper_{$name}_{$type[1]}")) {
-					return "Plugin_{$type[0]}_Helper_{$name}_{$type[1]}";
+	public function HelperClass($helper,$type='default') {
+		$type = strtolower($type);
+		if (is_array($helper)) {
+			array_map('strtolower',$helper);
+			if ($type=='default') {
+				$filename = "helper.{$helper[1]}.php";
+				$classname = "Plugin_{$helper[0]}_Helper_{$helper[1]}";
+			} else {
+				$filename = "helper.{$helper[1]}.$type.php";
+				$classname = "Plugin_{$helper[0]}_Helper_{$helper[1]}_$type";
+			}
+			if (Load::inc(ESCHER_DOCUMENT_ROOT."/plugins/{$helper[0]}/helpers/{$helper[1]}/$filename")
+				&& class_exists($classname)) {
+					return $classname;
 			} else {
 				return false;
 			}
-		} elseif (is_null($type)) {
-			return Load::inc(ESCHER_REAL_PATH.'/helpers/'.$name.'/helper.'.$name.'.php');
 		} else {
-			$type = strtolower($type);
-			if (Load::inc(ESCHER_REAL_PATH.'/helpers/'.$name.'/helper.'.$name.'.php')
-				&& Load::inc(ESCHER_REAL_PATH.'/helpers/'.$name.'/'.$type.'/helper.'.$name.'.'.$type.'.php')
-				&& class_exists("Helper_{$name}_{$type}")) {
-					return "Helper_{$name}_{$type}";
+			$helper = strtolower($helper);
+			Load::inc(ESCHER_REAL_PATH."/helpers/$helper/helper.$helper.php");
+			if ($type=='default') {
+				return class_exists("Helper_$helper") ? "Helper_$helper" : false;
+			}
+			if (Load::inc(ESCHER_REAL_PATH."/helpers/$helper/$type/helper.$helper.$type.php")
+				&& class_exists("Helper_{$helper}_{$type}")) {
+					return "Helper_{$helper}_{$type}";
 			} else {
 				return false;
 			}
@@ -139,15 +147,16 @@ class Load {
 	 * @param array $args An array of arguments to pass to the interface.
 	 * @return object|false Returns a new instance of the interface class, or false on failure.
 	 */
-	public function Helper($name,$type,$args=NULL) {
-		if ($classname = Load::HelperClass($name,$type)) {
+	public function Helper($helper,$type='default',$args=NULL) {
+		if ($classname = Load::HelperClass($helper,$type)) {
 			$newhelper = new $classname($args);
-			if (is_array($type)) {
-				$newhelper->plugin = strtolower($type[0]);
-				$newhelper->type = strtolower($type[1]);
+			if (is_array($helper)) {
+				$newhelper->plugin = strtolower($helper[0]);
+				$newhelper->type = strtolower($helper[1]);
 			} else {
-				$newhelper->type = strtolower($type);
+				$newhelper->type = strtolower($helper);
 			}
+			$newhelper->flavor = strtolower($type);
 			return $newhelper;
 		} else {
 			return false;
@@ -162,29 +171,30 @@ class Load {
 	 * @param array $args An array of arguments to pass to the interface.
 	 * @return object|false Returns a persistent instance of the interface class, or false on failure.
 	 */
-	public function PersistentHelper($name,$type,$namespace,$args=NULL) {
+	public function PersistentHelper($name,$helper,$type='default',$args=NULL) {
 		static $PHelpers = array();
 		// Ensure that global interfaces are being accessed properly
-		if ($namespace=='global' && !self::isInternalCall()) { return false; }
-		if (is_array($type)) {
-			array_map('strtolower',$type);
-			$plugin = $type[0];
-			$typename = $type[1];
+		if ($name=='global' && !self::isInternalCall()) { return false; }
+		if (is_array($helper)) {
+			array_map('strtolower',$helper);
+			$plugin = $helper[0];
+			$helpername = $helper[1];
 		} else {
 			$plugin = 'core';
-			$typename = strtolower($type);
+			$helpername = strtolower($helper);
 		}
-		$name = strtolower($name);
-		if (!empty($PHelpers[$name][$plugin][$typename][$namespace])) {
-			return $PHelpers[$name][$plugin][$typename][$namespace];
+		$type = strtolower($type);
+		if (!empty($PHelpers[$helpername][$plugin][$type][$name])) {
+			return $PHelpers[$helpername][$plugin][$type][$name];
 		}
-		if ($classname = Load::HelperClass($name,$type)) {
-			$PHelpers[$name][$plugin][$typename][$namespace] = new $classname($args);
+		if ($classname = Load::HelperClass($helper,$type)) {
+			$PHelpers[$helpername][$plugin][$type][$name] = new $classname($args);
 			if ($plugin!='core') {
-				$PHelpers[$name][$plugin][$typename][$namespace]->plugin = $plugin;
+				$PHelpers[$helpername][$plugin][$type][$name]->plugin = $plugin;
 			}
-			$PHelpers[$name][$plugin][$typename][$namespace]->type = $typename;
-			return $PHelpers[$name][$plugin][$typename][$namespace];
+			$PHelpers[$helpername][$plugin][$type][$name]->type = $helpername;
+			$PHelpers[$helpername][$plugin][$type][$name]->flavor = $type;
+			return $PHelpers[$helpername][$plugin][$type][$name];
 		} else {
 			return false;
 		}	
@@ -244,7 +254,7 @@ class Load {
 	 */
 	public function ACL() {	
 		self::$internalCall = true;
-		return Load::PersistentHelper('acl','default','global');
+		return Load::PersistentHelper('global','acl');
 	}
 
 	/**
@@ -255,7 +265,7 @@ class Load {
 		$CFG = Load::Config();
 		if (empty($CFG['cache'])) { return false; }
 		$cache = $CFG['datasource'][$CFG['cache']];
-		return Load::PersistentHelper('cache',$cache['type'],$name,$cache['settings']);
+		return Load::PersistentHelper($name,'cache',$cache['type'],$cache['settings']);
 	}
 	
 	/**
@@ -264,7 +274,7 @@ class Load {
 	 */
 	public function Config() {
 		self::$internalCall = true;
-		return Load::PersistentHelper('config','default','global');
+		return Load::PersistentHelper('global','config');
 	}
 	public function CFG() { return self::Config(); } // Shorthand
 
@@ -275,8 +285,9 @@ class Load {
 	public function DB($name='default') {
 		$CFG = Load::Config();
 		$args = $CFG['database'][$name];
-		unset($args['type']);
-		return Load::PersistentHelper('database',$CFG['database'][$name]['type'],$name,$args);
+		$helper = !empty($args['plugin']) ? array($args['plugin'],'database') : 'database';
+		unset($args['type'],$args['plugin']);
+		return Load::PersistentHelper($name,$helper,$CFG['database'][$name]['type'],$args);
 	}
 	
 	/**
@@ -286,11 +297,14 @@ class Load {
 	public function Datasource($definition='db') {
 		$CFG = Load::Config();
 		if ($definition=='db' && !isset($CFG['datasource']['db'])) {
-			return Load::PersistentHelper('datasource','db','db');
+			return Load::PersistentHelper('db','datasource','db');
 		} elseif ($definition=='arrcache' && !isset($CFG['datasource']['arrcache'])) {
-			return Load::PersistentHelper('datasource','arrcache','arrcache');
+			return Load::PersistentHelper('arrcache','datasource','arrcache');
 		} elseif (isset($CFG['datasource'][$definition]['type'])) {
-			return Load::PersistentHelper('datasource',$CFG['datasource'][$definition]['type'],$definition,@$CFG['datasource'][$definition]['settings']);
+			$helper = !empty($CFG['datasource'][$definition]['plugin'])
+				? array($CFG['datasource'][$definition]['plugin'],'datasource')
+				: 'datasource';
+			return Load::PersistentHelper($definition,$helper,$CFG['datasource'][$definition]['type'],@$CFG['datasource'][$definition]['settings']);
 		}
 		return false;
 	}
@@ -312,7 +326,11 @@ class Load {
 	 * @return object Returns the Filter object.
 	 */
 	public function Filter($type='default',$args=NULL) {
-		return Load::Helper('filter',$type,$args);
+		if (is_array($type)) {
+			return Load::Helper(array($type[0],'output'),$type[1],$args);
+		} else {
+			return Load::Helper('filter',$type,$args);
+		}
 	}
 	
 	/**
@@ -321,7 +339,7 @@ class Load {
 	 */
 	public function Headers() {	
 		self::$internalCall = true;
-		return Load::PersistentHelper('headers','default','global');
+		return Load::PersistentHelper('global','headers');
 	}
 	
 	/**
@@ -330,7 +348,7 @@ class Load {
 	 */
 	public function Hooks() {	
 		self::$internalCall = true;
-		return Load::PersistentHelper('hooks','default','global');
+		return Load::PersistentHelper('global','hooks');
 	}
 	
 	/**
@@ -338,7 +356,11 @@ class Load {
 	 * @return object Returns the Input object.
 	 */
 	public function Input($type='default',$args=NULL) {
-		return Load::Helper('input',$type,$args);
+		if (is_array($type)) {
+			return Load::Helper(array($type[0],'input'),$type[1],$args);
+		} else {
+			return Load::Helper('input',$type,$args);
+		}
 	}
 	
 	/**
@@ -346,7 +368,11 @@ class Load {
 	 * @return object Returns the Lockout object.
 	 */
 	public function Lockout($type='default',$args=NULL) {
-		return Load::Helper('lockout',$type,$args);
+		if (is_array($type)) {
+			return Load::Helper(array($type[0],'lockout'),$type[1],$args);
+		} else {
+			return Load::Helper('lockout',$type,$args);
+		}
 	}
 	
 	/**
@@ -354,7 +380,11 @@ class Load {
 	 * @return object Returns the Output object.
 	 */
 	public function Output($type='php',$args=NULL) {
-		return Load::Helper('output',$type,$args);
+		if (is_array($type)) {
+			return Load::Helper(array($type[0],'output'),$type[1],$args);
+		} else {
+			return Load::Helper('output',$type,$args);
+		}
 	}
 	
 	/**
@@ -379,7 +409,7 @@ class Load {
 		$args['root'] = $CFG['root'];
 		if (is_null($path)) {
 			self::$internalCall = true;
-			return Load::PersistentHelper('router',$CFG['router']['type'],'global',$args);
+			return Load::PersistentHelper('global','router',$CFG['router']['type'],$args);
 		} else {
 			return Load::Helper('router',$CFG['router']['type'],$args);
 		}
@@ -394,7 +424,7 @@ class Load {
 		$args = $CFG['session'];
 		unset($args['type']);
 		self::$internalCall = true;
-		return Load::PersistentHelper('session',$CFG['session']['type'],'global',$args);
+		return Load::PersistentHelper('global','session',$CFG['session']['type'],$args);
 	}
 	
 	/**
@@ -405,7 +435,7 @@ class Load {
 		$CFG = Load::Config();
 		$args = @$CFG['ui'];
 		self::$internalCall = true;
-		return Load::PersistentHelper('ui','default','global',$args);
+		return Load::PersistentHelper('global','ui','default',$args);
 	}
 	
 	public function User($keys=NULL) {
@@ -427,7 +457,11 @@ class Load {
 	 * @return object Returns the UserAgent object.
 	 */
 	public function UserAgent($type='default',$args=NULL) {
-		return Load::Helper('useragent',$type,$args);
+		if (is_array($type)) {
+			return Load::Helper(array($type[0],'useragent'),$type[1],$args);
+		} else {
+			return Load::Helper('useragent',$type,$args);
+		}
 	}
 
 	/**
@@ -438,13 +472,16 @@ class Load {
 		$CFG = Load::Config();
 		if (array_key_exists($name,$CFG['userauth'])) {
 			$auth = $CFG['userauth'][$name];
-			return Load::Helper('userauth',$auth['type'],$auth);
+			$helper = !empty($auth['plugin'])
+				? array($auth['plugin'],'userauth')
+				: 'userauth';
+			return Load::Helper($helper,$auth['type'],$auth);
 		}
 		$hooks = Load::Hooks();
 		$hookauth = $hooks->getUserAuths();
 		if (array_key_exists($name,$hookauth)) {
 			$auth = $hookauth[$name];
-			return Load::Helper('userauth',array($auth[0],$auth[1]),$auth[2]);
+			return Load::Helper(array($auth[0],'userauth'),$auth[1],$auth[2]);
 		}
 		$auth = $CFG['userauth']['default'];
 		return Load::Helper('userauth',$auth['type'],$auth);

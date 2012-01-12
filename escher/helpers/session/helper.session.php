@@ -1,8 +1,8 @@
 <?php
 
-abstract class Helper_session extends Helper {
+class Helper_session extends Helper {
 	public $remember_current_request = TRUE;
-	protected $useCustomHandler = TRUE;
+	protected $useCustomHandler = FALSE;
 	protected $cookieName = 'escher_session';
 	protected $cookiePath = '/';
 	protected $cookieDomain = NULL;

@@ -32,7 +32,7 @@ class Plugin_facebook extends Plugin {
 	/* Oauth-Based Facebook Authentication */
 	function oauthLink() {
 		$CFG = Load::Config();
-		$browser = Load::Helper('useragent','default');
+		$browser = Load::UserAgent();
 		return '<a class="facebook-login-button" href="https://www.facebook.com/dialog/oauth?client_id='.$CFG['facebook_appId'].'&amp;redirect_uri='.urlencode($CFG['wwwroot'].'/login/facebook/').($browser->match('mobile') ? '&amp;display=touch' : '').'"><img src="'.$CFG['wwwroot'].'/plugins/facebook/images/sign-in-with-facebook.png" alt="Sign in with Facebook" style="border: 0px;" width="151" height="22" /></a>';
 	}
 

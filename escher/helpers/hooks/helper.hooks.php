@@ -1,6 +1,6 @@
 <?php
 
-abstract class Helper_hooks extends Helper {
+class Helper_hooks extends Helper {
 	protected $dispatches = array();
 	protected $metadata = array();
 	protected $content = array();

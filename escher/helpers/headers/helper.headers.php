@@ -1,6 +1,6 @@
 <?php
 
-abstract class Helper_headers extends Helper {
+class Helper_headers extends Helper {
 	protected $head_html = '';
 	protected $foot_html = '';
 	protected $head_js_tags = array();

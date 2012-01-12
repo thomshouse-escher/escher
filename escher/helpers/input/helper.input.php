@@ -1,6 +1,6 @@
 <?php
 
-abstract class Helper_input extends Helper {
+class Helper_input extends Helper {
 	function __construct() {
 		parent::__construct();
 		$this->get = $_GET;

@@ -1,6 +1,6 @@
 <?php
 
-abstract class Helper_useragent extends Helper {
+class Helper_useragent extends Helper {
 	function getClasses() {
 		static $result;
 		if (is_null($result)) {

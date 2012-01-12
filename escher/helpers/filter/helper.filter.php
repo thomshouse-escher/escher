@@ -1,6 +1,6 @@
 <?php
 
-abstract class Helper_filter extends Helper {
+class Helper_filter extends Helper {
 	function filter($value,$type='string',$default=NULL) {
 		if (is_object($value)) {
 			$value = get_object_vars($value);
