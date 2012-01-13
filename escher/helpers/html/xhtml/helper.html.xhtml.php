@@ -70,6 +70,7 @@ class Helper_html_xhtml extends Helper_html {
 	function tag($selector,$contents=NULL,$attrs=array()) {
 		// If content is null, we're really just opening a tag...
 		if (is_null($contents)) { return $this->open($selector,$attrs); }
+		$classes=array();
 		// Parse the selector
 		extract($this->parseSelector($selector));
 		// If this is an HTML5 layout tag, define it as a class
