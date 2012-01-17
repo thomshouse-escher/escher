@@ -265,7 +265,11 @@ class Load {
 		$CFG = Load::Config();
 		if (empty($CFG['cache'])) { return false; }
 		$cache = $CFG['datasource'][$CFG['cache']];
-		return Load::PersistentHelper($name,'cache',$cache['type'],$cache['settings']);
+		if (is_array($cache['type'])) {
+			return Load::PersistentHelper($name,array($cache['type'][0],'cache'),$cache['type'][1],$cache['settings']);
+		} else {
+			return Load::PersistentHelper($name,'cache',$cache['type'],$cache['settings']);
+		}
 	}
 	
 	/**
@@ -285,9 +289,13 @@ class Load {
 	public function DB($name='default') {
 		$CFG = Load::Config();
 		$args = $CFG['database'][$name];
-		$helper = !empty($args['plugin']) ? array($args['plugin'],'database') : 'database';
-		unset($args['type'],$args['plugin']);
-		return Load::PersistentHelper($name,$helper,$CFG['database'][$name]['type'],$args);
+		$type = $args['type'];
+		unset($args['type']);
+		if (is_array($type)) {
+			return Load::PersistentHelper($name,array($type[0],'database'),$type[1],$args);
+		} else {
+			return Load::PersistentHelper($name,'database',$type,$args);
+		}
 	}
 	
 	/**
@@ -301,10 +309,15 @@ class Load {
 		} elseif ($definition=='arrcache' && !isset($CFG['datasource']['arrcache'])) {
 			return Load::PersistentHelper('arrcache','datasource','arrcache');
 		} elseif (isset($CFG['datasource'][$definition]['type'])) {
-			$helper = !empty($CFG['datasource'][$definition]['plugin'])
-				? array($CFG['datasource'][$definition]['plugin'],'datasource')
-				: 'datasource';
-			return Load::PersistentHelper($definition,$helper,$CFG['datasource'][$definition]['type'],@$CFG['datasource'][$definition]['settings']);
+			$type = $CFG['datasource'][$definition]['type'];
+			$settings = !empty($CFG['datasource'][$definition]['settings'])
+				? $CFG['datasource'][$definition]['settings']
+				: array();
+			if (is_array($type)) {
+				return Load::PersistentHelper($definition,array($type[0],'datasource'),$type,$settings);
+			} else {
+				return Load::PersistentHelper($definition,'datasource',$type,$settings);
+			}
 		}
 		return false;
 	}
@@ -394,6 +407,7 @@ class Load {
 	public function Router($path=NULL) {
 		$CFG = Load::Config();
 		$args = $CFG['router'];
+		$type = $args['type'];
 		unset($args['type']);
 		if (!is_null($path)) {
 			$args['path'] = $path;
@@ -409,9 +423,17 @@ class Load {
 		$args['root'] = $CFG['root'];
 		if (is_null($path)) {
 			self::$internalCall = true;
-			return Load::PersistentHelper('global','router',$CFG['router']['type'],$args);
+			if (is_array($type)) {
+				return Load::PersistentHelper('global',array($type[0],'router'),$type[1],$args);
+			} else {
+				return Load::PersistentHelper('global','router',$type,$args);
+			}
 		} else {
-			return Load::Helper('router',$CFG['router']['type'],$args);
+			if (is_array($type)) {
+				return Load::Helper(array($type[0],'router'),$type[1],$args);
+			} else {
+				return Load::Helper('router',$type,$args);
+			}
 		}
 	}
 
@@ -422,9 +444,14 @@ class Load {
 	public function Session() {
 		$CFG = Load::Config();
 		$args = $CFG['session'];
+		$type = $args['type'];
 		unset($args['type']);
 		self::$internalCall = true;
-		return Load::PersistentHelper('global','session',$CFG['session']['type'],$args);
+		if (is_array($type)) {
+			return Load::PersistentHelper('global',array($type[0],'session'),$type[1],$args);
+		} else {
+			return Load::PersistentHelper('global','session',$type,$args);
+		}
 	}
 	
 	/**
