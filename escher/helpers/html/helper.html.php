@@ -3,6 +3,7 @@
 abstract class Helper_html extends Helper {
 	protected $directOutput = FALSE;
 	protected $html5LayoutTags = array('article','aside','footer','header','section');
+	protected $selfClosingTags = array('area','base','basefont','br','col','frame','hr','img','input','link','meta','param');
 	protected $openTags = array();
 	
 	abstract function close($tag);
@@ -11,10 +12,9 @@ abstract class Helper_html extends Helper {
 	abstract function tag($tag,$contents=NULL,$attrs=array());
 
 	function directOutput($bool=NULL) {
-		if (!is_null($bool)) {
-			$this->directOutput = (bool)$bool;
-		}
-		return $this->directOutput;
+		$result = $this->directOutput;
+		if (!is_null($bool)) { $this->directOutput = (bool)$bool; }
+		return $result;
 	}
 
 	protected function parseSelector($string) {
@@ -35,7 +35,7 @@ abstract class Helper_html extends Helper {
 		return array('tag'=>$tag,'id'=>$id,'class'=>$classes);
 	}
 	
-	protected function renderOpeningTag($tag,$attrs) {
+	protected function renderOpeningTag($tag,$attrs,$close=FALSE) {
 		$result = "<$tag";
 		foreach($attrs as $a => $v) {
 			if (!empty($v)) {
@@ -46,7 +46,7 @@ abstract class Helper_html extends Helper {
 				}
 			}
 		}
-		$result .= '>';
+		$result .= $close ? ' />' : '>';
 		return $result;
 	}
 	

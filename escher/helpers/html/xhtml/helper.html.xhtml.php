@@ -33,7 +33,7 @@ class Helper_html_xhtml extends Helper_html {
 			}
 			// Determine if the current tag matches the selector
 			if ($this_tag['tag']==$tag && (is_null($id) || $this_tag['id']==$id) &&
-				(empty($classes) || sizeof(array_intersect($classes,$this_tag['classes'])==sizeof($classes)))) {
+				(empty($class) || sizeof(array_intersect($class,$this_tag['class']))==sizeof($class))) {
 					$tagFound = TRUE;
 			}
 		}
@@ -68,8 +68,6 @@ class Helper_html_xhtml extends Helper_html {
 	}
 
 	function tag($selector,$contents=NULL,$attrs=array()) {
-		// If content is null, we're really just opening a tag...
-		if (is_null($contents)) { return $this->open($selector,$attrs); }
 		$classes=array();
 		// Parse the selector
 		extract($this->parseSelector($selector));
@@ -84,7 +82,11 @@ class Helper_html_xhtml extends Helper_html {
 		} else { $attrs['class'] = $classes; }
 		if (!is_null($id)) { $attrs['id'] = $id; }
 		// Render the tag
-		$result = $this->renderOpeningTag($tag,$attrs).$contents.$this->renderClosingTag($tag);
+		if (in_array($tag,$this->selfClosingTags)) {
+			$result = $this->renderOpeningTag($tag,$attrs,TRUE);
+		} else {
+			$result = $this->renderOpeningTag($tag,$attrs).$contents.$this->renderClosingTag($tag);
+		}
 		if ($this->directOutput) { echo $result; }
 		return $result;				
 	}

@@ -4,23 +4,30 @@
  * 
  * Form Helper base class
  * @author Andrew Detwiler <andetwiler@mpsaz.org>
+ * @author Thom Stricklin <thom@thomshouse.net>
  * @version 1.0
  * @package Escher
  */
 
 /**
  * Form Helper base class
+ * @author Andrew Detwiler <andetwiler@mpsaz.org>
+ * @author Thom Stricklin <thom@thomshouse.net>
+ * @version 1.0
  * @package Escher
  */
-
 class Helper_form extends Helper {
 	protected $directOutput = FALSE;
-	private $html;
-	private $data=array();
+	protected $inForm = FALSE;
+	protected $inFieldset = FALSE;
+	protected $inWrapper = FALSE;
+	protected $nameFormat = '';
+	protected $data = array();
+	protected $html;
 
 	function __construct($args=NULL) {
+		parent::__construct($args);
 		$this->html = Load::Helper('html','auto');
-		$this->directOutput = TRUE;
 	}
 
 	function directOutput($bool=NULL) {
@@ -29,226 +36,277 @@ class Helper_form extends Helper {
 		return $result;
 	}
 
-	function open($attrs=NULL) {
-		$result = $this->html->open('form',$attrs);
-		$this->outputResult($result);
-
-		return $result;
+	function setData($data) {
+		if (!is_array($data)) { return FALSE; }
+		$this->data = $data;
+		return TRUE;
 	}
 
-	function openFieldset($attrs=NULL) {
-		$result = $this->html->open('fieldset',$attrs);
-		$this->outputResult($result);
-
-		return $result;
+	function setNameFormat($format) {
+		if (!is_string($format)) { return FALSE; }
+		$this->nameFormat = $format;
+		return TRUE;
 	}
 
-	function openActions($attrs=NULL) {
-		$result = $this->openDiv('actions');
-		$this->outputResult($result);
-
-		return $result;
+	function formatName($name) {
+		return (strpos($this->nameFormat,'%s'))
+			? sprintf($this->nameFormat,$name)
+			: $this->nameFormat.$name;
 	}
 
-	function close() {	
-		$result = $this->html->closeTo('form');
-		$this->outputResult($result);
+	function open($attrs=array()) {
+		$content = '';
+		if ($this->inForm) {
+			$content = $this->html->closeTo('form');
+			$this->inFieldset = FALSE;
+			$this->inWrapper = FALSE;
+		}
+		$this->inForm = TRUE;
+		$content .= $this->html->open('form',$attrs);
+		return $this->outputResult($content);
+	}
 
-		return $result;
+	function close() {
+		if (!$this->inForm) { return; }
+		$this->inForm = FALSE;
+		$content = $this->html->closeTo('form');
+		return $this->outputResult($content);
+	}
+
+	function openFieldset($attrs=array()) {
+		$content = '';
+		if ($this->inFieldset) {
+			$content = $this->html->closeTo('fieldset');
+			$this->inWrapper = FALSE;
+		}
+		$this->inFieldset = TRUE;
+		$content .= $this->html->open('fieldset',$attrs);
+		return $this->outputResult($content);
 	}
 
 	function closeFieldset() {
-		$result = $this->html->closeTo('fieldset');
-		$this->outputResult($result);
-
-		return $result;
+		if (!$this->inFieldset) { return; }
+		$this->inFieldset = FALSE;
+		$content = $this->html->closeTo('fieldset');
+		return $this->outputResult($content);
 	}
 
-	function closeActions($attrs=NULL) {
-		$result = $this->closeDiv();
-		$this->outputResult($result);
-
-		return $result;
+	function openActions($attrs=array()) {
+		$content = '';
+		if ($this->inWrapper) {
+			$content = $this->html->closeTo('div.'.$this->inWrapper);
+		}
+		$this->inWrapper = 'actions';
+		$content .= $this->html->open('div.actions',$attrs);
+		return $this->outputResult($content);
 	}
 
-	function textarea($name,$label=NULL,$attrs=NULL) {
-		if (empty($name)) { return false; }
-		if (empty($attrs)) { $attrs=array(); }
-
-		$attrs['name'] = $name;
-		$attrs['type'] = 'textbox';
-		$input = $this->html->open('textarea',$attrs);
-		$input .= $this->html->closeTo('textarea');
-		$result = $this->wrapInput($input,$label);
-		$this->outputResult($result);
-
-		return $result;
+	function closeActions() {
+		if (!$this->inWrapper) { return; }
+		$content = $this->html->closeTo('div.'.$this->inWrapper);
+		$this->inWrapper = FALSE;
+		return $this->outputResult($content);
 	}
 
-	function textbox($name,$label=NULL,$attrs=NULL) {
-		if (empty($name)) { return false; }
-		if (empty($attrs)) { $attrs=array(); }
-
-		$attrs['name'] = $name;
-		$attrs['type'] = 'textbox';
-		$input = $this->html->tag('input',NULL,$attrs);
-		$result = $this->wrapInput($input,$label);
-		$this->outputResult($result);
-
-		return $result;
+	function openInputs($attrs=array()) {
+		$content = '';
+		if ($this->inWrapper) {
+			$content = $this->html->closeTo('div.'.$this->inWrapper);
+		}
+		$this->inWrapper = 'clearfix';
+		$content = $this->html->open('div.clearfix',$attrs);
+		$content .= $this->html->open('div.input');
+		return $this->outputResult($content);
 	}
 
-	function password($name,$label=NULL,$attrs=NULL) {
-		if (empty($name)) { return false; }
-		if (empty($attrs)) { $attrs=array(); }
-
-		$attrs['name'] = $name;
-		$attrs['type'] = 'password';
-		$input = $this->html->tag('input',NULL,$attrs);
-		$result = $this->wrapInput($input,$label);
-		$this->outputResult($result);
-
-		return $result;
+	function closeInputs() {
+		if (!$this->inWrapper) { return; }
+		$content = $this->html->closeTo('div.'.$this->inWrapper);
+		$this->inWrapper = FALSE;
+		return $this->outputResult($content);
 	}
 
-	function checkbox($name,$label=NULL,$attrs=NULL) {
-		if (empty($name)) { return false; }
-		if (empty($attrs)) { $attrs=array(); }
-
-		$attrs['name'] = $name;
-		$attrs['type'] = 'checkbox';
-		$result = $this->openDiv('inputs');
-		$result .= $this->openDiv('input');
-		$input = $this->html->tag('input',NULL,$attrs);
-		if (!empty($label)) { $input .= $this->html->tag('span',$label); }	
-		$result .= $this->label($input);	
-		$result .= $this->closeDiv();
-		$result .= $this->closeDiv();
-
-		$this->outputResult($result);
-
-		return $result;
+	function textbox($name,$label='',$attrs=array()) {
+		return $this->inputTag('textbox',$name,$label,$attrs);
 	}
 
-	function radio($name,$label=NULL,$attrs=NULL) {
-		if (empty($name)) { return false; }
-		if (empty($attrs)) { $attrs=array(); }
-
-		$attrs['name'] = $name;
-		$attrs['type'] = 'radio';
-		$result = $this->openDiv('inputs');
-		$result .= $this->openDiv('input');
-		$input = $this->html->tag('input',NULL,$attrs);
-		if (!empty($label)) { $input .= $this->html->tag('span',$label); }	
-		$result .= $this->label($input);	
-		$result .= $this->closeDiv();
-		$result .= $this->closeDiv();
-
-		$this->outputResult($result);
-
-		return $result;
+	function password($name,$label='',$attrs=array()) {
+		return $this->inputTag('password',$name,$label,$attrs);
 	}
 
-	function hidden($name,$value,$attrs=NULL) {
-		if (empty($name) && !isset($value)) { return false; }
-		if (empty($attrs)) { $attrs=array(); }
-
-		$attrs['name'] = $name;
+	function radio($name,$value,$label='',$attrs=array()) {
 		$attrs['value'] = $value;
-		$attrs['type'] = 'hidden';
-		$result = $this->html->tag('input',NULL,$attrs);
-		$this->outputResult($result);
-
-		return $result;
+		if (array_key_exists($name,$this->data)	&& $this->data[$name]==$attrs['value']) {
+			$attrs['checked'] = 'checked';
+		}
+		return $this->inputTag('radio',$name,$label,$attrs);
 	}
 
-	function submit($label=NULL,$attrs=NULL) {
-		if (empty($attrs)) { $attrs=array(); }
+	function textarea($name,$label='',$attrs=array()) {
+		$value = array_key_exists($name,$this->data)
+			? $this->data[$name]
+			: '';
+		$attrs['name'] = $this->formatName($name);
+		$attrs['type'] = 'textbox';
+		$content = $this->html->tag('textarea',$value,$attrs);
+		return $this->outputResult($this->wrapInput($content,$label));
+	}
 
+	function checkbox($name,$label='',$attrs=array()) {
+		$checked_value = isset($attrs['value'])
+			? $attrs['value']
+			: '1';
+		if (array_key_exists($name,$this->data) && $this->data[$name]==$checked_value) {
+			$attrs['checked'] = 'checked';
+		}
+		$attrs['name'] = $this->formatName($name);
+		$attrs['type'] = 'hidden';
+		$attrs['value'] = $checked_value==='1' ? '0' : '';
+		$content = $this->html->tag('input',NULL,$attrs);
+		$attrs['type'] = 'checkbox';
+		$attrs['value'] = $checked_value;
+		$content .= $this->html->tag('input',NULL,$attrs);
+		return $this->outputResult($this->wrapInput($content,$label));
+	}
+
+	function hidden($name,$attrs=array()) {
+		if (array_key_exists($name,$this->data)) {
+			$attrs['value'] = $this->data[$name];
+		}
+		$attrs['name'] = $this->formatName($name);
+		$attrs['type'] = 'hidden';
+		return $this->outputResult($this->html->tag('input',NULL,$attrs));
+	}
+
+	function submit($label='',$attrs=array()) {
 		$attrs['type'] = 'submit';
 		if (!empty($label)) { $attrs['value'] = $label; }
-		$result = $this->html->tag('input',NULL,$attrs);
-		$this->outputResult($result);
-
-		return $result;
+		return $this->outputResult($this->wrapInput($this->html->tag('input',NULL,$attrs)));
 	}
 
-	function reset($label=NULL,$attrs=NULL) {
-		if (empty($attrs)) { $attrs=array(); }
-
+	function reset($label='',$attrs=array()) {
 		$attrs['type'] = 'reset';
 		if (!empty($label)) { $attrs['value'] = $label; }
-		$result = $this->html->tag('input',NULL,$attrs);
-		$this->outputResult($result);
-
-		return $result;
+		return $this->outputResult($this->wrapInput($this->html->tag('input',NULL,$attrs)));
 	}
 
-	function button($name,$label=NULL,$attrs=NULL) {
-		if (empty($name)) { return false; }
-		if (empty($attrs)) { $attrs=array(); }
-
-		if (!empty($name)) { $attrs['name'] = $name; }
+	function button($label='',$attrs=array()) {
 		$attrs['type'] = 'button';
 		if (!empty($label)) { $attrs['value'] = $label; }
-		$result = $this->html->tag('input',NULL,$attrs);
-		$this->outputResult($result);
-
-		return $result;
+		return $this->outputResult($this->wrapInput($this->html->tag('input',NULL,$attrs)));
 	}
 
-	function select($name,$options=NULL,$label=NULL,$attrs=NULL) {
-		if (empty($name)) { return false; }
-		if (empty($attrs)) { $attrs=array(); }
+	function select($name,$options=array(),$label='',$attrs=array()) {
+		$attrs['name'] = $this->formatName($name);
+		$content = $this->html->tag('select',$this->selectOptions($name,$options),$attrs);
+		return $this->outputResult($this->wrapInput($content,$label));
+	}
 
-		$attrs['name'] = $name;
-		
-		$content=array();
-		if (!empty($options)) {
-			foreach ($options as $opt) {
-				$opt[2]['value'] = $opt[0];
-				$content[] = $this->html->tag('option',$opt[1],$opt[2]);
+	function checkboxes($name,$options=array(),$label='',$attrs=array()) {
+		$oname = $this->formatName($name).'[]';
+		$content = $this->html->open('ul.inputs-list');
+		foreach($options as $o) {
+			if (sizeof($o)<2) { continue; }
+			if (!isset($o[2])) { $o[2] = array(); }
+			$o[2]['name'] = $oname;
+			$o[2]['type'] = 'checkbox';
+			$o[2]['value'] = $o[0];
+			if (array_key_exists($name,$this->data)
+				&& ($this->data[$name]==$o[0]
+					|| (is_array($this->data[$name])
+						&& in_array($o[0],$this->data[$name])
+					)
+				)
+			) {
+				$o[2]['checked'] = 'checked';
 			}
+			$content .= $this->html->open('li');
+			$content .= $this->html->open('label');
+			$content .= $this->html->tag('input','',$o[2]);
+			$content .= $this->html->tag('span',$o[1]);
+			$content .= $this->html->closeTo('li');
 		}
-
-		$input = $this->html->tag('select',implode('',$content),$attrs);
-		$result = $this->wrapInput($input,$label);
-		$this->outputResult($result);
-
-		return $result;
+		$content .= $this->html->closeTo('ul.inputs-list');
+		return $this->outputResult($this->wrapInput($content,$label));
 	}
 
-	protected function openDiv($class=NULL, $attrs=NULL) {
-		if (empty($attrs)) { $attrs=array(); }
-		if (!empty($class)) { $attrs['class'][] = $class; }
-
-		$result = $this->html->open('div',$attrs);
-
-		return $result;
+	function radios($name,$options=array(),$label='',$attrs=array()) {
+		$oname = $this->formatName($name);
+		$content = $this->html->open('ul.inputs-list');
+		foreach($options as $o) {
+			if (sizeof($o)<2) { continue; }
+			if (!isset($o[2])) { $o[2] = array(); }
+			$o[2]['name'] = $oname;
+			$o[2]['type'] = 'radio';
+			$o[2]['value'] = $o[0];
+			if (array_key_exists($name,$this->data) && $this->data[$name]==$o[0]) {
+				$o[2]['checked'] = 'checked';
+			}
+			$content .= $this->html->open('li');
+			$content .= $this->html->open('label');
+			$content .= $this->html->tag('input','',$o[2]);
+			$content .= $this->html->tag('span',$o[1]);
+			$content .= $this->html->closeTo('li');
+		}
+		$content .= $this->html->closeTo('ul.inputs-list');
+		return $this->outputResult($this->wrapInput($content,$label));
 	}
 
-	protected function closeDiv() {
-		$result = $this->html->closeTo('div');
-
-		return $result;
+	protected function inputTag($type,$name,$label='',$attrs=array()) {
+		if (array_key_exists($name,$this->data)) {
+			$attrs['value'] = $this->data[$name];
+		}
+		$attrs['name'] = $this->formatName($name);
+		$attrs['type'] = $type;
+		$content = $this->html->tag('input',NULL,$attrs);
+		return $this->outputResult($this->wrapInput($content,$label));
 	}
 
 	protected function label($content,$attrs=NULL) {
-		$result = $this->html->tag('label',$content,$attrs);
-
-		return $result;
+		return $this->html->tag('label',$content,$attrs);
 	}
 
 	protected function wrapInput($input=NULL,$label=NULL) {
-		$result = $this->openDiv('inputs');
-		if (!empty($label)) { $result .= $this->label($label); }
-		$result .= $this->openDiv('input');
-		if (!empty($input)) { $result .= $input; }
-		$result .= $this->closeDiv();
-		$result .= $this->closeDiv();
+		if ($this->inWrapper) { return $input; }
+		$content = $this->html->open('div.clearfix');
+		if (!empty($label)) { $content .= $this->label($label); }
+		$content .= $this->html->open('div.input');
+		if (!empty($input)) { $content .= $input; }
+		$content .= $this->html->closeTo('div.clearfix');
 
-		return $result;
+		return $content;
 	}
 
-	protected function outputResult($result) { if ($this->directOutput) echo $result; }
+	protected function selectOptions($name,$options=array()) {
+		if (empty($options) || !is_array($options)) { return ''; }
+		$content = '';
+		foreach ($options as $g => $o) {
+			if (is_array(reset($o))) {
+				$group_attrs = array();
+				if (!is_int($g)) { $group_attrs['label'] = $g; }
+				$content .= $this->html->tag(
+					'optgroup',
+					$this->selectOptions($name,$o),
+					$group_attrs
+				);
+			} else {
+				if (sizeof($o)<2) { continue; }
+				if (!isset($o[2])) { $o[2] = array(); }
+				$o[2]['value'] = $o[0];
+				if (array_key_exists($name,$this->data)
+					&& ($this->data[$name]==$o[0]
+						|| (is_array($this->data[$name])
+							&& in_array($o[0],$this->data[$name])
+						)
+					)
+				) {
+					$o[2]['selected'] = 'selected';
+				}
+				$content .= $this->html->tag('option',$o[1],$o[2]);
+			}
+		}
+		return $content;
+	}
+
+	protected function outputResult($content) { if ($this->directOutput) echo $content; return $content; }
 }
