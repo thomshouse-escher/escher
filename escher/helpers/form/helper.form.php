@@ -126,20 +126,12 @@ class Helper_form extends Helper {
 		return $this->outputResult($content);
 	}
 
-	function textbox($name,$label='',$attrs=array()) {
+	function text($name,$label='',$attrs=array()) {
 		return $this->inputTag('textbox',$name,$label,$attrs);
 	}
 
 	function password($name,$label='',$attrs=array()) {
 		return $this->inputTag('password',$name,$label,$attrs);
-	}
-
-	function radio($name,$value,$label='',$attrs=array()) {
-		$attrs['value'] = $value;
-		if (array_key_exists($name,$this->data)	&& $this->data[$name]==$attrs['value']) {
-			$attrs['checked'] = 'checked';
-		}
-		return $this->inputTag('radio',$name,$label,$attrs);
 	}
 
 	function textarea($name,$label='',$attrs=array()) {
@@ -162,10 +154,29 @@ class Helper_form extends Helper {
 		$attrs['name'] = $this->formatName($name);
 		$attrs['type'] = 'hidden';
 		$attrs['value'] = $checked_value==='1' ? '0' : '';
-		$content = $this->html->tag('input',NULL,$attrs);
+		$content = $this->html->open('ul.inputs-list');
+		$content .= $this->html->open('li');
+		$content .= $this->html->open('label');
+		$content .= $this->html->tag('input',NULL,$attrs);
 		$attrs['type'] = 'checkbox';
 		$attrs['value'] = $checked_value;
 		$content .= $this->html->tag('input',NULL,$attrs);
+		$content .= $this->html->closeTo('ul.inputs-list');
+		return $this->outputResult($this->wrapInput($content,$label));
+	}
+
+	function radio($name,$value,$label='',$attrs=array()) {
+		$attrs['name'] = $this->formatName($name);
+		$attrs['type'] = 'radio';
+		$attrs['value'] = $value;
+		if (array_key_exists($name,$this->data)	&& $this->data[$name]==$attrs['value']) {
+			$attrs['checked'] = 'checked';
+		}
+		$content = $this->html->open('ul.inputs-list');
+		$content .= $this->html->open('li');
+		$content .= $this->html->open('label');
+		$content .= $this->html->tag('input',NULL,$attrs);
+		$content .= $this->html->closeTo('ul.inputs-list');
 		return $this->outputResult($this->wrapInput($content,$label));
 	}
 
