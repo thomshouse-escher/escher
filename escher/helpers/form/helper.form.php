@@ -17,12 +17,17 @@
  * @package Escher
  */
 class Helper_form extends Helper {
+	protected $actionsClass = 'actions';
+	protected $inputsClass = 'clearfix';
+	protected $sidetextClass = 'help-inline';
+
 	protected $directOutput = FALSE;
 	protected $inForm = FALSE;
 	protected $inFieldset = FALSE;
 	protected $inWrapper = FALSE;
 	protected $nameFormat = '';
 	protected $data = array();
+	protected $inputStatus = array();
 	protected $html;
 
 	function __construct($args=NULL) {
@@ -40,6 +45,15 @@ class Helper_form extends Helper {
 		if (!is_array($data)) { return FALSE; }
 		$this->data = $data;
 		return TRUE;
+	}
+
+	function useInputStatus($bool=TRUE) {
+		if ($bool) {
+			$UI = Load::UI();
+			$this->inputStatus = $UI->getInputStatus();
+		} else {
+			$this->inputStatus = array();
+		}
 	}
 
 	function setNameFormat($format) {
@@ -96,8 +110,8 @@ class Helper_form extends Helper {
 		if ($this->inWrapper) {
 			$content = $this->html->closeTo('div.'.$this->inWrapper);
 		}
-		$this->inWrapper = 'actions';
-		$content .= $this->html->open('div.actions',$attrs);
+		$this->inWrapper = $this->actionsClass;
+		$content .= $this->html->open('div.'.$this->actionsClass,$attrs);
 		return $this->outputResult($content);
 	}
 
@@ -113,8 +127,8 @@ class Helper_form extends Helper {
 		if ($this->inWrapper) {
 			$content = $this->html->closeTo('div.'.$this->inWrapper);
 		}
-		$this->inWrapper = 'clearfix';
-		$content = $this->html->open('div.clearfix',$attrs);
+		$this->inWrapper = $this->inputsClass;
+		$content = $this->html->open('div.'.$this->inputsClass,$attrs);
 		$content .= $this->html->open('div.input');
 		return $this->outputResult($content);
 	}
@@ -126,25 +140,26 @@ class Helper_form extends Helper {
 		return $this->outputResult($content);
 	}
 
-	function text($name,$label='',$attrs=array()) {
-		return $this->inputTag('textbox',$name,$label,$attrs);
+	function text($name,$label='',$attrs=array(),$sidetext='') {
+		return $this->inputTag('textbox',$name,$label,$attrs,$sidetext);
 	}
 
-	function password($name,$label='',$attrs=array()) {
-		return $this->inputTag('password',$name,$label,$attrs);
+	function password($name,$label='',$attrs=array(),$sidetext='') {
+		return $this->inputTag('password',$name,$label,$attrs,$sidetext);
 	}
 
-	function textarea($name,$label='',$attrs=array()) {
+	function textarea($name,$label='',$attrs=array(),$sidetext='') {
 		$value = array_key_exists($name,$this->data)
 			? $this->data[$name]
 			: '';
 		$attrs['name'] = $this->formatName($name);
 		$attrs['type'] = 'textbox';
 		$content = $this->html->tag('textarea',$value,$attrs);
-		return $this->outputResult($this->wrapInput($content,$label));
+		$content .= $this->sidetext($sidetext);
+		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
 
-	function checkbox($name,$label='',$attrs=array()) {
+	function checkbox($name,$label='',$attrs=array(),$sidetext='',$flip=FALSE) {
 		$checked_value = isset($attrs['value'])
 			? $attrs['value']
 			: '1';
@@ -161,11 +176,13 @@ class Helper_form extends Helper {
 		$attrs['type'] = 'checkbox';
 		$attrs['value'] = $checked_value;
 		$content .= $this->html->tag('input',NULL,$attrs);
+		if ($flip) { $content .= $this->html->tag('span',$label); }
+		$content .= $this->sidetext($sidetext);
 		$content .= $this->html->closeTo('ul.inputs-list');
-		return $this->outputResult($this->wrapInput($content,$label));
+		return $this->outputResult($this->wrapInput($content,$flip?'':$label,$name));
 	}
 
-	function radio($name,$value,$label='',$attrs=array()) {
+	function radio($name,$value,$label='',$attrs=array(),$sidetext='',$flip=FALSE) {
 		$attrs['name'] = $this->formatName($name);
 		$attrs['type'] = 'radio';
 		$attrs['value'] = $value;
@@ -176,8 +193,10 @@ class Helper_form extends Helper {
 		$content .= $this->html->open('li');
 		$content .= $this->html->open('label');
 		$content .= $this->html->tag('input',NULL,$attrs);
+		if ($flip) { $content .= $this->html->tag('span',$label); }
+		$content .= $this->sidetext($sidetext);
 		$content .= $this->html->closeTo('ul.inputs-list');
-		return $this->outputResult($this->wrapInput($content,$label));
+		return $this->outputResult($this->wrapInput($content,$flip?'':$label,$name));
 	}
 
 	function hidden($name,$attrs=array()) {
@@ -207,10 +226,11 @@ class Helper_form extends Helper {
 		return $this->outputResult($this->wrapInput($this->html->tag('input',NULL,$attrs)));
 	}
 
-	function select($name,$options=array(),$label='',$attrs=array()) {
+	function select($name,$options=array(),$label='',$attrs=array(),$sidetext='') {
 		$attrs['name'] = $this->formatName($name);
 		$content = $this->html->tag('select',$this->selectOptions($name,$options),$attrs);
-		return $this->outputResult($this->wrapInput($content,$label));
+		$content .= $this->sidetext($sidetext);
+		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
 
 	function checkboxes($name,$options=array(),$label='',$attrs=array()) {
@@ -238,7 +258,7 @@ class Helper_form extends Helper {
 			$content .= $this->html->closeTo('li');
 		}
 		$content .= $this->html->closeTo('ul.inputs-list');
-		return $this->outputResult($this->wrapInput($content,$label));
+		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
 
 	function radios($name,$options=array(),$label='',$attrs=array()) {
@@ -260,30 +280,45 @@ class Helper_form extends Helper {
 			$content .= $this->html->closeTo('li');
 		}
 		$content .= $this->html->closeTo('ul.inputs-list');
-		return $this->outputResult($this->wrapInput($content,$label));
+		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
 
-	protected function inputTag($type,$name,$label='',$attrs=array()) {
+	protected function inputTag($type,$name,$label='',$attrs=array(),$sidetext='') {
+		list($attrs,$sidetext) = $this->checkInputStatus($name,$attrs,$sidetext);
 		if (array_key_exists($name,$this->data)) {
 			$attrs['value'] = $this->data[$name];
 		}
+
 		$attrs['name'] = $this->formatName($name);
 		$attrs['type'] = $type;
 		$content = $this->html->tag('input',NULL,$attrs);
-		return $this->outputResult($this->wrapInput($content,$label));
+		$content .= $this->sidetext($sidetext);
+		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
 
-	protected function label($content,$attrs=NULL) {
+	protected function sidetext($sidetext='') {
+		return $this->html->tag('span',$sidetext,
+			array('class'=>$this->sidetextClass)
+		);
+	}
+
+	protected function label($content,$attrs='') {
 		return $this->html->tag('label',$content,$attrs);
 	}
 
-	protected function wrapInput($input=NULL,$label=NULL) {
+	protected function wrapInput($input,$label='',$name='') {
 		if ($this->inWrapper) { return $input; }
-		$content = $this->html->open('div.clearfix');
-		if (!empty($label)) { $content .= $this->label($label); }
+		$attrs = array('class'=>array());
+		if (!empty($name) && array_key_exists($name,$this->inputStatus)) {
+			$attrs['class'][] = $this->inputStatus[$name]['status'];
+		}
+		$content = $this->html->open('div.'.$this->inputsClass,$attrs);
+		if (!empty($label)) {
+			$content .= $this->html->tag('label',$label);
+		}
 		$content .= $this->html->open('div.input');
-		if (!empty($input)) { $content .= $input; }
-		$content .= $this->html->closeTo('div.clearfix');
+		$content .= $input;
+		$content .= $this->html->closeTo('div.'.$this->inputsClass);
 
 		return $content;
 	}
@@ -319,5 +354,24 @@ class Helper_form extends Helper {
 		return $content;
 	}
 
-	protected function outputResult($content) { if ($this->directOutput) echo $content; return $content; }
+	protected function checkInputStatus($name,$attrs,$sidetext='') {
+		if (!array_key_exists($name,$this->inputStatus)) {
+			return array($attrs,$sidetext);
+		}
+		$status = $this->inputStatus[$name];
+		if (isset($attrs['class'])) {
+			$attrs['class'] = array_merge($attrs['class'],$status['status']);
+		} else {
+			$attrs['class'] = array($status['status']);
+		}
+		if (!empty($status['message'])) {
+			$sidetext = $status['message'];
+		}
+		return array($attrs,$sidetext);
+	}
+
+	protected function outputResult($content) {
+		if ($this->directOutput) { echo $content; }
+		return $content;
+	}
 }

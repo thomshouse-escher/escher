@@ -52,8 +52,8 @@ class Helper_html_xhtml extends Helper_html {
 			$tag = 'div';
 		}
 		// Merge selector classes & id into $attrs
-		if (isset($attrs['class']) && is_array($attrs['class'])) {
-			$attrs['class'] = array_merge($attrs['class'],$class);
+		if (isset($attrs['class'])) {
+			$attrs['class'] = array_merge((array)$attrs['class'],$class);
 		} else { $attrs['class'] = $class; }
 		if (!is_null($id)) { $attrs['id'] = $id; }
 		// Append to the stack of open tags
@@ -77,8 +77,8 @@ class Helper_html_xhtml extends Helper_html {
 			$tag = 'div';
 		}
 		// Merge selector classes & id into $attrs
-		if (isset($attrs['class']) && is_array($attrs['class'])) {
-			$attrs['class'] = array_merge($attrs['class'],$classes);
+		if (isset($attrs['class'])) {
+			$attrs['class'] = array_merge((array)$attrs['class'],$classes);
 		} else { $attrs['class'] = $classes; }
 		if (!is_null($id)) { $attrs['id'] = $id; }
 		// Render the tag
