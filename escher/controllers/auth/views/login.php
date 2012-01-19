@@ -1,22 +1,14 @@
-<h1>Sign In</h1>
-<form method="POST" class="logregform loginform">
-	<fieldset>
-		<div class="inputs">
-			<label>Username:</label>
-			<div class="input"><input type="text" name="username" /></div>
-		</div>
-		<div class="inputs">
-			<label>Password:</label>
-			<div class="input"><input type="password" name="password" /></div>
-		</div>
-		<div class="inputs">
-			<div class="input">
-				<label>
-					<input type="checkbox" name="persist" value="1" />
-					<span>Stay signed in</span>
-				</label>
-			</div>
-		</div>
-		<div class="actions"><input class="btn primary" type="submit" value="Sign in" /></div>
-	</fieldset>
-</form>
+<?php
+
+$HTML->tag('h1','Sign In');
+
+$FORM->open(array('method'=>'POST','class'=>'logregform loginform'));
+
+$FORM->openFieldset();
+$FORM->text('username','Username:');
+$FORM->password('password','Password:');
+$FORM->checkbox('persist','Stay signed in',NULL,NULL,TRUE);
+
+$FORM->openActions();
+$FORM->submit('Sign in',array('class'=>'btn primary'));
+$FORM->close();

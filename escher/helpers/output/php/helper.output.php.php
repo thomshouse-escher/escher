@@ -27,8 +27,10 @@ class Helper_output_php extends Helper_output {
 		$_require = 'escher_acl_require';
 		$_unload = 'escher_clear_unload';
 		$HTML = Load::Helper('html','auto');
+		$FORM = Load::Helper('form');
 		$UI = Load::UI();
 		$HTML->directOutput(TRUE);
+		$FORM->directOutput(TRUE);
 		$UI->directOutput(TRUE);
 
 		// Assign and filter vars

@@ -66,52 +66,54 @@ class Controller_auth extends Controller {
 		if (Load::User()) { $headers->redirect(); }
 		$CFG = Load::Config();
 		$input = Load::Input();
-		$this->data = $data = $input->post;
-		$errors = array();
+		$UI = Load::UI();
+		$this->data['post'] = $data = $input->post;
+		$error = FALSE;
 		if (!empty($input->post)) {
 			$hooks = Load::Hooks();
 			if (empty($data['username'])) {
-				$headers->addNotification('You must specify a username.','error');
-				$errors[] = 'username';
+				//$headers->addNotification('You must specify a username.','error');
+				$UI->setInputStatus('username','error','Please choose a username');
+				$error = TRUE;
 			} elseif (in_array(strtolower($data['username']), $CFG['reserved_usernames'])
 					|| in_array($data['username'], $CFG['reserved_usernames'])) {
-				$headers->addNotification('You have selected an invalid username.','error');
-				unset($data['username']);
-				$errors[] = 'username';
+				//$headers->addNotification('You have selected an invalid username.','error');
+				$UI->setInputStatus('username','error','Invalid username');
+				$error = TRUE;
 			} elseif ($user = Load::User(array('username'=>$data['username']))) {
-				$headers->addNotification('The username you have selected is already in use.
-					Please try a different username.','error');
-				unset($data['username']);
-				$errors[] = 'username';
+				//$headers->addNotification('The username you have selected is already in use.
+				//	Please try a different username.','error');
+				$UI->setInputStatus('username','error','Not available');
+				$error = TRUE;
 			}
 			if (empty($data['email'])) {
-				$headers->addNotification('You must specify an email address.','error');
-				$errors[] = 'email';
+				//$headers->addNotification('You must specify an email address.','error');
+				$UI->setInputStatus('email','error','Email required');
+				$error = TRUE;
 			} elseif ($user = Load::User(array('email'=>$data['email']))) {
-				$headers->addNotification('The email you provided is already in use.','error');
-				unset($data['email']);
-				$errors[] = 'email';
+				//$headers->addNotification('The email you provided is already in use.','error');
+				$UI->setInputStatus('email','error','This email is already registered');
+				$error = TRUE;
 			}
 			if (empty($data['password'])) {
-				$headers->addNotification('Please select a password.','error');
-				$errors[] = 'password';
+				//$headers->addNotification('Please select a password.','error');
+				$UI->setInputStatus('password','error','Please choose a password');
+				$error = TRUE;
 			}
 			
 			$captcha = $hooks->runEvent('captcha_verify');
 			if (!empty($captcha)) {
 				foreach($captcha as $c) {
-					if ($c===FALSE) {
-						$errors[] = 'captcha';
-					}
+					if ($c===FALSE) { $error = TRUE; }
 				}
 			}
 
 			if (empty($data['agree_terms'])) {
 				$headers->addNotification('You must agree to the terms of service to register for this website.','error');
-				$errors[] = 'agree-terms';
+				$error = TRUE;
 			}
 
-			if (empty($errors)) {
+			if (!$error) {
 				$vars = $input->post;
 				if (file_exists('terms.txt')) {
 					$vars['agreed_terms'] = md5_file('terms.txt');
@@ -122,7 +124,6 @@ class Controller_auth extends Controller {
 				$headers->redirect('~/');
 			}
 		}
-		$this->data['errors'] = $errors;
 	}
 	
 	function action_lockout($args) {
