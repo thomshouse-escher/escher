@@ -1,4 +1,9 @@
-<div class="blog-tagline"><?php $L('Tagline:'); ?> 
-<input type="text" name="<?php $E($fieldname_prefix.'tagline'); ?>" value="<?php $E(@$tagline); ?>" />
-</div>
-<input type="hidden" name="<?php $E($fieldname_prefix.'model_type'); ?>" value="<?php $E(@$model_type); ?>" />
+<?php
+	$FORM->setNameFormat($nameformat);
+	$FORM->setData($model);
+	$FORM->text('tagline','Tagline:');
+	$FORM->hidden('model_type',
+		array(
+			'value' => @$model_type
+		)
+	);

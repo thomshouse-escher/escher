@@ -47,21 +47,21 @@ abstract class Controller_Series extends Controller {
 	
 	function manage_edit($args) {
 		$page = Load::Model($this->seriesType,@$this->id);
-		$input = Load::Input();
 		$lockout = Load::Lockout();
 		if ($lockout->isLocked($page)) {
 			$headers = Load::Headers();
 			$headers->addNotification('This page is currently being edited by another user.','error');
 			$headers->redirect('./');
 		}
-		if (!empty($input->post)) {
-			$headers = Load::Headers();
-			$page->parseFormData($input->post);
+		if (!empty($this->input->post)) {
+			$uniqid=NULL;
+			if (empty($page->id)) { $uniqid = key($this->input->post['model'][$page->_m()]['new']); }
+			$page->parseInput($uniqid);
 			$page->touch();
 			if ($page->save()) {
-				$headers->redirect('./');
+				$this->headers->redirect('./');
 			} else {
-				$headers->addNotification('Page data could not be saved.','error');
+				$this->headers->addNotification('Page data could not be saved.','error');
 			}
 		}
 		if (!empty($this->id)) { $lockout->lock($page); }
@@ -98,16 +98,19 @@ abstract class Controller_Series extends Controller {
 	}
 	
 	function manage_edit_entry($args) {
-		$input = Load::Input();
 		$entry = Load::Model($this->entryType,@$args[0]);
 		if (!empty($entry->series_type) && !empty($entry->series_id) && ($entry->series_type != $this->seriesType || $entry->series_id != $this->id)) {
 			Load::Error('403');
 		}
-		if (!empty($input->post)) {
-			$entry->parseFormData($input->post);
+		if (!empty($this->input->post)) {
+			$uniqid=NULL;
+			if (empty($entry->id)) { $uniqid = key($this->input->post['model'][$entry->_m()]['new']); }
+			$entry->parseInput($uniqid);
 			$model = Load::Model($entry->model_type,@$entry->model_id);
-			$model->parseFormData($input->post);
-			if (!empty($input->post['delete_entry'])) {
+			$uniqid=NULL;
+			if (empty($model->id)) { $uniqid = key($this->input->post['model'][$model->_m()]['new']); }
+			$model->parseInput($uniqid);
+			if (!empty($this->input->post['delete_entry'])) {
 				$entry->delete();
 				$model->delete();
 				$series = Load::Model($this->seriesType,$this->id);

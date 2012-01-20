@@ -1,4 +1,4 @@
-<?php Load::core('patterns/Model_Entry.php');
+<?php Load::core('patterns/model.entry.php');
 
 class Model_blog_entry extends Entry {
 	protected $_schema = array('id'=>'int','title'=>'varchar',

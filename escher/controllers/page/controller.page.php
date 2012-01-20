@@ -12,35 +12,36 @@ class Controller_page extends Controller {
 	
 	function manage_edit($args) {
 		$page = Load::Model('page',@$this->id);
-		$input = Load::Input();
 		$lockout = Load::Lockout();
 		if ($lockout->isLocked($page)) {
-			$headers = Load::Headers();
-			$headers->addNotification('This page is currently being edited by another user.','error');
-			$headers->redirect('./');
+			$this->headers->addNotification('This page is currently being edited by another user.','error');
+			$this->headers->redirect('./');
 		}
-		if (!empty($input->post)) {
-			$headers = Load::Headers();
-			if (!empty($input->post['discard_draft'])) {
+		if (!empty($this->input->post)) {
+			if (!empty($this->input->post['discard_draft'])) {
 				unset($page->draft);
 				$page->save();
-				$headers->addNotification('Saved draft for this page has been discarded.');
-				$headers->redirect('./edit/');
+				$this->headers->addNotification('Saved draft for this page has been discarded.');
+				$this->headers->redirect('./edit/');
 			}
-			if (!empty($input->post['save_draft'])) {
+			if (!empty($this->input->post['save_draft'])) {
 				$draft = clone($page);
 				unset($draft->draft);
-				$draft->parseFormData($input->post);
+				$uniqid=NULL;
+				if (empty($draft->id)) { $uniqid = key($this->input->post['model'][$draft->_m()]['new']); }
+				$draft->parseInput($uniqid);
 				$page->draft = serialize($draft);
 			} else {
 				unset($page->draft);
-				$page->parseFormData($input->post);
+				$uniqid=NULL;
+				if (empty($page->id)) { $uniqid = key($this->input->post['model'][$page->_m()]['new']); }
+				$page->parseInput($uniqid);
 			}
 			$page->touch();
 			if ($page->save()) {
-				$headers->redirect('./');
+				$this->headers->redirect('./');
 			} else {
-				$headers->addNotification('Page data could not be saved.','error');
+				$this->headers->addNotification('Page data could not be saved.','error');
 			}
 		}
 		if (!empty($this->id)) { $lockout->lock($page); }

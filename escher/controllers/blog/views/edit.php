@@ -1,7 +1,19 @@
-<form method="POST" onsubmit="<?php $E($_unload()); ?>">
-	<div><?php $F($form,'decode'); ?></div>
-	<p>
-		<input type="submit" value="<?php $L('Save'); ?>" />
-		<input type="button" value="<?php $L('Cancel'); ?>" onclick="<?php $E($_unload()."window.location='$current_path';"); ?>" />
-	</p>
-</form>
+<?php
+	$FORM->open(
+		array(
+			'method' => 'POST',
+			'onsubmit' => $_unload()
+		)
+	);
+	$FORM->openFieldset();
+	$F($form,'decode');
+	$FORM->openActions();
+	$FORM->submit('Save');
+	$FORM->button('Cancel',
+		array(
+			'onclick' => $_unload()."window.location='$current_path';"
+		)
+	);
+	$FORM->closeActions();
+	$FORM->closeFieldset();
+	$FORM->close();

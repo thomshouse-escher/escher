@@ -169,27 +169,22 @@ abstract class EscherModel extends EscherObject {
 	}
 
 	// Iterates through an associative array for namespaced form fields and assigns data for this object
-	function parseFormData($data,$uniqid=NULL) {
-		if (isset($this->id)) {
-			$regex = "/^{$this->_m()}_{$this->id}_(.+)$/";
-		} elseif (!is_null($uniqid)) {
-			$regex = "/^{$this->_m()}_{$uniqid}_(.+)$/";
-		} else {
-			$fields = array_keys($data);
-			foreach ($fields as $k) {
-				if (preg_match("/^({$this->_m()}_new[^_]+)_/",$k,$match)) {
-					$regex = "/^{$match[1]}_(.+)$/";
-					break;
-				}
+	function parseInput($uniqid=NULL) {
+		$input = Load::Input();
+		if (!empty($this->id)) {
+			if (!empty($input->post['model'][$this->_m()][$this->id])) {
+				$data = $input->post['model'][$this->_m()][$this->id];
+			} else {
+				return false;
 			}
-			if (!isset($regex)) { return false; }
+		} elseif (!is_null($uniqid)
+			&& !empty($input->post['model'][$this->_m()]['new'][$uniqid])
+		) {
+			$data = $input->post['model'][$this->_m()]['new'][$uniqid];
+		} else {
+			return false;
 		}
-		$inputs = preg_grep($regex,array_keys($data));
-		if (empty($inputs)) { return false; }
-		foreach($inputs as $i) {
-			$k = preg_replace($regex,"$1",$i);
-			$this->$k = $data[$i];
-		}
+		$this->assignVars($data);
 		return true;
 	}
 
@@ -276,8 +271,8 @@ abstract class EscherModel extends EscherObject {
 	// Display a view for this model, using provided data or object data
 	final function display($view,$data=NULL,$type=NULL) {
 		if (is_null($data)) {
-			$data = get_object_vars($this);
-			$data['fieldname_prefix'] = $this->_m().'_'.(isset($this->id) ? $this->id : 'new'.uniqid()).'_';
+			$data['model'] = get_object_vars($this);
+			$data['nameformat'] = !empty($this->id) ? "model[{$this->_m()}][{$this->id}][%s]" : "model[{$this->_m()}][new][".uniqid()."][%s]";
 		}
 		if (is_null($type)) { $type = $this->_output_type; }
 		$out = Load::Output($type,$this);
