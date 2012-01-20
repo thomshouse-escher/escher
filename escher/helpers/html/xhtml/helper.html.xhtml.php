@@ -56,6 +56,7 @@ class Helper_html_xhtml extends Helper_html {
 			$attrs['class'] = array_merge((array)$attrs['class'],$class);
 		} else { $attrs['class'] = $class; }
 		if (!is_null($id)) { $attrs['id'] = $id; }
+		if (empty($attrs['class'])) { unset($attrs['class']); }
 		// Append to the stack of open tags
 		$this_tag = array('tag' => $rawtag,'id' => NULL,'class' => array());
 		if (isset($attrs['id'])) { $this_tag['id'] = $attrs['id']; }
@@ -81,6 +82,7 @@ class Helper_html_xhtml extends Helper_html {
 			$attrs['class'] = array_merge((array)$attrs['class'],$classes);
 		} else { $attrs['class'] = $classes; }
 		if (!is_null($id)) { $attrs['id'] = $id; }
+		if (empty($attrs['class'])) { unset($attrs['class']); }
 		// Render the tag
 		if (in_array($tag,$this->selfClosingTags)) {
 			$result = $this->renderOpeningTag($tag,$attrs,TRUE);

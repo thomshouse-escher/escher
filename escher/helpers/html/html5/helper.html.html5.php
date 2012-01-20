@@ -34,6 +34,7 @@ class Helper_html_html5 extends Helper_html {
 	}
 
 	function open($selector,$attrs=array()) {
+		$class = array();
 		// Parse the selector
 		extract($this->parseSelector($selector));
 		// If this is an HTML5 layout tag, define it as a class
@@ -45,6 +46,7 @@ class Helper_html_html5 extends Helper_html {
 			$attrs['class'] = array_merge((array)$attrs['class'],$class);
 		} else { $attrs['class'] = $class; }
 		if (!is_null($id)) { $attrs['id'] = $id; }
+		if (empty($attrs['class'])) { unset($attrs['class']); }
 		// Append to the stack of open tags
 		$this_tag = array('tag' => $tag,'id' => NULL,'class' => array());
 		if (isset($attrs['id'])) { $this_tag['id'] = $attrs['id']; }
@@ -57,18 +59,19 @@ class Helper_html_html5 extends Helper_html {
 	}
 
 	function tag($selector,$contents=NULL,$attrs=array()) {
-		$classes=array();
+		$class=array();
 		// Parse the selector
 		extract($this->parseSelector($selector));
 		// If this is an HTML5 layout tag, define it as a class
 		if (in_array($tag,$this->html5LayoutTags)) {
-			$classes[] = 'html5-'.$tag;
+			$class[] = 'html5-'.$tag;
 		}
 		// Merge selector classes & id into $attrs
 		if (isset($attrs['class'])) {
-			$attrs['class'] = array_merge((array)$attrs['class'],$classes);
-		} else { $attrs['class'] = $classes; }
+			$attrs['class'] = array_merge((array)$attrs['class'],$class);
+		} else { $attrs['class'] = $class; }
 		if (!is_null($id)) { $attrs['id'] = $id; }
+		if (empty($attrs['class'])) { unset($attrs['class']); }
 		// Render the tag
 		if (in_array($tag,$this->selfClosingTags)) {
 			$result = $this->renderOpeningTag($tag,$attrs,TRUE);

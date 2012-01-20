@@ -141,7 +141,7 @@ class Helper_form extends Helper {
 	}
 
 	function text($name,$label='',$attrs=array(),$sidetext='') {
-		return $this->inputTag('textbox',$name,$label,$attrs,$sidetext);
+		return $this->inputTag('text',$name,$label,$attrs,$sidetext);
 	}
 
 	function password($name,$label='',$attrs=array(),$sidetext='') {

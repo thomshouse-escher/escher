@@ -38,12 +38,12 @@ abstract class Helper_html extends Helper {
 	protected function renderOpeningTag($tag,$attrs,$close=FALSE) {
 		$result = "<$tag";
 		foreach($attrs as $a => $v) {
-			if (!empty($v)) {
-				if ($a=='class') {
-					$result .= ' class="'.implode(' ',$v).'"';
-				} else {
-					$result .= " $a=\"$v\"";
-				}
+			if (is_null($v)) {
+				$result .= " $a";
+			} elseif ($a=='class') {
+				$result .= ' class="'.implode(' ',$v).'"';
+			} else {
+				$result .= " $a=\"$v\"";
 			}
 		}
 		$result .= $close ? ' />' : '>';
