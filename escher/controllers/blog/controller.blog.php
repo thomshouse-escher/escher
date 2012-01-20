@@ -1,4 +1,4 @@
-<?php Load::core('patterns/Controller_Series.php');
+<?php Load::core('patterns/controller.series.php');
 
 class Controller_blog extends Controller_Series {
 	protected $allowedModelTypes = array('article');

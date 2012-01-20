@@ -1,2 +1,14 @@
-<div class="blog-title"><?php $L('Title:'); ?> <input style="width: 85%;" type="text" name="<?php $E($fieldname_prefix.'title'); ?>" value="<?php $E(@$title); ?>" /></div>
-<div class="blog-description"><textarea class="<?php $E(implode(' ',$H('rte_classname'))); ?>" style="width: 95%; height: 18em;" id="<?php $E($fieldname_prefix.'description'); ?>" name="<?php $E($fieldname_prefix.'description'); ?>"><?php $E(@$description); ?></textarea></div>
+<?php
+	$FORM->setNameFormat($nameformat);
+	$FORM->setData($model);
+	$FORM->text('title','Title:', 
+		array(
+			'style' => 'width: 85%;',
+		)
+	);
+	$FORM->textarea('description',NULL,
+		array(
+			'style' => 'width: 95%; height: 18em;',
+			'class' => implode(' ',$H('rte_classname')),
+		)
+	);
