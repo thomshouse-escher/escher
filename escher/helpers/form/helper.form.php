@@ -360,7 +360,7 @@ class Helper_form extends Helper {
 		}
 		$status = $this->inputStatus[$name];
 		if (isset($attrs['class'])) {
-			$attrs['class'] = array_merge($attrs['class'],$status['status']);
+			$attrs['class'] = array_merge((array)$attrs['class'],(array)$status['status']);
 		} else {
 			$attrs['class'] = array($status['status']);
 		}
