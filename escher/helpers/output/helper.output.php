@@ -4,6 +4,7 @@ abstract class Helper_output extends Helper {
 	public $extension = '';
 	public $var_filter = 'encode';
 	protected $assigned_vars = array();
+	protected $modelVars = array();
 	protected $path;
 
 	abstract function fetch($filename);
@@ -24,6 +25,10 @@ abstract class Helper_output extends Helper {
 		if (is_array($arr)) {
 			$this->assigned_vars = array_merge($this->assigned_vars,$arr);
 		}
+	}
+
+	function assignModelVars($model=NULL,$nameFormat='') {
+		$this->modelVars = empty($model) ? array() : array($model,$nameFormat);
 	}
 	
 	function assignReservedVars() {

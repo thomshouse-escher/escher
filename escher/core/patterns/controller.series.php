@@ -54,9 +54,7 @@ abstract class Controller_Series extends Controller {
 			$headers->redirect('./');
 		}
 		if (!empty($this->input->post)) {
-			$uniqid=NULL;
-			if (empty($page->id)) { $uniqid = key($this->input->post['model'][$page->_m()]['new']); }
-			$page->parseInput($uniqid);
+			$page->parseInput();
 			$page->touch();
 			if ($page->save()) {
 				$this->headers->redirect('./');
@@ -103,13 +101,9 @@ abstract class Controller_Series extends Controller {
 			Load::Error('403');
 		}
 		if (!empty($this->input->post)) {
-			$uniqid=NULL;
-			if (empty($entry->id)) { $uniqid = key($this->input->post['model'][$entry->_m()]['new']); }
-			$entry->parseInput($uniqid);
+			$entry->parseInput();
 			$model = Load::Model($entry->model_type,@$entry->model_id);
-			$uniqid=NULL;
-			if (empty($model->id)) { $uniqid = key($this->input->post['model'][$model->_m()]['new']); }
-			$model->parseInput($uniqid);
+			$model->parseInput();
 			if (!empty($this->input->post['delete_entry'])) {
 				$entry->delete();
 				$model->delete();

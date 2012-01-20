@@ -7,6 +7,8 @@ abstract class EscherModel extends EscherObject {
 	protected $_content = array();
 	protected $_output_type = 'php';
 
+	protected static $_parsedNew = array();
+
 	public function __construct($key=NULL) {
 		parent::__construct();
 		// Load hooks for metadata/content
@@ -181,6 +183,13 @@ abstract class EscherModel extends EscherObject {
 			&& !empty($input->post['model'][$this->_m()]['new'][$uniqid])
 		) {
 			$data = $input->post['model'][$this->_m()]['new'][$uniqid];
+		} elseif (!empty($input->post['model'][$this->_m()]['new'])) {
+			$uniqid = reset(array_diff(
+				array_keys($input->post['model'][$this->_m()]['new']),
+				static::$_parsedNew
+			));
+			static::$_parsedNew[] = $uniqid;
+			$data = $input->post['model'][$this->_m()]['new'][$uniqid];
 		} else {
 			return false;
 		}
@@ -270,13 +279,15 @@ abstract class EscherModel extends EscherObject {
 
 	// Display a view for this model, using provided data or object data
 	final function display($view,$data=NULL,$type=NULL) {
-		if (is_null($data)) {
-			$data['model'] = get_object_vars($this);
-			$data['nameformat'] = !empty($this->id) ? "model[{$this->_m()}][{$this->id}][%s]" : "model[{$this->_m()}][new][".uniqid()."][%s]";
-		}
 		if (is_null($type)) { $type = $this->_output_type; }
 		$out = Load::Output($type,$this);
 		$out->assignVars($data);
+		if (is_null($data)) {
+			$nameFormat = !empty($this->id)
+				? "model[{$this->_m()}][{$this->id}][%s]"
+				: "model[{$this->_m()}][new][".uniqid()."][%s]";
+			$out->assignModelVars($this,$nameFormat);
+		}
 		return $out->displayModelView($this,$view);
 	}
 

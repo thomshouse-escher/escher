@@ -28,6 +28,10 @@ class Helper_output_php extends Helper_output {
 		$_unload = 'escher_clear_unload';
 		$HTML = Load::Helper('html','auto');
 		$FORM = Load::Helper('form');
+		if (!empty($this->modelVars)) {
+			$FORM->setData((array)$this->modelVars[0]);
+			$FORM->setNameFormat($this->modelVars[1]);
+		}
 		$UI = Load::UI();
 		$HTML->directOutput(TRUE);
 		$FORM->directOutput(TRUE);

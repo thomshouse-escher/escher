@@ -24,20 +24,14 @@ class Controller_page extends Controller {
 				$this->headers->addNotification('Saved draft for this page has been discarded.');
 				$this->headers->redirect('./edit/');
 			}
+			$page->parseInput();
+			unset($page->draft);
 			if (!empty($this->input->post['save_draft'])) {
 				$draft = clone($page);
-				unset($draft->draft);
-				$uniqid=NULL;
-				if (empty($draft->id)) { $uniqid = key($this->input->post['model'][$draft->_m()]['new']); }
-				$draft->parseInput($uniqid);
 				$page->draft = serialize($draft);
 			} else {
-				unset($page->draft);
-				$uniqid=NULL;
-				if (empty($page->id)) { $uniqid = key($this->input->post['model'][$page->_m()]['new']); }
-				$page->parseInput($uniqid);
+				$page->touch();
 			}
-			$page->touch();
 			if ($page->save()) {
 				$this->headers->redirect('./');
 			} else {
