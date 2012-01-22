@@ -19,6 +19,7 @@
 class Helper_form extends Helper {
 	protected $actionsClass = 'actions';
 	protected $inputsClass = 'clearfix';
+	protected $blocktextClass = 'help-block';
 	protected $sidetextClass = 'help-inline';
 
 	protected $directOutput = FALSE;
@@ -122,7 +123,8 @@ class Helper_form extends Helper {
 		return $this->outputResult($content);
 	}
 
-	function openInputs($attrs=array()) {
+	function openInputs($attrs=array(),$name='') {
+		$this->checkInputStatus($name,$attrs,$helptext);
 		$content = '';
 		if ($this->inWrapper) {
 			$content = $this->html->closeTo('div.'.$this->inWrapper);
@@ -133,9 +135,16 @@ class Helper_form extends Helper {
 		return $this->outputResult($content);
 	}
 
-	function closeInputs() {
+	function closeInputs($name='') {
 		if (!$this->inWrapper) { return; }
-		$content = $this->html->closeTo('div.'.$this->inWrapper);
+		$content = '';
+		if (!empty($name)) {
+			$this->checkInputStatus($name,$attrs,$blocktext);
+			if (!empty($blocktext)) {
+				$content .= $this->_blocktext($blocktext);
+			}
+		}
+		$content .= $this->html->closeTo('div.'.$this->inWrapper);
 		$this->inWrapper = FALSE;
 		return $this->outputResult($content);
 	}
@@ -148,18 +157,20 @@ class Helper_form extends Helper {
 		return $this->inputTag('password',$name,$label,$attrs,$sidetext);
 	}
 
-	function textarea($name,$label='',$attrs=array(),$sidetext='') {
+	function textarea($name,$label='',$attrs=array(),$blocktext='') {
+		$this->checkInputStatus($name,$attrs,$blocktext);
 		$value = array_key_exists($name,$this->data)
 			? $this->data[$name]
 			: '';
 		$attrs['name'] = $this->formatName($name);
 		$attrs['type'] = 'textbox';
 		$content = $this->html->tag('textarea',$value,$attrs);
-		$content .= $this->sidetext($sidetext);
+		$content .= $this->_blocktext($blocktext);
 		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
 
-	function checkbox($name,$label='',$attrs=array(),$sidetext='',$flip=FALSE) {
+	function checkbox($name,$label='',$attrs=array(),$helptext='',$inline=TRUE) {
+		$this->checkInputStatus($name,$attrs,$helptext);
 		$checked_value = isset($attrs['value'])
 			? $attrs['value']
 			: '1';
@@ -176,27 +187,14 @@ class Helper_form extends Helper {
 		$attrs['type'] = 'checkbox';
 		$attrs['value'] = $checked_value;
 		$content .= $this->html->tag('input',NULL,$attrs);
-		if ($flip) { $content .= $this->html->tag('span',$label); }
-		$content .= $this->sidetext($sidetext);
-		$content .= $this->html->closeTo('ul.inputs-list');
-		return $this->outputResult($this->wrapInput($content,$flip?'':$label,$name));
-	}
-
-	function radio($name,$value,$label='',$attrs=array(),$sidetext='',$flip=FALSE) {
-		$attrs['name'] = $this->formatName($name);
-		$attrs['type'] = 'radio';
-		$attrs['value'] = $value;
-		if (array_key_exists($name,$this->data)	&& $this->data[$name]==$attrs['value']) {
-			$attrs['checked'] = 'checked';
+		if ($inline) {
+			$content .= $this->html->tag('span',$label);
+			$content .= $this->_blocktext($helptext);
+		} else {
+			$content .= $this->_sidetext($helptext);
 		}
-		$content = $this->html->open('ul.inputs-list');
-		$content .= $this->html->open('li');
-		$content .= $this->html->open('label');
-		$content .= $this->html->tag('input',NULL,$attrs);
-		if ($flip) { $content .= $this->html->tag('span',$label); }
-		$content .= $this->sidetext($sidetext);
 		$content .= $this->html->closeTo('ul.inputs-list');
-		return $this->outputResult($this->wrapInput($content,$flip?'':$label,$name));
+		return $this->outputResult($this->wrapInput($content,$inline?'':$label,$name));
 	}
 
 	function hidden($name,$attrs=array()) {
@@ -226,14 +224,20 @@ class Helper_form extends Helper {
 		return $this->outputResult($this->wrapInput($this->html->tag('input',NULL,$attrs)));
 	}
 
-	function select($name,$options=array(),$label='',$attrs=array(),$sidetext='') {
+	function select($name,$options=array(),$label='',$attrs=array(),$helptext='') {
+		$this->checkInputStatus($name,$attrs,$helptext);
 		$attrs['name'] = $this->formatName($name);
 		$content = $this->html->tag('select',$this->selectOptions($name,$options),$attrs);
-		$content .= $this->sidetext($sidetext);
+		if (!empty($attrs['multiple'])) {
+			$content .= $this->_blocktext($helptext);
+		} else {
+			$content .= $this->_sidetext($helptext);
+		}
 		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
 
-	function checkboxes($name,$options=array(),$label='',$attrs=array()) {
+	function checkboxes($name,$options=array(),$label='',$attrs=array(),$blocktext='') {
+		$this->checkInputStatus($name,$attrs,$blocktext);
 		$oname = $this->formatName($name).'[]';
 		$content = $this->html->open('ul.inputs-list');
 		foreach($options as $o) {
@@ -261,7 +265,8 @@ class Helper_form extends Helper {
 		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
 
-	function radios($name,$options=array(),$label='',$attrs=array()) {
+	function radios($name,$options=array(),$label='',$attrs=array(),$blocktext='') {
+		$this->checkInputStatus($name,$attrs,$blocktext);
 		$oname = $this->formatName($name);
 		$content = $this->html->open('ul.inputs-list');
 		foreach($options as $o) {
@@ -280,11 +285,20 @@ class Helper_form extends Helper {
 			$content .= $this->html->closeTo('li');
 		}
 		$content .= $this->html->closeTo('ul.inputs-list');
+		$content .= $this->_blocktext($blocktext);
 		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
 
+	function sideText($text) {
+		return $this->outputResult($this->wrapInput($this->_sidetext($text)));
+	}
+
+	function blockText($text) {
+		return $this->outputResult($this->wrapInput($this->_blocktext($text)));
+	}
+
 	protected function inputTag($type,$name,$label='',$attrs=array(),$sidetext='') {
-		list($attrs,$sidetext) = $this->checkInputStatus($name,$attrs,$sidetext);
+		$this->checkInputStatus($name,$attrs,$sidetext);
 		if (array_key_exists($name,$this->data)) {
 			$attrs['value'] = $this->data[$name];
 		}
@@ -292,13 +306,19 @@ class Helper_form extends Helper {
 		$attrs['name'] = $this->formatName($name);
 		$attrs['type'] = $type;
 		$content = $this->html->tag('input',NULL,$attrs);
-		$content .= $this->sidetext($sidetext);
+		$content .= $this->_sidetext($sidetext);
 		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
 
-	protected function sidetext($sidetext='') {
-		return $this->html->tag('span',$sidetext,
+	protected function _sidetext($text='') {
+		return $this->html->tag('span',$text,
 			array('class'=>$this->sidetextClass)
+		);
+	}
+
+	protected function _blocktext($text='') {
+		return $this->html->tag('div',$text,
+			array('class'=>$this->blocktextClass)
 		);
 	}
 
@@ -327,6 +347,7 @@ class Helper_form extends Helper {
 		if (empty($options) || !is_array($options)) { return ''; }
 		$content = '';
 		foreach ($options as $g => $o) {
+			iF (!is_array($o)) { $o = array($o,$o); }
 			if (is_array(reset($o))) {
 				$group_attrs = array();
 				if (!is_int($g)) { $group_attrs['label'] = $g; }
@@ -354,7 +375,7 @@ class Helper_form extends Helper {
 		return $content;
 	}
 
-	protected function checkInputStatus($name,$attrs,$sidetext='') {
+	protected function checkInputStatus($name,&$attrs,&$sidetext) {
 		if (!array_key_exists($name,$this->inputStatus)) {
 			return array($attrs,$sidetext);
 		}

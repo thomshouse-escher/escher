@@ -1,6 +1,6 @@
 <?php
 
-$HTML->tag('h1','Sign In');
+$HTML->tag('h1','Log In');
 
 $FORM->open(array('method'=>'POST','class'=>'logregform loginform'));
 
