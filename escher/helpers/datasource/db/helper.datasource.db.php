@@ -289,7 +289,8 @@ class Helper_datasource_db extends Helper_datasource {
 			} elseif ($k=='SQL') {
 				$pieces[] = "($v)";
 			} else {
-				$result = $this->evalConditions($k,$v);	
+				$result = $this->evalConditions($k,$v);
+				if (!is_array($result)) { return false; }
 				$pieces[] = $result[0];
 				$params = array_merge($params,$result[1]);
 			}
@@ -309,6 +310,7 @@ class Helper_datasource_db extends Helper_datasource {
 				return array("$qkey = ?",array($value));
 			}
 		} elseif (is_array($value)) {
+			if (sizeof($value)==0) { return false; }
 			$first = reset($value);
 			if (is_numeric(key($value)) && $first == 'NOT') {
 				array_shift($value);
@@ -317,7 +319,8 @@ class Helper_datasource_db extends Helper_datasource {
 			} elseif (is_numeric(key($value)) && in_array($first,array('AND','&&','OR','||','XOR'))) {
 				array_shift($value);
 				return $this->evalConditions($key,$value,$first);
-			} elseif (!array_diff(array_keys($value),array_keys(array_values($value)))) {
+			} elseif (sizeof(preg_grep('/\D/',array_keys($value)))==0) {
+				if (sizeof($value)==0) { die_r(func_get_args()); }
 				$in = array_fill(0,sizeof($value),'?');
 				return array("$qkey IN(".implode(',',$in).")",$value);
 			} else {

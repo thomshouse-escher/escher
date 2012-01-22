@@ -7,11 +7,15 @@
  * @author Thom Stricklin <code@thomshouse.net>
  * @version 1.0
  * @package Escher
+ * @subpackage Helpers
  */
 
 /**
  * ACL (Access Control List) Helper base class
+ * @author Thom Stricklin <code@thomshouse.net>
+ * @version 1.0
  * @package Escher
+ * @subpackage Helpers
  */
 class Helper_acl extends Helper {
 	/**
@@ -25,20 +29,21 @@ class Helper_acl extends Helper {
 	 * @param mixed $entity
 	 * @return boolean
 	 */
-	function check($resource=NULL,$action=NULL,$context=NULL,$inherit=TRUE,$entity=NULL) {
-		// Set $resource to 'all' if it isn't set
-		if (is_null($resource)) {
-			$resource = 'all';
-		} else if ($resource = $this->sanitizeModel($resource)) {
-			// If $resource is valid, add 'all' to the resource type
-			$resource[0] = array_merge(array('all'),(array)$resource[0]);
-		// If $resource is not valid, return false
-		} else return false;
+	function check($resource='all',$action=array(),$context='./',$inherit=TRUE,$entity=NULL) {
+		if ($resource=='all' || is_null($resource)) {
+			$resource = array('all');
+		} else {
+			if ($resource = $this->sanitizeModel($resource)) {
+				// If $resource is valid, add 'all' to the resource type
+				$resource = array('all',$resource);
+			// If $resource is not valid, return false
+			} else { return false; }
+		}
 		// Cast action to array and add 'all' 
 		$action = (array)$action;
 		$action[] = 'all';
 		// ...and pass it all along to require (since this is just a kinder, gentler version)
-		return $this->req($resource,$action,$context,$inherit,$entity);
+		return $this->determineAccess($resource,$action,$context,$inherit,$entity);
 	}
 
 	/**
@@ -51,137 +56,171 @@ class Helper_acl extends Helper {
 	 * @param mixed $entity
 	 * @return boolean
 	 */
-	function req($resource=NULL,$action=NULL,$context=NULL,$inherit=TRUE,$entity=NULL) {
+	function req($resource,$action=array(),$context='./',$inherit=TRUE,$entity=NULL) {
 		// Sanitize $resource
 		if ($resource = $this->sanitizeModel($resource)) {
-			list($rtype,$rid) = $resource;
-		} else return false;
+			$resource = array($resource);
+		} else { return false; }
 		// Sanitize $action
+		if (empty($action)) { return false; }
 		$action = (array)$action;
-		if (empty($action)) return false;
-		// Sanitize $context
-		if (is_null($context)) {
-			$router = Load::Router();
-			$context = $router->getContext();
-		} elseif (is_string($context)) {
-			$router = Load::Router($context);
-			$context = $router->getContext();
-		} elseif (!is_object($context)) {
-			return false;
-		}
-		if (!$context->id) {
-			return false;
-		}
-		// Sanitize entity (defaults to $USER)
-		if (is_null($entity)) {
-			if (!$entity = Load::USER()) {
-				return false;
-			}
-		}
-		if ($entity = $this->sanitizeModel($entity)) {
-			list($etype,$eid) = $entity;
-		} else return false;
-	
 		// This is where the magic will happen
-		return $this->determineAccess($rtype,$rid,$action,$context,$context,$inherit,$etype,$eid);
+		return $this->determineAccess($resource,$action,$context,$inherit,$entity);
 	}
 	
 	/**
 	 * Low-level permission checking.  Checks recursively.  Deny > Allow.  Entity > Group > All entities.
-	 * @param string $rtype
-	 * @param integer $rid
-	 * @param array $action
-	 * @param Model $context
-	 * @param Model $orig_context
+	 * @param mixed $resource
+	 * @param mixed $action
+	 * @param mixed $context
 	 * @param boolean $inherit
-	 * @param string $etype
-	 * @param integer $eid
-	 * @param array $groups
+	 * @param mixed $entity
 	 * @return boolean
 	 */
-	protected function determineAccess($rtype,$rid,$action,$context,$orig_context,$inherit,$etype,$eid,$groups=NULL) {
-		$ds = Load::Datasource('db');
-		$r_cond = array();
-		// If $rtype is an array, datasource wil automatically interpret as an IN() statement
-		$r_cond['resource_type'] = $rtype;
-		// There should be no rules set for "all" type and nonzero id, so do some extra checking
-		if ($rid && in_array('all',(array)$rtype)) {
-			$r_cond[] = array('OR',
-				'resource_id' => 0,
-				array('AND','resource_id' => $rid,'resource_type' => array('!=' => 'all'))
-			);
-		// ...Unless we don't have to
-		} else {
-			$r_cond['resource_id'] = 0;
-		}
-		// Set Action and Context conditions
-		$a_cond = array('action' => $action);
-		$c_cond = array('context' => $context->id);
-		// If we have already ascended to parent_contexts, we must look for descending rules
-		if ($context->id!=$orig_context->id) {
-			$c_cond['descend'] = 1;
-		}
-		// Assemble the conditions
-		$conditions = array($r_cond,$a_cond,$c_cond,'entity_type'=>$etype,'entity_id'=>$eid);
-		// Sort by 'rule' ascending, so that blocks override allows
-		$options = array('order' => array('rule'=>1),'select' => 'rule');
-		$result = $ds->get('acl_rule',$conditions,$options);
-		// If we found a rule for this entity, return the rule (as bool)
-		if (!empty($result)) {
-			 return (bool)$result['rule'];
-		}
-		// Get the group tree for any groups for this entity
-		if (is_null($groups)) {
-			$groups = $this->getGroupTree($etype,$eid);
-		}
-		// If there are groups, check for permissions on the groups
-		if (!empty($groups)) {
-			$conditions = array($r_cond,$a_cond,$c_cond,'entity_type' => 'acl_group','entity_id' => array_keys($groups));
-			// Fetching associatively so that group id is the key
-			$options = array('limit' => 0,'order' => array('rule'=>1),'select' => 'entity_id,rule','fetch'=>'assoc');
-			$result = $ds->get('acl_rule',$conditions,$options);
-			// Child groups trump parents, so if a rule is set for a group, unset any rules for the parents
-			foreach($result as $k => $r) {
-				foreach($groups[$k] as $parent) {
-					if (array_key_exists($parent,$result)) {
-						unset($result[$parent]);
-					}
-				}
-			}
-			// If there are still any results left, return the first one (as bool)
-			if (!empty($result)) {
-				return (bool)reset($result);
-			}
-		}
-		// Now check for rules for the entity type itself (zero id)
-		$conditions = array($r_cond,$a_cond,$c_cond,'entity_type'=>$etype,'entity_id'=>0);
-		$options = array('order' => array('rule'=>1),'select' => 'rule');
-		$result = $ds->get('acl_rule',$conditions,$options);
-		// If there is a rule for the entity type, return (as bool)
-		if (!empty($result)) {
-			 return (bool)$result['rule'];
-		}
-		// If we still haven't matched any rules, ascend the $context if possible and try again
-		if ($context = $context->getParent()) {
-			return $this->determineAccess($rtype,$rid,$action,$context,$orig_context,$inherit,$etype,$eid,$groups);
-		} else {
+	protected function determineAccess($resource,$action,$context,$inherit,$entity) {
+		// Sanitize $context
+		if (empty($context)) {
+			$router = Load::Router();
+			$context = $router->getRoute();
+		} elseif (is_string($context)) {
+			$ro = Load::Router();
+			$cpath = $ro->resolvePath($context,FALSE);
+			$router = Load::Router($cpath);
+			$context = $router->getRoute();
+		} elseif (!is_a($context,'Model_route') && !is_a($context,'Model_route_dynamic')) {
 			return false;
 		}
+		if (empty($context->id)) { return false; }
+		// Sanitize entity (defaults to $USER)
+		if (is_null($entity)) { if (!$entity = Load::USER()) { return false; } }
+		if (!$entity = $this->sanitizeModel($entity)) { return false; }
+
+		if (is_array($action) && sizeof($action)==1) {
+			$action = reset($action);
+		}
+
+		// Begin organizing entities by generation, type, and ids
+		$entities = array(
+			array($entity[0],array($entity[1]))
+			// Ex. array('user',array(123));
+		);
+
+		// Get all generations of usergroup entities
+		$gm = Load::Model('usergroup');
+		$groups = $gm->getGroups($entity,-1);
+		$group_ids = array();
+		foreach($groups as $g) {
+			$entities[] = array('usergroup',$g);
+			$group_ids = array_merge($group_ids,$g);
+		}
+
+		// Add generation for anonymous entity 
+		$entities[] = array($entity[0],array(0));
+
+		// Also get generation of contexts
+		if ($inherit) {
+			$contexts = array();
+			$cm = $context;
+			while (!empty($cm->id)) {
+				$contexts[] = $cm->id;
+				$cm = $cm->getParent();
+			}
+			$CFG = Load::Config();
+			if (isset($CFG->root['id'])) { $contexts[] = $CFG->root['id']; }
+			$contexts[] = '/';
+			$contexts[] = 0;
+			$contexts = array_unique($contexts);
+		} else {
+			$contexts = array($context->id);
+		}
+
+		// Build the array notation for $resource, since it's a bit weird
+		if ($resource[0]=='all') {
+			if (sizeof($resource)==2) {
+				$r_notation = array(
+					'OR',
+					array(
+						'resource_type' => 'all',
+						'resource_id' => '0',
+					),
+					array(
+						'resource_type' => $resource[1][0],
+						'resource_id' => $resource[1][1],
+					),
+				);
+			} else {
+				$r_notation = array(
+					'resource_type' => 'all',
+					'resource_id' => '0',
+				);
+			}
+		} else {
+			$r_notation = array(
+				'resource_type' => $resource[0],
+				'resource_id' => $resource[1],
+			);
+		}
+
+		// Get ALL relevant ACL rules
+		$rm = Load::Model('acl_rule');
+		$rules = $rm->find(
+			array(
+				$r_notation,
+				'action' => $action,
+				'context' => $contexts,
+				array(
+					'OR',
+					'context' => $context->id,
+					'inheritable' => 1,
+				),
+				array(
+					'OR',
+					array(
+						'entity_type' => $entity[0],
+						'entity_id' => array($entity[1],0),
+					),
+					array(
+						'entity_type' => 'usergroup',
+						'entity_id' => $group_ids,
+					),
+				)
+			)
+		);
+
+		if (empty($rules)) { return false; }
+
+		foreach($contexts as $c) {
+			foreach($entities as $e) {
+				$allow = FALSE;
+				$deny = FALSE;
+				foreach($rules as $r) {
+					if ($r['context']==$c
+						&& $r['entity_type']==$e[0]
+						&& in_array($r['entity_id'],$e[1])
+					) {
+						if ($r['rule']) { $allow = TRUE; }
+						else { $deny = TRUE; }
+					}
+				}
+				if ($deny) { return FALSE; }
+				elseif ($allow) { return TRUE; }
+			}
+		}
 	}
 	
-	function allow($entity,$resource,$action='',$context=NULL,$descend=TRUE) {
-		$this->setRule($entity,1,$resource,$action,$context,$descend);
+	function allow($entity,$resource,$action='',$context=NULL,$inheritable=TRUE) {
+		$this->setRule($entity,1,$resource,$action,$context,$inheritable);
 	}
 
-	function deny($entity,$resource,$action='',$context=NULL,$descend=TRUE) {
-		$this->setRule($entity,0,$resource,$action,$context,$descend);
+	function deny($entity,$resource,$action='',$context=NULL,$inheritable=TRUE) {
+		$this->setRule($entity,0,$resource,$action,$context,$inheritable);
 	}
 
-	function remove($entity,$resource,$action='',$context=NULL,$descend=TRUE) {
-		$this->setRule($entity,-1,$resource,$action,$context,$descend);
+	function remove($entity,$resource,$action='',$context=NULL,$inheritable=TRUE) {
+		$this->setRule($entity,-1,$resource,$action,$context,$inheritable);
 	}
 	
-	protected function setRule($entity,$rule,$resource,$action='all',$context=NULL,$descend=TRUE) {
+	protected function setRule($entity,$rule,$resource,$action='all',$context=NULL,$inheritable=TRUE) {
 		// Sanitize entity
 		if (!$entity = $this->sanitizeModel($entity)) return false;
 		// Sanitize rule
@@ -206,7 +245,7 @@ class Helper_acl extends Helper {
 		$ds = Load::Datasource('db');
 		$conditions = array(
 			'resource_type' => $resource[0],'resource_id' => $resource[1],
-			'action' => $action, 'context' => $context->id, 'descend' => $descend,
+			'action' => $action, 'context' => $context->id, 'inheritable' => $inherit,
 			'entity_type' => $entity[0], 'entity_id' => $entity[1]);
 		$options = array('limit' => 0,'select' => 'id','fetch' => 'col');
 		$current_rules = $ds->get('acl_rule',$conditions,$options);
@@ -247,47 +286,5 @@ class Helper_acl extends Helper {
 		} else { return false; }
 		$mid = (int)$mid;
 		return array($mtype,$mid);
-	}
-	
-	protected function getGroupTree($etype,$eid) {
-		$ds = Load::Datasource('db');
-		//Array of associative arrays, where key is original group id and array is ids of ascendant parents
-		$group_trees = array();
-		$all_groups = array();
-		
-		$groups = $ds->get('acl_group_member',
-			array('member_type'=>$etype,'member_id'=>$eid),
-			array('fetch'=>'col','select'=>'group_id','limit'=>0)
-		);
-		
-		foreach ($groups as $g) {
-			// If the group already exists in the tree, continue
-			if (array_key_exists($g,$group_trees)) {
-				continue;
-			}
-			$this_tree = array();
-			$gp = $ds->get('acl_group',array('id'=>$g),array('fetch'=>'one','select'=>'parent_id'));
-			while ($gp != 0) {
-				if (in_array($gp,$this_tree)) {
-					// If caught chasing own tail...
-					break;
-				}
-				$this_tree[] = $gp;
-				if (array_key_exists($gp,$group_trees)) {
-					$this_tree = array_merge($this_tree,$group_trees[$gp]);
-					break;
-				}
-				$gp = $ds->get('acl_group',array('id'=>$g),array('fetch'=>'one','select'=>'parent_id'));
-			}
-			$group_trees[$g] = $this_tree;
-			while (!empty($this_tree)) {
-				$g = array_shift($this_tree);
-				$group_trees[$g] = $this_tree;
-				if (@array_key_exists($this_tree[0],$group_trees)) {
-					break;
-				}
-			}
-		}
-		return $group_trees;
 	}
 }
