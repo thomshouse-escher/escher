@@ -161,6 +161,21 @@ class Helper_acl extends Helper {
 			);
 		}
 
+		// Build the array notation for $entity
+		$e_notation = array(
+			'OR',
+			array(
+				'entity_type' => $entity[0],
+				'entity_id' => array($entity[1],0),
+			),
+		);
+		if (!empty($group_ids)) {
+			$e_notation[] = array(
+				'entity_type' => 'usergroup',
+				'entity_id' => $group_ids,
+			);
+		};
+
 		// Get ALL relevant ACL rules
 		$rm = Load::Model('acl_rule');
 		$rules = $rm->find(
@@ -173,17 +188,7 @@ class Helper_acl extends Helper {
 					'context' => $context->id,
 					'inheritable' => 1,
 				),
-				array(
-					'OR',
-					array(
-						'entity_type' => $entity[0],
-						'entity_id' => array($entity[1],0),
-					),
-					array(
-						'entity_type' => 'usergroup',
-						'entity_id' => $group_ids,
-					),
-				)
+				$e_notation,
 			)
 		);
 
