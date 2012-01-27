@@ -2,44 +2,22 @@
 
 // Class for handling data model objects associated with files
 abstract class File extends Model {
-	protected $doImageResizing = FALSE;
-	protected $allowUpscaling = FALSE;
-	var $resize_parameters = array();
-	var $resized_images = array();
+	protected $_doImageResizing = FALSE;
+	protected $_allowUpscaling = FALSE;
+	protected $_resizeParameters = array();
 
 	function __construct($key=NULL) {
 		parent::__construct($key);
 		// If this model handles image resizing and no sizes are provided, get the default from $CFG
-		if ($this->doImageResizing && (empty($this->resized_images) || !is_array($this->resized_images))) {
+		if ($this->_doImageResizing && empty($this->_resizeParameters)) {
 			$CFG = Load::Config();
-			$this->resize_parameters = $CFG['resized_images'];
+			$this->_resizeParameters = $CFG['resized_images'];
 		}
 	}
 
-	// Save the resized images as a serialized array (in case the $CFG values change later)
-	function save() {
-		if (isset($this->resized_images)) {
-			$sizes = $this->resized_images;
-			$this->resized_images = serialize($this->resized_images);
-			$result = parent::save();
-			$this->resized_images = $sizes;
-			return $result;
-		} else { return parent::save(); }
-	}
-	
-	// Load and unserialize the resized images
-	function load($key) {
-		if ($result = parent::load($key)) {
-			if (!$this->resized_images = unserialize($this->resized_images)) {
-				unset($this->resized_images);
-			}
-		}
-		return $result;
-	}
-	
 	// Handles the saving of an uploaded file
 	// Descendant classes should incorporate save() into this function as appropriate
-	function saveUploadedFile($file=array()) {
+	function parseUpload($file=array()) {
 		if (empty($file)) {
 			return false;
 		}

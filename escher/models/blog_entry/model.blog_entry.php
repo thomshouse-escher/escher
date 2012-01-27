@@ -1,14 +1,28 @@
 <?php Load::core('patterns/model.entry.php');
 
 class Model_blog_entry extends Entry {
-	protected $_schema = array('id'=>'int','title'=>'varchar',
-		'series_type'=>'varchar','series_id'=>'int',
-		'model_type'=>'varchar','model_id'=>'int',
-		'permalink'=>'varchar','tagline'=>'varchar','pub_status'=>'tinyint',
-		'pub_time'=>'datetime','pub_type'=>'varchar','pub_id'=>'int',
-		'ctime'=>'datetime','ctype'=>'varchar','cid'=>'int',
-		'mtime'=>'datetime','mtype'=>'varchar','mid'=>'int');
-	protected $_content = array('preview');
+	protected $_schemaFields = array(
+		'id'             =>'int',
+		'title'          =>'string',
+		'series_type'    =>'resource',
+		'series_id'      =>'id',
+		'entry_type'     =>'resource',
+		'entry_id'       =>'id',
+		'permalink'      =>'string',
+		'tagline'        =>'string',
+		'published'      =>'bool',
+		'published_at'   =>'datetime',
+		'published_from' =>'resource',
+		'published_by'   =>'id',
+		'created_at'     =>'datetime',
+		'created_from'   =>'resource',
+		'created_by'     =>'id',
+		'modified_at'    =>'datetime',
+		'modified_from'  =>'resource',
+		'modified_by'    =>'id',
+		// Content
+		'preview' => 'content',
+	);
 		
 	function touch($fields=array('c','m'),$model=NULL) {
 		parent::touch($fields,$model);

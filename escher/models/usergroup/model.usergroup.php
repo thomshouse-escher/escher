@@ -1,7 +1,13 @@
 <?php
 
 class Model_usergroup extends Model {
-	protected $_cache_keys = array(array('grouptag'));
+	protected $_schemaFields = array(
+		'group_tag' => 'resource',
+		'title'    => 'string',
+	);
+	protected $_schemaKeys = array(
+		'group_tag' => array('type' => 'unique','fields' =>'group_tag'),
+	);
 
 	protected static $_ascendHits = array();
 

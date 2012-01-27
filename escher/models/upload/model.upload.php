@@ -1,7 +1,21 @@
 <?php
 
 class Model_upload extends File {
-	protected $doImageResizing = TRUE;
+	protected $_schemaFields = array(
+		'filename'      => 'string',
+		'mimetype'      => 'string',
+		'created_at'    => 'datetime',
+		'created_from'  => 'resource',
+		'created_by'    => 'id',
+		'modified_at'   => 'datetime',
+		'modified_from' => 'resource',
+		'modified_by'   => 'id',
+		'filesize'      => array('type' => 'int','unsigned' => TRUE),
+		// Content
+		'resized_images' => 'array',
+	);
+		
+	protected $_doImageResizing = TRUE;
 	
 	function __construct($key=NULL) {
 		parent::__construct($key);

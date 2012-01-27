@@ -1,6 +1,11 @@
 <?php
 
 class Model_session extends Model {
-	protected $_content = array('data');
-	protected $_cache_keys = array(array('session_id'));
+	protected $_schemaFields = array(
+		'session_id'  => array('type' => 'string','length' => 64),
+		'created_at'  => 'datetime',
+		'modified_at' => 'datetime',
+		// Content
+		'data' => 'content',
+	);
 }
