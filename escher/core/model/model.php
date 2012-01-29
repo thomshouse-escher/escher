@@ -1,32 +1,17 @@
 <?php
 
 abstract class EscherModel extends EscherObject {
-	protected $_schema = array();
-	protected $_cache_keys = array();
-	protected $_metadata = FALSE;
-	protected $_content = array();
-	protected $_output_type = 'php';
+	protected $_schemaFields = array();
+	protected $_schemaKeys = array();
+	protected $_schemaTriggers = array();
+	protected $_outputType = 'php';
 
 	protected static $_parsedNew = array();
 
 	public function __construct($key=NULL) {
 		parent::__construct();
-		// Load hooks for metadata/content
-		$hooks = Load::Hooks();
-		// If we are allowing all attributes as metadata, hooks don't matter
-		if ($this->_metadata!==TRUE) {
-			// Otherwise, look for metadata hooks for this model
-			if ($metahooks = $hooks->getMetadata($this->_m())) {
-				if ($this->_metadata===FALSE) { $this->_metadata = array(); }
-				$this->_metadata = array_merge($metahooks,$this->_metadata);
-			}
-		}
-
-		// Look for content hooks for this model
-		if ($contenthooks = $hooks->getContent($this->_m())) {
-			if ($this->_content===FALSE) { $this->_content = array(); }
-			$this->_content = array_merge($contenthooks,$this->_content);
-		}
+		// Expand schema shorthands and defaults
+		$this->_expandSchema();
 
 		// If a key was provided, let's load the model
 		if(!is_null($key)) {
@@ -41,14 +26,13 @@ abstract class EscherModel extends EscherObject {
 		// If only the primary id was provided as key, format for datasource
 		} elseif (is_scalar($key)) {
 			$key = array('id' => $key);
-		// Else sort the array keys so caching will work
-		} else if (is_array($key) && !empty($key)) {
-			ksort($key);
 		// And if our key is invalid, return false
-		} else { return false; }
+		} else if (!is_array($key) || !empty($key)) {
+			return false;
+		}
 		// If we can't load from cache, load from datasources and cache it
-		if (!$this->loadCache($key)) {
-			if(!$this->loadData($key)) {
+		if (!$this->loadCached($key)) {
+			if(!$this->loadUncached($key)) {
 				return false;
 			} else {
 				$this->cache();
@@ -57,21 +41,21 @@ abstract class EscherModel extends EscherObject {
 		return true;
 	}
 	
-	protected function loadCache($keys) {
+	function loadCached($keys) {
 		$sources = $this->_getCacheDatasources();
 		// Iterate through our datasources, trying to load the model
 		foreach($sources as $s) {
 			$ds = Load::Datasource($s);
 			if ($result = $ds->get($this,$keys)) {
 				// Assign class vars (metadata, content, etc.) and return
-				$this->assignClassVars($result);
+				//$this->assignClassVars($result);
 				return true;
 			}
 		}
 		return false;
 	}
 
-	protected function loadData($keys) {
+	function loadUncached($keys) {
 		$sources = $this->_getDatasources();
 		// Iterate through our datasources, trying to load the model
 		foreach($sources as $s) {
@@ -80,7 +64,7 @@ abstract class EscherModel extends EscherObject {
 				// When we find the datasource, set it
 				$this->_datasource = $s;
 				// Assign class vars (metadata, content, etc.)
-				$this->assignClassVars($result);
+				//$this->assignClassVars($result);
 				return true;
 			}
 		}
@@ -141,8 +125,24 @@ abstract class EscherModel extends EscherObject {
 		return true;
 	}
 	
-	function touch($fields=array('c','m'),$model=NULL) {
+	function touch($fields=NULL,$model=NULL) {
+		// If no fields provided, try the triggers
+		if (empty($fields)) {
+			$fields = array();
+			if (!empty($this->_schemaTriggers['touch_create'])) {
+				$fields = array_merge($fields,
+					$this->_schemaTriggers['touch_create']
+				);
+			}
+			if (!empty($this->_schemaTriggers['touch_modify'])) {
+				$fields = array_merge($fields,
+					$this->_schemaTriggers['touch_modify']
+				);
+			}
+		}
+		// If no model provided, assume the current user
 		if (is_null($model)) { $model = Load::USER(); }
+		// Extract the model type & id
 		if (is_a($model,'Model') && !empty($model->id)) {
 			$mtype = $model->_m();
 			$mid = $model->id;
@@ -150,27 +150,22 @@ abstract class EscherModel extends EscherObject {
 			$mtype = 0;
 			$mid = 0;
 		}
-		$this->_schema();
+
+		// Iterate through the fields and set the valid ones
 		foreach($fields as $f) {
-			if($f=='c' && isset($this->ctime) && preg_match('/[1-9]/',$this->ctime)) {
-				continue;
-			}
-			$timefield = $f.'time';
-			if (array_key_exists($timefield,$this->_schema)) {
-				$this->$timefield = date('Y-m-d H:i:s',NOW);
-				$idfield = $f.'id';
-				if (array_key_exists($idfield,$this->_schema)) {
-					$this->$idfield = $mid;
-					$typefield = $f.'type';
-					if (array_key_exists($typefield,$this->_schema)) {
-						$this->$typefield = $mtype;
-					}
-				}
+			if(!array_key_exists($f,$this->_schemaFields)
+				|| (in_array($f,$this->_schemaTriggers['touch_create'])
+					&& !empty($this->$f))
+			) { continue; }
+			switch ($this->_schemaFields[$f]['type']) {
+				case 'datetime': $this->$f = NOW; break;
+				case 'string': $this->$f = $mtype; break;
+				case 'int': $this->$f = $mid; break;
 			}
 		}
 	}
 
-	// Iterates through an associative array for namespaced form fields and assigns data for this object
+	// Iterates through form input and assigns variables
 	function parseInput($uniqid=NULL) {
 		$input = Load::Input();
 		if (!empty($this->id)) {
@@ -197,55 +192,6 @@ abstract class EscherModel extends EscherObject {
 		return true;
 	}
 
-	// Provide the schema of the current model
-	function _schema() {
-		if (empty($this->_schema)) {
-			$sources = $this->_getDatasources();
-			foreach($sources as $s) {
-				$ds = Load::Datasource($s);
-				if ($this->_schema = $ds->getSchema($this->_m())) {
-					break;
-				}				
-			}
-		}
-		$schema = $this->_schema;
-		foreach($this->_content as $v) {
-			if (!array_key_exists($v,$schema)) {
-				$schema[$v] = 'content';
-			}
-		}
-		if ($this->_metadata===TRUE) {
-			$obj = new ArrayObject($this);
-			foreach($obj as $k => $v) {
-				if (!array_key_exists($k,$schema)) {
-					$schema[$k] = 'meta';
-				}
-			}
-		} elseif (is_array($this->_metadata)) {
-			foreach($this->_metadata as $v) {
-				if (!array_key_exists($v,$schema)) {
-					$schema[$v] = 'meta';
-				}
-			}			
-		}
-		return $schema;
-	}
-	
-	// provide a list of allowed metadata fields, or TRUE (accepts everything) or FALSE (none)
-	function _metadata() {
-		return $this->_metadata;	
-	}
-	
-	// Provide a list of allowed content fields, or FALSE if none
-	function _content() {
-		return $this->_content;	
-	}
-	
-	// Provide a list of cacheable key sets for this model
-	function _cache_keys() {
-		return $this->_cache_keys;	
-	}
-	
 	// Get the datasources for this object
 	protected function _getDatasources() {
 		if (isset($this->_datasource)) {
@@ -279,7 +225,7 @@ abstract class EscherModel extends EscherObject {
 
 	// Display a view for this model, using provided data or object data
 	final function display($view,$data=NULL,$type=NULL) {
-		if (is_null($type)) { $type = $this->_output_type; }
+		if (is_null($type)) { $type = $this->_outputType; }
 		$out = Load::Output($type,$this);
 		$out->assignVars($data);
 		if (is_null($data)) {
@@ -306,12 +252,6 @@ abstract class EscherModel extends EscherObject {
 		return false;
 	}
 
-	// What is the name of this model?
-	final function _m() {
-		$class = get_class($this);
-		return substr($class,strpos($class,'Model_')+6);
-	}
-
 	// Override assignVars to protect class variables
 	public function assignVars($vars) {
 		if (!is_array($vars) || array_values($vars)==$vars) {
@@ -327,25 +267,153 @@ abstract class EscherModel extends EscherObject {
 		return true;
 	}
 
-	// Assign Class Vars (metadata, content, etc.) safely
-	protected function assignClassVars($vars) {
-		if (is_object($vars)) { $vars = get_object_vars($vars); }
-		if (!is_array($vars) || array_values($vars)==$vars) {
-			return false;
+	// What is the name of this model?
+	final function _m() {
+		$class = get_class($this);
+		return substr($class,strpos($class,'Model_')+6);
+	}
+
+	final function __get($name) {
+		$id = "{$this->_m()}_id";
+		switch ($name) {
+			case 'id':
+			case $id:
+			case '_schemaFields':
+			case '_schemaKeys':
+			case '_schemaTriggers':
+				return $this->$name; break;
+			default:
+				$trace = debug_backtrace();
+				trigger_error('Undefined property: '
+					. get_class($this) . '::$' .$name .
+					' in ' . $trace[0]['file'] .
+					' on line ' . $trace[0]['line'],
+					E_USER_NOTICE);
+				return NULL; break;
 		}
-		if (!empty($vars['_metadata']) && is_array($vars['_metadata'])) {
-			if (!$this->_metadata) {
-				$this->_metadata = $vars['_metadata'];
-			} elseif(is_array($this->_metadata)) {
-				$this->_metadata = array_unique(array_merge($this->_metadata,$vars['_metadata']));
-			}
+	}
+
+	final function __set($name,$value) {
+		$id = "{$this->_m()}_id";
+		switch ($name) {
+			case 'id':
+			case $id: $this->$id = $value; break;
+			default:
+				if(isset($this->$name)) { return; }
+				$this->$name = $value;
+				break;
 		}
-		// Merge content intelligently
-		if (!empty($vars['_content']) && is_array($vars['_content'])) {
-			if(is_array($this->_content)) {
-				$this->_content = array_unique(array_merge($this->_content,$vars['_content']));
-			} else {
-				$this->_content = $vars['_content'];
+	}
+
+	final protected function _expandSchema() {
+		// Create a primary key if it doesn't exist
+		if (!array_key_exists('primary',$this->_schemaKeys)
+			|| empty($this->_schemaKeys['primary']['fields'])
+		) {
+			$this->_schemaKeys['primary'] = array(
+				'type' => 'primary',
+				'fields' => $this->_m().'_id',
+			);
+		}
+		// Create the primary key field if it doesn't exist
+		if (is_string($this->_schemaKeys['primary']['fields'])
+			&& !array_key_exists(
+				$this->_schemaKeys['primary']['fields'],
+				$this->_schemaFields
+			)
+		) {
+			$this->_schemaFields = array_merge(
+				array($this->_schemaKeys['primary']['fields'] => array(
+					'type' =>'id',
+					'auto_increment' => TRUE,
+				)),
+				$this->_schemaFields
+			);
+		}
+		
+		// Get field hooks for expansion
+		$hooks = Load::Hooks();
+		$source_fields = array(
+			'class'    => $this->_schemaFields,
+			'metadata' => array(), //$hooks->getModelFields($this->_m()),
+		);
+		
+		// Run class fields and hook fields on separate passes
+		foreach($source_fields as $source => $fields) {
+			foreach($fields as $name => $attrs) {
+				// Do not allow metadata to overwrite class fields
+				if ($source=='metadata'
+					&& array_key_exists($name,$this->_schemaFields)
+				) { 
+					$trace = debug_backtrace();
+					trigger_error('Cannot redeclare schema field: '
+						. $name . ' for model ' . $this->_m()
+						. ' in ' . $trace[0]['file']
+						. ' on line ' . $trace[0]['line'],
+						E_USER_NOTICE);
+					continue;
+				}
+
+				// Convert string value to valid array
+				if (is_string($attrs)) {
+					$attrs = array('type' => $attrs);
+				}
+				// Require this field to have a type
+				if (!is_array($attrs) || empty($attrs['type'])) {
+					continue;
+				}
+
+				// Assemble default values
+				$default = array();
+				switch ($attrs['type']) {
+					case 'string': $default['length'] = 255; break;
+					case 'int':    $default['range'] = pow(2,32); break;
+					case 'resource':
+						$default['length'] = 48;
+						$attrs['type'] = 'string'; break;
+					case 'id':
+						$default['unsigned'] = TRUE;
+						$default['range'] = pow(2,32);
+						$attrs['type'] = 'int'; break;
+					case 'array':
+					case 'content':
+						$default['length'] = pow(2,32); break;
+				}
+
+				// Merge defaults with attributes
+				$attrs = array_merge($attrs,array_diff_key($default,$attrs));
+
+				// Check metadata (except for content fields)
+				if (in_array($attrs['type'],array('array','content'))) {
+					unset($attrs['metadata']);
+				} elseif ($source=='metadata' && !isset($attrs['metadata'])) {
+					$attrs['metadata'] = TRUE;
+				}
+
+				// Set up default triggers
+				if (empty($this->_schemaTriggers['touch_create'])) {
+					$touch_create = array_values(
+						preg_grep(
+							"/^({$this->_m()}_)?created_(at|from|by)$/",
+							array_keys($this->_schemaFields)
+					));
+					if (!empty($touch_create)) {
+						$this->_schemaTriggers['touch_create'] = $touch_create;
+					}
+				}
+				if (empty($this->_schemaTriggers['touch_modify'])) {
+					$touch_modify = array_values(
+						preg_grep(
+							"/^({$this->_m()}_)?modified_(at|from|by)$/",
+							array_keys($this->_schemaFields)
+					));
+					if (!empty($touch_modify)) {
+						$this->_schemaTriggers['touch_modify'] = $touch_modify;
+					}
+				}
+
+				// Save expanded schema
+				$this->_schemaFields[$name] = $attrs;
 			}
 		}
 	}
