@@ -73,7 +73,7 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		$vars['twitter_token'] = $access_token;
 
 		// Load the facebook (oauth) userauth, register, and redirect
-		$userauth = Load::Helper('userauth',array('twitter','oauth'));
+		$userauth = Load::Helper(array('twitter','userauth'),'oauth');
 		if ($user = $userauth->register($vars['username'],'',$vars)) {
 			$_SESSION['user_id'] = $user->id;
 			return true;
