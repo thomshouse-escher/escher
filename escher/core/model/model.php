@@ -366,15 +366,24 @@ abstract class EscherModel extends EscherObject {
 				// Assemble default values
 				$default = array();
 				switch ($attrs['type']) {
-					case 'string': $default['length'] = 255; break;
-					case 'int':    $default['range'] = pow(2,32); break;
-					case 'resource':
-						$default['length'] = 48;
-						$attrs['type'] = 'string'; break;
+					// Integer types and shorthands
+					case 'int': $default['range'] = pow(2,32); break;
 					case 'id':
 						$default['unsigned'] = TRUE;
 						$default['range'] = pow(2,32);
 						$attrs['type'] = 'int'; break;
+					// String types and shorthands
+					case 'string': $default['length'] = 255; break;
+					case 'md5':
+						$default['range'] = 32;
+						$attrs['type'] = 'string'; break;
+					case 'resource':
+						$default['length'] = 48;
+						$attrs['type'] = 'string'; break;
+					case 'email':
+						$default['length'] = 255;
+						$attrs['type'] = 'string'; break;
+					// Content types and shorthands
 					case 'array':
 					case 'content':
 						$default['length'] = pow(2,32); break;

@@ -16,6 +16,21 @@
  */
 class Helper_datasource_db extends Helper_datasource {
 	protected $db;
+	protected $intTypes = array(
+		'tinyint'   => 1, // 256 (Range)
+		'smallint'  => 2, // 65535
+		'mediumint' => 3, // 16777215
+		'int'       => 4, // 4294967295
+		'bigint'    => 8, // 18446744073709551615
+	);
+	protected $stringTypes = array('char','binary','varchar','varbinary');
+	protected $contentTypes = array(
+		'tinytext'   => 1, // L < 2^8
+		'text'       => 2, // L < 2^16
+		'mediumtext' => 3, // L < 2^24
+		'longtext'   => 4, // L < 2^32
+	);
+
 	function __construct($args=NULL) {
 		if (is_null($args)) {
 			$this->db = Load::DB();
@@ -25,158 +40,267 @@ class Helper_datasource_db extends Helper_datasource {
 			$this->db = Load::Helper('database',$type,$args);
 		}
 	}
-	function set($model,$attrs=array(),$values=NULL,$options=array()) {
-		unset($options['this']); extract($options);
+
+	function set($model,$data=array(),$options=array()) {
 		$db = $this->db;
-		$meta_arr = array();
-		$content_arr = array();
-		if (is_object($model)) {
-			// If model object is passed, get object schema and attributes
+
+		// If $model is an object, get type and values
+		if (is_a($model,'Model')) {
 			$m = $model->_m();
-			$id = @$model->id;
-			$attrs = $model->_schema();
-			if (!$attrs) {
-				$attrs = $db->getSchema($m);
-			}
-			$values = array();
-			foreach($attrs as $k => $v) {
-				if (!isset($model->$k)) {
-					unset($attrs[$k]);
-				} elseif ($v=='meta') {
-					$meta_arr[$k] = $model->$k;
-					unset($attrs[$k]);
-				} elseif ($v=='content') {
-					$content_arr[$k] = $model->$k;
-					unset($attrs[$k]);
-				} elseif (in_array($v,array('time','datetime','timestamp'))) {
-					$values[$k] = $this->time($model->$k);
-				} elseif ($v=='date') {
-					$values[$k] = $this->date($model->$k);
-				} else {
-					$values[$k] = $model->$k;
-				}
-			}
+			$data = get_object_vars($model);
+		// If $model is string, get the object
 		} elseif (is_string($model)) {
-			// If string is passed as $model, use $attrs and values from args
 			$m = $model;
-			// If no values given, check to see if $attrs is associative
-			if (is_null($values) && array_keys($attrs)!=array_keys(array_values($attrs))) {
-				$values = array_values($attrs);
-				$attrs = array_keys($attrs);
-			}
-			$attrs = array_flip($attrs);
-			$schema = $db->getSchema($model);
-			foreach($attrs as $a => $t) {
-				if(array_key_exists($a,$schema)) {
-					if ($a=='id') {
-						$id = $values[$t];	
-					}
-					$attrs[$a] = $schema[$a];
-				} else {
-					unset($attrs[$a]);
-					unset($values[$t]);
-				}
-			}
-		} else { return false; }
-
-		// Build sql statement for attributes.
-		$attr_sql = array();
-		foreach($attrs as $a => $v) {
-			$attr_sql[] = "$a = ?";
-		}
-		$attr_sql = implode(',',$attr_sql);
-
-		// Check values to be scalar
-		foreach($values as $k => $v) {
-			if (!is_scalar($v)) {
-				return false;
-			}
+			$model = Load::Model($m);
+		} else {
+			return false;
 		}
 
-		// If an id is present, attempt to update
-		if (isset($id)) {
-			$result = $db->Execute("UPDATE ".$db->t($m)." SET ".$attr_sql." WHERE id=".$db->q($id),
-				$values);
-			// Check to make sure it was inserted (Select COUNT(*) is fallback for sql types w/out affectedRows())
-			if (!($db->affectedRows() || $db->getOne("SELECT COUNT(*) FROM ".$db->t($m)." WHERE id=",array($id)))) {
-				$result = false;
+		// Update schema from model
+		if (is_a($model,'Model')) {
+			$this->_setSchema($model);
+		}
+		// Make the schema available
+		$schema = $this->_getSchema($m);
+
+		// Clean and separate data
+		$data = array_intersect_key($data,$schema['fields']);
+		$metadata = array();
+		$content = array();
+		$primary = array();
+		foreach($data as $k => $v) {
+			// Clean up the data
+			switch ($schema['fields'][$k]['type']) {
+				// JSON-encode arrays
+				case 'array':
+					if (is_array($v)) { $data[$k] = json_encode($v); }
+				// Ensure dates & times are properly formatted
+				case 'time':
+				case 'datetime':
+				case 'timestamp':
+					$data[$k] = $this->time($v); break;
+				case 'date':
+					$data[$k] = $this->date($v); break;
+			}
+			if (!is_scalar($data[$k])) { return false; }
+
+			// Push primary key fields to $primary array
+			if (in_array($k,(array)$schema['keys']['primary'])) {
+				$primary[$k] = $data[$k];
+				unset($data[$k]);
+
+			// Push content and arrays into the content table
+			} elseif (in_array(
+				$schema['fields'][$k]['type'],
+				array('array','content')
+			)) {
+				$content[$k] = $data[$k];
+				unset($data[$k]);
+
+			// Push metadata into the metadata array
+			} elseif (!empty($schema['fields'][$k]['metadata'])) {
+				$metadata[$k] = $data[$k];
+				unset($data[$k]);
 			}
 		}
-		// If no id is present or if row does not exist, insert
-		if (!isset($id) || !$result) {
-			$result = $db->Execute("INSERT INTO ".$db->t($m)." SET ".$attr_sql,$values);
-			if ($result) {
-				$id = $db->getAutoId();
-				if (is_object($model)) {
-					$model->id = $id;	
+
+		$partitions = array(
+			'data'     => $data,
+			'metadata' => $metadata,
+			'content'  => $content,
+		);
+
+		// Iterate through each of the partitions
+		foreach($partitions as $partition => $values) {
+			// Determine whether the primary key has been set
+			$primarySet =
+				sizeof($primary)==sizeof((array)$schema['keys']['primary']['fields']);
+
+			// Skip content and metadata partition if nothing to save
+			if (in_array($partition,array('metadata','content'))
+				&& (!$primarySet || empty($values))
+			) {
+				continue;
+			}
+			
+			// Set the table name of the current partition
+			switch ($partition) {
+				case 'data':     $partname = $db->t($m); break;
+				case 'metadata': $partname = $db->t($m).'_metadata'; break;
+				case 'content':  $partname = $db->t($m).'_content'; break;
+			}
+
+			// Build sql pieces for attributes and key
+			$primary_sql = array();
+			$attr_sql = array();
+			foreach($primary as $a => $v) {
+				$primary_sql[] = "$a = ?";
+			}
+			foreach($values as $a => $v) {
+				$attr_sql[] = "$a = ?";
+			}
+
+			// If primary key is set, perform an update
+			if ($primarySet) {
+				$result = $db->Execute(
+					"UPDATE " . $partname. " SET " . implode(',',$attr_sql)
+						. " WHERE " . implode(' && ',$primary_sql),
+					array_merge(array_values($values),array_values($primary))
+				);
+				// Check to make sure update occurred
+				if (!($db->affectedRows() || $db->getOne(
+						"SELECT COUNT(*) FROM " . $partname
+							. " WHERE " . implode(' && ',$primary_sql),
+						array_values($primary)
+				))) {
+					$result = false;
 				}
 			}
-		}
-		// If exec was successful, process metadata & content (Escher feature)
-		if ($result) {
-			if ((is_object($model) && $model->_metadata()) || !empty($metadata)) {
-				$db->Execute("DELETE FROM ".$db->t($m.'_metadata')." WHERE id=?",array($id));
-				foreach ($meta_arr as $n => $v) {
-					if (!preg_match('/^[\d_]/',$n)) {
-						$db->Execute("INSERT INTO ".$db->t($m.'_metadata')." SET id=?, name=?, value=?",array($id,$n,$v));
+
+			// If primary key is not set or if row did not exist, insert
+			if (!$primarySet || !$result) {
+				if (!$primarySet) {
+					if (sizeof((array)$schema['keys']['primary'])>1) {
+						return false;
+					}
+					$key = reset($schema['keys']['primary']);
+					if (empty($schema['fields'][$key]['auto_increment'])) {
+						return false;
+					}
+				}
+				$result = $db->Execute(
+					"INSERT INTO " . $partname . " SET "
+						. implode(',',array_merge($attr_sql,$primary_sql)),
+					array_merge(array_values($values),array_values($primary))
+				);
+				if (!$result) { return false; }
+				if (!$primarySet) {
+					$id = $db->getAutoId();
+					$primary = array($key => $id);
+					if (is_object($model)) {
+						$model->$key = $id;	
 					}
 				}
 			}
-			if ((is_object($model) && $model->_content()) || !empty($content)) {
-				$db->Execute("DELETE FROM ".$db->t($m.'_content')." WHERE id=?",array($id));
-				foreach ($content_arr as $n => $v) {
-					if (!preg_match('/^[\d_]/',$n)) {
-						if (is_scalar($v)) {
-							$db->Execute("INSERT INTO ".$db->t($m.'_content')." SET id=?, name=?, value=?, serialized=0",array($id,$n,$v));
-						} else {
-							$db->Execute("INSERT INTO ".$db->t($m.'_content')." SET id=?, name=?, value=?, serialized=1",array($id,$n,serialize($v)));
-						}
-					}
-				}
-			}
-			// Return id on success
-			return $id;
 		}
-		// Return false on failure
-		return false;
+
+		// Return id or success
+		return isset($id) ? $id : TRUE;
 	}
 	
-	function get($model,$conditions=array(),$options=array()) {
-		$select = '*'; $where = ''; $limit = 1; $order = ''; $group = '';
-		unset($options['this']); extract($options);
+	function get($models,$conditions=array(),$options=array()) {
+		// Clean up the options
+		$options = array_merge(
+			array(
+				'select' => '*',
+				'limit'  => 1,
+				'order'  => '',
+				'group'  => '',
+				'joins'   => array(),
+			),
+			$options
+		);
+		if (!is_array($options['select'])) {
+			$options['select'] = explode(',',$options['select']);
+		}
+
 		$db = $this->db;
-		// Get the name of the model
-		if (is_object($model)) {
-			$m = $db->t($model->_m());
-			// Special case for metadata lookups (i.e. oauth ids)
-			$md = $model->_metadata();
-			if ($select == '*' && $limit==1 && sizeof($conditions)==1 && is_scalar(current($conditions)) && ($md===TRUE || (is_array($md) && in_array(key($conditions),$md)))) {
-				$m .= " m LEFT JOIN {$db->t($model->_m().'_metadata')} md ON m.id=md.id";
-				if ($md===TRUE) {
-					$conditions = array('OR','m.'.key($conditions) => current($conditions),array('md.name' => key($conditions),'md.value' => current($conditions)));
-				} else {
-					$conditions = array('md.name' => key($conditions),'md.value' => current($conditions));
-				}
-				$select = 'm.*';
+		
+		// Convert a single model to an array
+		if (is_a($models,'Model') || is_string($models)
+			|| (is_array($models) && sizeof($models)==2 && empty($options['join']))) {
+			$models = array($models);
+		} elseif (!is_array($models)) {
+			return false;
+		}
+
+		$tables = array();
+		$joins = array();
+		$j = 0; // Explicit join iterator
+
+		// Iterate through the models array
+		foreach($models as $alias => $m) {
+			// Get model name and object
+			if (is_a($m,'Model')) {
+				$model = $m;
+				$m = $model->_m();
+			} elseif (is_array($m)) {
+				$model = Load::Model($m);
+				$m = $model->_m();
+			} elseif (is_string($m)) {
+				$model = Load::Model($m);
+			} else { return false; }
+
+			// Set the table alias if it's not a string
+			if (is_numeric($alias)) { $alias = $m; }
+
+			// Load schema
+			if (is_a($model,'Model')) {
+				$schema = array(
+					'fields' => $model->_schemaFields,
+					'keys' => $model->_schemaKeys,
+				);
+			} elseif (!$schema = $this->_getSchema($m)) {
+				return false;
 			}
-		} elseif (is_string($model)) {
-			$m = $db->t($model);
-		} elseif (is_array($model) && !empty($join) && sizeof($join)==sizeof($model)-1) {
-			$m = '';
-			foreach($model as $alias => $table) {
-				if (!is_numeric($alias)) { $alias = " $alias"; }
-				else { $alias = ''; }
-				if (empty($m)) {
-					$m = "{$db->t($table)}$alias";
-				} else {
-					$m .= " LEFT JOIN {$db->t($table)}$alias ON {$join[0]}";
-					array_shift($join);
+
+			// Get which partitions we are checking
+			foreach($schema['fields'] as $n => $f) {
+				// See if the current field is in the select
+				if (preg_grep("/^({$alias}\.)?(\*|$n)/",$options['select'])) {
+					if (in_array($f['type'],array('content','array'))) {
+						$partitions['content'] = TRUE;
+					} elseif (!empty($f['metadata'])) {
+						$partitions['metadata'] = TRUE;
+					} else {
+						$partitions['data'] = TRUE;
+					}
 				}
 			}
-		} else { return false; }
-		// If the conditions are provided as a string, assume an SQL query and pass through
+			$partnames = array();
+			$partnames['data'] = $db->t($m).' '.$db->n($alias);
+			$partnames['metadata'] = $db->t($m.'_metadata').' '.$db->n($alias.'_m');
+			$partnames['content'] = $db->t($m.'_content').' '.$db->n($alias.'_c');
+
+			// Set our joins
+			for($i=1;$i<sizeof($partitions);$i++) {
+				// Implicit partition joins
+				$joins[] = implode(',',(array)$schema['keys']['primary']['fields']);
+			}
+			// Explicit joins from options
+			if ($j) {
+				if (sizeof($options['joins'])<$j) { return false; }
+				$joins[] = $options['joins'][$j-1];
+			}
+			$j++;
+
+			// Add all partition tables to the tables array
+			$tables = array_merge(
+				$tables,
+				array_values(array_intersect_key($partnames,$partitions))
+			);
+		}
+
+		
+		// Get the SQL from (tables/joins) clause
+		$from = '';
+		foreach($tables as $k => $t) {
+			if ($k==0) {
+				$from = $t;
+			} else {
+				$j = $joins[$k-1];
+				$from .= " LEFT JOIN $t";
+				$from .= strpos($k,'=')!==FALSE
+					? " ON $j"
+					: " USING($j)";
+			}
+		}
+
+		// Get SQL where clause
 		if (is_string($conditions)) {
+			// If conditions are a string, assume an SQL query and pass through
 			$where = "WHERE ".$conditions;
+			$conditions = array($conditions,array());
 		// Otherwise, assemble the SQL statement from the array of conditions
 		} elseif (is_array($conditions) && !empty($conditions)) {
 			if (!$conditions = $this->traverseConditions($conditions)) {
@@ -184,84 +308,189 @@ class Helper_datasource_db extends Helper_datasource {
 			}
 			$where = "WHERE ".$conditions[0];
 		}
-		// Interpret array notation of order
-		if (is_array($order)) {
+
+		// Get SQL order clause
+		if (is_array($options['order'])) {
+			// Interpret array notation
 			$o = array();
-			foreach($order as $k => $v) {
+			foreach($options['order'] as $k => $v) {
 				if ($v>0) { $o[] = "$k ASC"; }
 				elseif ($v<0) { $o[] = "$k DESC"; }
 				else { $o[] = $k; }
 			}
-			$order = implode(',',$o);
+			$options['order'] = implode(',',$o);
 		}
-		if (!empty($order)) {
-			$order = "ORDER BY $order";
+		$order = !empty($options['order']) ? "ORDER BY {$options['order']}" : '';
+
+		// Get SQL group clause
+		if (is_array($options['group'])) {
+			$options['group'] = implode(',',$options['group']);
 		}
-		if (is_array($group)) {
-			$group = implode(',',$group);
-		}
-		if (!empty($group)) {
-			$group = "GROUP BY $group";
-		}
-		// If $limit is an array, accept it as skip,limit
-		if (is_array($limit)) {
-			$sqllimit = 'LIMIT '.(int)$limit[0].','.(int)$limit[1];
-			$limit = (int)$limit[1];
-		} elseif ($limit>0) {
-			$sqllimit = "LIMIT ".(int)$limit;
-		} else { $sqllimit = ''; }
-		// If $fetch is provided, use fetcy type.  Otherwise, if our limit is one, get the row, else get all results
-		if (!empty($fetch) && in_array($fetch,array('one','row','col','all','assoc'))) {
-			$qtype = 'get'.ucfirst(strtolower($fetch));
-		} elseif (!preg_match('/[,*]/',$select)) {
+		$group = !empty($options['group']) ? "GROUP BY {$options['group']}" : '';
+
+		// Get SQL limit clause
+		if (is_array($options['limit'])) {
+			// Convert array to skip,limit
+			$limit = 'LIMIT '.(int)$options['limit'][0].','.(int)$options['limit'][1];
+			$options['limit'] = (int)$options['limit'][1];
+		} elseif ($options['limit']>0) {
+			$limit = "LIMIT ".(int)$options['limit'];
+		} else { $limit = ''; }
+
+		// Get SQL select clause
+		$select = implode(',',$db->n($options['select']));
+
+		// If $fetch is provided, use fetch type.  Otherwise, if our limit is one, get the row, else get all results
+		if (!empty($options['fetch']) && in_array($options['fetch'],array('one','row','col','all','assoc'))) {
+			$qtype = 'get'.ucfirst(strtolower($options['fetch']));
+		} elseif (sizeof($options['select'])==1 && !preg_match('/[*]/',$options['select'][0])) {
 			$qtype = ($limit==1) ? 'getOne' : 'getCol';
 		} else {
 			$qtype = ($limit==1) ? 'getRow' : 'getAll';
 		}
+
 		// The DB Query
-		$result = $db->$qtype("SELECT $select FROM $m $where $group $order $sqllimit",$conditions[1]);
+		$result = $db->$qtype("SELECT ".$select." FROM $from $where $group $order $limit",$conditions[1]);
+
 		// If result is a single valid row and we are selecting everything, get metadata and content
-		if (is_object($model) && $qtype=='getRow' && !empty($result['id'])) {
-			$m = $db->t($model->_m());
-			if ($meta = $db->getAssoc('SELECT name,value FROM '.$m.'_metadata WHERE id=?',array($result['id']))) {
-				$result = array_merge($result,$meta);
-				$result['_metadata'] = array_keys($meta);
-			}
-			if ($content = $db->getAssoc('SELECT name,value FROM '.$m.'_content WHERE id=?',array($result['id']))) {
-				if ($serialized = $db->getCol('SELECT name FROM '.$m.'_content WHERE id=? && serialized=1',array($result['id']))) {
-					foreach($serialized as $s) {
-						$content[$s] = unserialize($content[$s]);
-					}
-				}
-				$result = array_merge($result,$content);
-				$result['_content'] = array_keys($content);
-			}
-			if (is_object($model)) {
-				$model->assignVars($result);
-			}
+		if (sizeof($models)==1 && is_a(reset($models),'Model') && $qtype=='getRow') {
+			$model = reset($models);
+			$model->assignVars($result);
 		}
 		return $result;
 	}
 	
-	function delete($model,$id=NULL) {
-		if (is_object($model)) {
-			$id = $model->id;
-			$model = $model->_m();
+	function delete($model,$key=NULL) {
+		// Get the key, name, and object
+		if (is_a($model,'Model')) {
+			$key = get_object_vars($model);
+			$m = $model->_m();
+		} elseif (is_array($model)) {
+			$m = $model[1];
+			$model = Load::Model($m);
+		} elseif (is_string($model)) {
+			$m = $model;
+			$model = Load::Model($m);
+		} else { return false; }
+
+		// Get the schema
+		if (is_a($model,'Model')) {
+			$schemaKeys = $model->_schemaKeys;
+		} else {
+			$schema = $this->_getSchema($m);
+			$schemaKeys = $schema['keys'];
 		}
-		if (is_null($id)) {
+
+		// Clean the key
+		if (is_scalar($key)) {
+			if (sizeof($schemaKeys['primary']['fields'])!=1) { return false; }
+			$key = array(reset($schemaKeys['primary']['fields']) => $key);
+		} else {
+			$key = array_intersect_key(
+				(array)$key,
+				array_flip($model->schemaKeys['primary']['fields'])
+			);
+		}
+
+		// Key must be full-sized
+		if (sizeof($key)!=sizeof($schemaKeys['primary']['fields'])) {
 			return false;
 		}
+
+		// Get SQL where clause from key
+		if ($where = $this->traverseConditions($key)) {
+			return false;
+		}
+
+		// Run the delete
 		$db = $this->db;
-		if ($db->Execute('DELETE FROM '.$db->t($model).' WHERE id=?',array($id))) {
-			$db->Execute('DELETE FROM '.$db->t($model.'_metadata').' WHERE id=?',array($id));
-			$db->Execute('DELETE FROM '.$db->t($model.'_content').' WHERE id=?',array($id));
+		if ($db->Execute('DELETE FROM '.$db->t($m).' WHERE '.$where[0],$where[1])) {
+			$db->Execute('DELETE FROM '.$db->t($m.'_metadata').' WHERE '.$where[0],$where[1]);
+			$db->Execute('DELETE FROM '.$db->t($m.'_content').' WHERE '.$where[0],$where[1]);
 			return true;
 		}
 		return false;
 	}
 	
 	function getSchema($model) {
-		return $this->db->getSchema($model);
+		// If $model is a string, load object
+		if (is_string($model)) {
+			$model = Load::Model($m);
+		}
+
+		// Return model schema if available
+		if (is_a($model,'Model')) {
+			return array(
+				'fields' => $model->_schemaFields,
+				'keys' => $model->_schemaKeys,
+			);
+		}
+
+		$raw = $this->db->getSchema($model);
+		$partitions = array();
+		$fields = array();
+		foreach(array('fields','metadata','content') as $partname) {
+			if (!empty($raw[$partname])) {
+				$partitions[] = $partname;
+			}
+			foreach($raw[$partname] as $name => $r) {
+				$fa = $r;
+				if (array_key_exists($r['type'],$this->intTypes)) {
+					$fa['type'] = 'int';
+					$fa['range'] = pow(2,8*$this->intTypes[$r['type']]);
+					unset($fa['length']);
+				} elseif (in_array($r['type'],$this->stringTypes)) {
+					$fa['type'] = 'string';
+				} elseif (array_key_exists($r['type'],$this->contentTypes)) {
+					$fa['type'] = 'content';
+					$fa['length'] = pow(2,8*$this->contentTypes[$r['type']]);
+				}
+				if ($partname=='metadata') { $fa['metadata'] = TRUE; }
+				if (empty($fa['not_null'])) { $fa['null'] = TRUE; }
+				unset($fa['not_null']);
+				$fields[$name] = $fa;
+			}
+		}
+		return array(
+			'fields' => $fields,
+		);
+	}
+
+	function _setSchema($model) {
+		// Get the model as an object
+		if (is_string($model) || is_array($model)) {
+			$model = Load::Model($model);
+		}
+		if (!is_a($model,'Model')) { return false; }
+
+		$fields = $model->_schemaFields;
+		foreach($fields as $name => $field) {
+			switch ($field['type']) {
+				case 'int':
+					foreach($this->intTypes as $type => $bytes) {
+						if ($field['range']<=pow(2,8*$bytes)) {
+							$field['type'] = $type;
+							break;
+						}
+					}
+					$field['length'] = ceil(log10($field['range']));
+					unset($field['range']);
+					break;
+				case 'string': $field['type'] = 'varchar'; break;
+				case 'content': case 'array':
+					foreach($this->contentTypes as $type => $bytes) {
+						if ($field['length']<=pow(2,8*$bytes)) {
+							$field['type'] = $type;
+							break;
+						}
+					}
+					break;
+			}
+			$fields[$name] = $field;
+		}
+		return $this->db->setSchema($model->_m(),array(
+			'fields' => $fields,
+		));
 	}
 	
 	function traverseConditions($cond,$glue='AND') {
