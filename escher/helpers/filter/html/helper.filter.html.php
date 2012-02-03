@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Helper_cache_memcache.php
+ * Filter Helper class
  * 
  * Filter (HTML) Helper class
  * @author Andrew Detwiler <adetwiler@adidamnetworks.com>
@@ -14,81 +14,30 @@
  * @package Escher
  */
 class Helper_filter_html extends Helper_filter {
+	protected $definitions = "!html,!body,!blink,!fieldset,!form,!legend,
+		@[id|class|style|title|dir<ltr|rtl>|lang],
+		a[+href|+name|charset|class|hreflang|rel:nofollow|rev|target|title],abbr[+title],
+		acronym[+title],address,area[shape|coords|href|alt|target],bdo,-blockquote,
+		//br,caption,cite,-code,col[align|char|charoff|span|valign|width],
+		colgroup[align|char|charoff|span|valign|width],dd,del~strike~s[datetime|cite],
+		dfn,-div,dl,dt,em~i,-h1,-h2,-h3,-h4,-h5,-h6,//hr,
+		//img[ssrc|border|alt=|title|hspace|vspace|width|height|align],
+		ins[datetime|cite],kbd,label[for],-li,map[+name],-ol,p,-pre,q[cite],samp,
+		-span,strong~b,-sub,-sup,
+		-table[border=0|cellspacing|cellpadding|width|height|bgcolor|background|bordercolor],
+		tbody,td[colspan|rowspan|width|height|align|valign|bgcolor|background|bordercolor|scope],
+		tfoot,th[colspan|rowspan|width|height|align|valign|scope],thead,
+		-tr[rowspan|width|height|align|valign|bgcolor|background|bordercolor],
+		tt,u,-ul,var";
 	protected $rules = array(
-		'allow' => array('div','p','span','img','video'),
-		'default' => array(
-			'attrs' => array(
-				'id' => TRUE,
-				'class' => TRUE,
-				'style' => TRUE,
-			),
-			'style' => array(
-				'float' => array('left','right','none'),
-				'font-weight' => TRUE,
-				'color' => TRUE,
-			),
-			'children' => TRUE,
-			'collapse' => FALSE,
-		),
-		'remove_default' => array(
-			'content' => TRUE,
-		),
-		'tags' => array(
-			'head' => array(
-				'content' => FALSE,
-			),
-			'p' => array(
-				'attrs' => array(
-					'class' => FALSE, // Overrides line 9
-				),
-				'style' => array(
-					'float' => FALSE, // Overrides line 13
-					'font-weight' => FALSE, // Overrides line 14
-					'text-decoration' => array('line-through'),
-				),
-				'children' => array('span','b','i','em','strong'),
-			),
-			'span' => array(
-				'style' => array(
-					'font-weight' => FALSE,
-				),
-			),
-			'img' => array(
-				'attrs' => array(
-					'src' => TRUE,
-				),
-				'collapse' => TRUE,
-			),
-			'script' => array(
-				'content' => FALSE,
-			),
-		),
+		'allow'  => array(),
+		'tags'     => array(),
+		'passthru' => array(),
+		'aliases'  => array(),
 	);
-	protected $allow = "
-		!html,!body,
-		@[id|class|style|title|dir<ltr?rtl|lang|xml::lang],
-		a[+href|+name|charset|class|hreflang|rel|rev|type|target|title],
-		strong~b,em~i,strike,u,p,-ol[type|compact],-ul[type|compact],-li,br,img[longdesc|usemap|
-		src|border|alt=|title|hspace|vspace|width|height|align],-sub,-sup,
-		-blockquote,-table[border=0|cellspacing|cellpadding|width|frame|rules|
-		height|align|summary|bgcolor|background|bordercolor],-tr[rowspan|width|
-		height|align|valign|bgcolor|background|bordercolor],tbody,thead,tfoot,
-		td[colspan|rowspan|width|height|align|valign|bgcolor|background|bordercolor
-		|scope],th[colspan|rowspan|width|height|align|valign|scope],caption,-div,
-		-span,-code,-pre,address,-h1,-h2,-h3,-h4,-h5,-h6,hr[size|noshade],-font[face
-		|size|color],dd,dl,dt,cite,abbr,acronym,del[datetime|cite],ins[datetime|cite],
-		object[classid|width|height|codebase|*],param[name|value|_value],embed[type|width
-		|height|src|*],script[src|type],map[name],area[shape|coords|href|alt|target],bdo,
-		button,col[align|char|charoff|span|valign|width],colgroup[align|char|charoff|span|
-		valign|width],dfn,fieldset,form[action|accept|accept-charset|enctype|method],
-		input[accept|alt|checked|disabled|maxlength|name|readonly|size|src|type|value],
-		kbd,label[for],legend,noscript,optgroup[label|disabled],option[disabled|label|selected|value],
-		q[cite],samp,select[disabled|multiple|name|size],small,
-		textarea[cols|rows|disabled|name|readonly],tt,var,big";
-	protected $compiledRules = array();
 
-	function html($data) {
-		$this->compileHTMLRules();
+	protected function html($data) {
+		$this->compileRules();
 		$this->dom = new DOMDocument();
 		libxml_use_internal_errors(true);
 		$this->dom->loadXML($data);
@@ -102,10 +51,12 @@ class Helper_filter_html extends Helper_filter {
 			array(
 				'/(\s*\n)+/',
 				'/^<\?xml[^\n]+\?>\n/i',
+				'#(?<!\s)/>#',
 			),
 			array(
 				"\n",
 				'',
+				' />',
 			),
 			$html
 		));
@@ -117,6 +68,7 @@ class Helper_filter_html extends Helper_filter {
 		if ($type=='html') {
 			return $this->html($value);
 		}
+		return parent::perform_filter($value,$type);
 	}
 
 	protected function validateNode($node) {
@@ -125,20 +77,65 @@ class Helper_filter_html extends Helper_filter {
 		if (empty($node->tagName)) { return false; }
 		$tagName = strtolower($node->tagName);
 
-		// Check if tag allowed
-		$valid = in_array($tagName, $this->compiledRules['allow']);
-
-		// Determine the ruleset to use
-		if (array_key_exists($tagName,$this->compiledRules['tags'])) {
-			$rules = $this->compiledRules['tags'][$tagName];
-		} elseif ($valid) {
-			$rules = $this->compiledRules['default'];
-		} else {
-			$rules = $this->compiledRules['remove_default'];
+		// Check to see if tag should be aliased
+		while (array_key_exists($tagName,$this->rules['aliases'])) {
+			$tagName = $this->rules['aliases'][$tagName];
 		}
+		// Replace the node with its alias
+		if ($tagName!=strtolower($node->tagName)) {
+			$newNode = $this->dom->createElement($tagName);
+			if ($node->hasAttributes()) {
+				foreach($node->attributes as $attr) {
+					$newNode->setAttributeNode($attr);
+				}
+			}
+			if ($node->hasChildNodes()) {
+				foreach($node->childNodes as $child) {
+					$newNode->appendChild($child);
+				}
+			}
+			$node->parentNode->replaceChild($newNode,$node);
+			$node = $newNode;
+		}
+
+		// Check if tag allowed
+		$valid = in_array($tagName,$this->rules['allow']);
+		$passthru = in_array($tagName,$this->rules['passthru']);
 
 		// If tag is valid, clean it up
 		if ($valid) {
+			$rules = $this->rules['tags'][$tagName];
+
+			// Force attributes
+			if (!empty($rules['forced'])) {
+				foreach($rules['forced'] as $attr => $value) {
+					$node->setAttribute($attr,$value);
+				}
+			}
+
+			// Add default attributes
+			if (!empty($rules['defaults'])) {
+				foreach($rules['defaults'] as $attr => $value) {
+					if (!$node->hasAttribute($attr)) {
+						$node->setAttribute($attr,$value);
+					}
+				}
+			}
+
+			// Check required attributes
+			if (!empty($rules['required'])) {
+				$success = FALSE;
+				foreach($rules['required'] as $attr => $value) {
+					if ($node->hasAttribute($attr)) {
+						$success = TRUE;
+						break;
+					}
+				}
+				if (!$success) {
+					$passthru = TRUE;
+				}
+			}
+
 			// Check attributes
 			if ($node->hasAttributes()) {
 				// Iterate through tha attributes
@@ -151,20 +148,22 @@ class Helper_filter_html extends Helper_filter {
 					) {
 						// If this is the style attribute, do style logic
 						if ($attrName == 'style') {
+							if ($rules['styles']===TRUE) { continue; }
 							// Parse the styles
-							$css = preg_split('/;/',$attrNode->value,-1,PREG_SPLIT_NO_EMPTY);
+							$css = preg_split('/\s*;\s*/',trim($attrNode->value),
+								-1,PREG_SPLIT_NO_EMPTY);
 							$styles = array();
 							foreach ($css as $s) {
-								$e = explode(':',$s,2);
+								$e = preg_split('/:\s*/',$s,2);
 								$styles[$e[0]] = trim($e[1]);
 							}
 							// Iterate through each style declaration
 							foreach ($styles as $k => $v) {
 								// If this style is not allowed, unset it
-								if (!array_key_exists($k,$rules['style'])
-									|| empty($rules['style'][$k])
-										|| (is_array($rules['style'][$k])
-										&& !in_array($v,$rules['style'][$k])
+								if (!array_key_exists($k,$rules['styles'])
+									|| empty($rules['styles'][$k])
+										|| (is_array($rules['styles'][$k])
+										&& !in_array($v,$rules['styles'][$k])
 								)) {
 									unset($styles[$k]);
 								}
@@ -218,8 +217,8 @@ class Helper_filter_html extends Helper_filter {
 
 		if ($node->hasChildNodes()) {
 			// If children are allowed, iterate through them
-			if ((!$valid && !empty($rules['content'])) // Tag not allowed, but content is
-				|| ($valid && empty($rules['collapse'])) // Tag allowed and does not collapse
+			if ((!$valid && $passthru) // Tag not allowed, but content is
+				|| ($valid && empty($rules['selfClosing'])) // Tag allowed and does not collapse
 			){
 				$children = array();
 				foreach ($node->childNodes as $child) {
@@ -238,10 +237,16 @@ class Helper_filter_html extends Helper_filter {
 					}
 				}
 			}
+		} elseif ($valid) {
+			if (!$rules['allowEmpty']) { return false; }
+			if (!$rules['selfClosing']) {
+				$empty = $this->dom->createTextNode('');
+				$node->appendChild($empty);
+			}
 		}
 
-		if (!$valid) {
-			if (!empty($rules['content']) && $node->hasChildNodes()) {
+		if (!$valid || $passthru) {
+			if ($passthru && $node->hasChildNodes()) {
 				foreach ($node->childNodes as $child) {
 					$node->parentNode->appendChild($child->cloneNode(TRUE));
 				}
@@ -251,24 +256,169 @@ class Helper_filter_html extends Helper_filter {
 		return true;
 	}
 
-	protected function compileHTMLRules() {
-		if (!empty($this->compiledRules)) { return; }
-		$rc = $this->rules;
-		foreach($rc['tags'] as $tagname => $tag) {
-			if (in_array($tagname,$rc['allow'])) {
-				$default = $rc['default'];
-			} else {
-				$default = $rc['remove_default'];
+	protected function compileRules() {
+		if (!empty($this->rules['allow'])) { return; }
+		$rules = $this->rules;
+
+		$masterDefault = $defaultRule = array(
+			'attrs'       => array(),
+			'forced'      => array(),
+			'required'    => array(),
+			'defaults'    => array(),
+			'styles'      => array(),
+			'allowEmpty'  => TRUE,
+			'selfClosing' => FALSE,
+			'collapse'    => FALSE,
+		);
+
+		// Parse the shorthand rules
+		$tags = preg_split('/,/',preg_replace('/\s/','',$this->definitions),
+			-1,PREG_SPLIT_NO_EMPTY);
+
+		foreach($tags as $t) {
+			// Extract the components of each rule
+			preg_match(
+				'#(!|//?|-|)([^[{~]+)((?:~[^[{]+)*)(\[.*\]|)(\{.*\}|)#',
+				$t,
+				$match
+			);
+			$t = array_combine(
+				array('mod','tag','alias','attrs','styles'),
+				array_slice($match,1)
+			);
+
+			// Parse aliases
+			$aliases = preg_split('/~/',$t['alias'],-1,PREG_SPLIT_NO_EMPTY);
+
+			// Check for passthru rules
+			if ($t['mod']=='!') {
+				$rules['passthru'] = array_merge(
+					$rules['passthru'],
+					array($t['tag']),
+					$aliases
+				);
+				continue;
+
+			// Check for aliases
+			} elseif (!empty($aliases)) {
+				$rules['aliases'] = array_merge(
+					$rules['aliases'],
+					array_fill_keys($aliases,$t['tag'])
+				);
 			}
-			foreach($default as $rulename => $rule) {
-				if (!array_key_exists($rulename,$tag)) {
-					$rc['tags'][$tagname][$rulename] = $rule;
-				} elseif (is_array($tag[$rulename]) && is_array($rule)) {
-					$rc['tags'][$tagname][$rulename] =
-						array_merge($rule,$tag[$rulename]);
+
+			// Begin compiling the current rule
+			$rule = $t['tag']=='@' ? $masterDefault : $defaultRule;
+
+			// Parse modifiers
+			switch ($t['mod']) {
+				case '-':  $rule['allowEmpty'] = FALSE; break;
+				case '//': $rule['collapse'] = TRUE;
+				case '/':  $rule['selfClosing'] = TRUE; break;
+			}
+
+			// Parse attributes
+			if (!empty($t['attrs'])) {
+				$attr_arr = preg_split('/([+|<>=:\[\]])/',$t['attrs'],-1,
+					PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
+				foreach($attr_arr as $at) {
+					switch ($at) {
+						case '+': $required = TRUE; break;
+						case '<': $choices = array(); break;
+						case '>':
+							$value = $choices;
+							$choices = FALSE;
+							break;
+						case ':': $forced = TRUE; break;
+						case '=':
+							$default = TRUE;
+							$rule['defaults'][$attr] = '';
+							break;
+						case '|': case '['; case ']';
+							if (isset($choices) && is_array($choices)) { break; }
+							if (!empty($attr)) {
+								$rule['attrs'][$attr] = $value;
+								if (!empty($required)
+									&& !array_key_exists($attr,$rule['required'])
+								) {
+									$rule['required'][$attr] = $value;
+								}
+							}
+							unset($forced,$required,$default,$choices,$capture,$attr);
+							$value = TRUE;
+							break;
+						default:
+							if (isset($choices) && is_array($choices)) {
+								$choices[] = $at;
+							} elseif (!empty($attr)) {
+								if (!empty($default)) {
+									$rule['defaults'][$attr] = $at;
+									$default = FALSE;
+								} elseif (!empty($forced)) {
+									$rule['forced'][$attr] = $at;
+									$forced = FALSE;
+								}
+							} else {
+								$attr = $at;
+							}
+					}
 				}
 			}
+
+			// Parse CSS styles
+			if (!empty($t['styles'])) {
+				$attr_arr = preg_split('/([+|<>=:{}])/',$t['styles'],-1,
+					PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
+				foreach($attr_arr as $at) {
+					switch ($at) {
+						case '+': break;
+						case '<': $choices = array(); break;
+						case '>':
+							$value = $choices;
+							$choices = FALSE;
+							break;
+						case ':':
+						case '=': $choice = TRUE; break;
+						case '|': case '{': case '}':
+							if (isset($choices) && is_array($choices)) { break; }
+							if (!empty($attr)) {
+								$rule['styles'][$attr] = $value;
+							}
+							unset($choice,$choices,$capture,$attr);
+							$value = TRUE;
+							break;
+						default:
+							if (isset($choices) && is_array($choices)) {
+								$choices[] = $at;
+							} elseif (!empty($attr)) {
+								if (!empty($choice)) {
+									$value = array($at);
+									$choice = FALSE;
+								}
+							} else {
+								$attr = $at;
+							}
+					}
+				}
+			}
+			if (!empty($rule['styles'])) {
+				$rule['attrs']['style'] = TRUE;
+			} elseif (array_key_exists('style',$rule['attrs'])
+				&& !empty($rule['attrs']['style'])
+			) {
+				$rule['styles'] = TRUE;
+			}
+
+			// Check to see if we are setting new defaults
+			if ($t['tag']=='@') {
+				$defaultRule = $rule;
+
+			// Merge the current rule with the defaults and save
+			} else {
+				$rules['allow'][] = $t['tag'];
+				$rules['tags'][$t['tag']] = $rule;
+			}
 		}
-		$this->compiledRules = $rc;
+		$this->rules = $rules;
 	}
 }

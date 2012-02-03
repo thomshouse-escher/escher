@@ -338,7 +338,7 @@ class Load {
 	 * Shorthand for loading a Filter object.
 	 * @return object Returns the Filter object.
 	 */
-	public function Filter($type='default',$args=NULL) {
+	public function Filter($type='html',$args=NULL) {
 		if (is_array($type)) {
 			return Load::Helper(array($type[0],'output'),$type[1],$args);
 		} else {

@@ -7,6 +7,7 @@ class Helper_hooks extends Helper {
 	protected $outputFunctions = array();
 	protected $userauths = array();
 	protected $events = array();
+	protected $filters = array();
 	protected $models = array();
 	protected $staticroutes = array();
 
