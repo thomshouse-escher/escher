@@ -250,7 +250,7 @@ class Helper_acl extends Helper {
 		$ds = Load::Datasource('db');
 		$conditions = array(
 			'resource_type' => $resource[0],'resource_id' => $resource[1],
-			'action' => $action, 'context' => $context->id, 'inheritable' => $inherit,
+			'action' => $action, 'context' => $context->id, 'inheritable' => $inheritable,
 			'entity_type' => $entity[0], 'entity_id' => $entity[1]);
 		$options = array('limit' => 0,'select' => 'id','fetch' => 'col');
 		$current_rules = $ds->get('acl_rule',$conditions,$options);

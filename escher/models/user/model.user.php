@@ -18,6 +18,6 @@ class Model_user extends Model {
 	);
 
 	function getUserAuth() {
-		return Load::UserAuth($this->auth);
+		return Load::UserAuth($this->user_auth);
 	}
 }

@@ -27,6 +27,9 @@ class Controller_errors extends Controller {
 			$this->headers->redirect('~/');
 		}
 		
+		// If user is logged in, don't try to redirect
+		if (Load::User()) { return; }
+		
 		// Load the config
 		$CFG = Load::CFG();
 		
@@ -40,7 +43,7 @@ class Controller_errors extends Controller {
 		$_SESSION['post_login_urls'][] = $redirect_back;
 		
 		// Check the login path. If the login path is not set in the config, default to static login.
-		$login = !empty($CFG['login_url']) ? $login = $CFG['login_url'] : '/login/';
+		$login = !empty($CFG['login_url']) ? $CFG['login_url'] : '/login/';
 		
 		// If query string use ampersand, if not use question mark.
 		$qstr = (strpos($login,'?')===FALSE) ? '?' : '&';

@@ -5,6 +5,6 @@
 <?php $HTML->open('footer'); ?>
 <?php if($_check($resource,'edit')) { ?>
 <div class="actions">
-<a href="<?php $E($current_path.'/edit_entry/'.$entry['id'].'/'); ?>"><?php $L('Edit'); ?></a> 
+<a href="<?php $E($current_path.'/edit_entry/'.$entry['blog_entry_id'].'/'); ?>"><?php $L('Edit'); ?></a> 
 </div>
 <?php } $HTML->closeTo('footer'); ?>

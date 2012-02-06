@@ -31,23 +31,22 @@ class Helper_datasource_arrcache extends Helper_datasource {
 			}
 			$data = $attrs;
 		} else { return false; }
-		// Cache the id if it is provided in the data (or in $options)
-		if (!empty($attrs['id'])) {
-			$this->cache[$m.'_id_'.$attrs['id']] = $data;
-		}
-		// Cache the other keys, if provided and valid
+		// Cache all unique keys
 		if (is_object($model)) {
-			foreach($model->_cache_keys() as $c) {
-				ksort($c);
+			foreach($model->_schemaKeys as $c) {
+				if (!in_array($c['type'],array('unique','primary'))) {
+					continue;
+				}
+				ksort($c['fields']);
 				$keyset = array();
-				foreach($c as $k) {
+				foreach($c['fields'] as $k) {
 					if (!isset($attrs[$k])) {
 						continue 2;
 					}
-					$keyset[] = "{$k}_{$attrs[$k]}";
+					$keyset[] = "{$k}={$attrs[$k]}";
 				}
-				$keyset = implode('_',$keyset);
-				$this->cache[$m.'_'.$keyset] = $data;
+				$keyset = implode('&',$keyset);
+				$this->cache[$m.'?'.$keyset] = $data;
 			}
 		}
 		return true;
@@ -58,14 +57,14 @@ class Helper_datasource_arrcache extends Helper_datasource {
 		} elseif (is_string($model)) {
 			$m = $model;
 		} else { return false; }
-		$name = $m.'_';
+		$name = $m.'?';
 		if (is_array($conditions)) {
 			ksort($conditions);
 			$c = array();
 			foreach($conditions as $k => $v) {
-				$c[] = $k.'_'.$v;
+				$c[] = $k.'='.$v;
 			}
-			$name .= implode('_',$c);
+			$name .= implode('&',$c);
 		} else { return false; }
 		if (!array_key_exists($name,$this->cache)) {
 			return false;
@@ -77,32 +76,22 @@ class Helper_datasource_arrcache extends Helper_datasource {
 		return $result;
 	}
 	
-	function delete($model,$id=NULL) {
-		if (is_object($model)) {
-			$id = $model->id;
-			$m = $model->_m();
-		} elseif (is_string($model)) {
-			$m = $model;
-		} else { return false; }
-		if (is_null($id)) {
-			return false;
-		}
-		// Unset the id
-		unset($this->cache[$m.'_id_'.$id]);
-		// Unset the other keys, if provided and valid
-		if (is_object($model)) {
-			foreach($model->_cache_keys() as $c) {
-				ksort($c);
-				$keyset = array();
-				foreach($c as $k) {
-					if (!isset($attrs[$k])) {
-						continue 2;
-					}
-					$keyset[] = "{$k}_{$attrs[$k]}";
+	function delete($model) {
+		if (!is_object($model)) { return false; }
+		$m = $model->_m();
+
+		// Unset all unique keys
+		foreach($model->_schemaKeys as $c) {
+			ksort($c['fields']);
+			$keyset = array();
+			foreach($c['fields'] as $k) {
+				if (!isset($attrs[$k])) {
+					continue 2;
 				}
-				$keyset = implode('_',$keyset);
-				unset($this->cache[$m.'_'.$keyset]);
+				$keyset[] = "{$k}={$attrs[$k]}";
 			}
+			$keyset = implode('&',$keyset);
+			unset($this->cache[$model->_m().'?'.$keyset]);
 		}
 		return true;
 	}

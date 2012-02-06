@@ -8,7 +8,7 @@ class Model_article extends Model {
 		'created_by'    => 'id',
 		'modified_at'   => 'datetime',
 		'modified_from' => 'resource',
-		'modified_by'   => 'id'
+		'modified_by'   => 'id',
 		// Content
 		'body'    => 'content',
 		'summary' => 'content',

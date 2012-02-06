@@ -21,15 +21,8 @@ abstract class EscherModel extends EscherObject {
 	
 	public function load($key=NULL) {
 		// If this object is already loaded, just reload (ignore provided keys)
-		if (!empty($this->id)) {
-			$key = array('id' => $this->id);
-		// If only the primary id was provided as key, format for datasource
-		} elseif (is_scalar($key)) {
-			$key = array('id' => $key);
-		// And if our key is invalid, return false
-		} else if (!is_array($key) || !empty($key)) {
-			return false;
-		}
+		if (!empty($this->id)) { $key = $this->id; }
+
 		// If we can't load from cache, load from datasources and cache it
 		if (!$this->loadCached($key)) {
 			if(!$this->loadUncached($key)) {
@@ -41,30 +34,49 @@ abstract class EscherModel extends EscherObject {
 		return true;
 	}
 	
-	function loadCached($keys) {
+	function loadCached($key) {
+		// If only the primary id was provided as key, format for datasource
+		if (is_scalar($key)
+			&& !empty($this->_schemaKeys['primary']['fields'])
+			&& sizeof($this->_schemaKeys['primary']['fields'])==1
+		) {
+			$key = array(reset($this->_schemaKeys['primary']['fields']) => $key);
+		}
+		// And if our key is invalid, return false
+		if (!is_array($key) || empty($key)) { return false; }
+
 		$sources = $this->_getCacheDatasources();
 		// Iterate through our datasources, trying to load the model
 		foreach($sources as $s) {
 			$ds = Load::Datasource($s);
-			if ($result = $ds->get($this,$keys)) {
+			if ($result = $ds->get($this,$key)) {
 				// Assign class vars (metadata, content, etc.) and return
-				//$this->assignClassVars($result);
 				return true;
 			}
 		}
 		return false;
 	}
 
-	function loadUncached($keys) {
+	function loadUncached($key) {
+		// If only the primary id was provided as key, format for datasource
+		if (is_scalar($key)
+			&& !empty($this->_schemaKeys['primary']['fields'])
+			&& sizeof($this->_schemaKeys['primary']['fields'])==1
+		) {
+			$key = array(reset($this->_schemaKeys['primary']['fields']) => $key);
+		}
+		// And if our key is invalid, return false
+		if (!is_array($key) || empty($key)) { return false; }
+
 		$sources = $this->_getDatasources();
 		// Iterate through our datasources, trying to load the model
 		foreach($sources as $s) {
 			$ds = Load::Datasource($s);
-			if ($result = $ds->get($this,$keys)) {
+			if ($result = $ds->get($this,$key)) {
 				// When we find the datasource, set it
 				$this->_datasource = $s;
 				// Assign class vars (metadata, content, etc.)
-				//$this->assignClassVars($result);
+				$this->assignVars($result);
 				return true;
 			}
 		}
@@ -74,7 +86,7 @@ abstract class EscherModel extends EscherObject {
 	public function save() {
 		// Touch the model if this is the first save
 		if (empty($this->id) && empty($this->ctime)) {
-			$this->touch();
+			//TODO $this->touch();
 		}
 		$sources = $this->_getDatasources();
 		// Iterate through the datasources and save
@@ -277,6 +289,7 @@ abstract class EscherModel extends EscherObject {
 		$id = "{$this->_m()}_id";
 		switch ($name) {
 			case 'id':
+				return $this->$id; break;
 			case $id:
 			case '_schemaFields':
 			case '_schemaKeys':
@@ -303,6 +316,14 @@ abstract class EscherModel extends EscherObject {
 				$this->$name = $value;
 				break;
 		}
+	}
+
+	final function __isset($name) {
+		if ($name=='id') {
+			$id = "{$this->_m()}_id";
+			return isset($this->$id);
+		}
+		return false;
 	}
 
 	final protected function _expandSchema() {
@@ -375,7 +396,7 @@ abstract class EscherModel extends EscherObject {
 					// String types and shorthands
 					case 'string': $default['length'] = 255; break;
 					case 'md5':
-						$default['range'] = 32;
+						$default['length'] = 32;
 						$attrs['type'] = 'string'; break;
 					case 'resource':
 						$default['length'] = 48;
@@ -424,6 +445,11 @@ abstract class EscherModel extends EscherObject {
 				// Save expanded schema
 				$this->_schemaFields[$name] = $attrs;
 			}
+		}
+
+		// Clean up the keys
+		foreach($this->_schemaKeys as $k => $v) {
+			$this->_schemaKeys[$k]['fields'] = (array)$v['fields'];
 		}
 	}
 }

@@ -43,7 +43,6 @@ class Helper_datasource_db extends Helper_datasource {
 
 	function set($model,$data=array(),$options=array()) {
 		$db = $this->db;
-
 		// If $model is an object, get type and values
 		if (is_a($model,'Model')) {
 			$m = $model->_m();
@@ -55,13 +54,12 @@ class Helper_datasource_db extends Helper_datasource {
 		} else {
 			return false;
 		}
-
 		// Update schema from model
 		if (is_a($model,'Model')) {
-			$this->_setSchema($model);
+			$this->setSchema($model);
 		}
 		// Make the schema available
-		$schema = $this->_getSchema($m);
+		$schema = $this->getSchema($m);
 
 		// Clean and separate data
 		$data = array_intersect_key($data,$schema['fields']);
@@ -82,10 +80,14 @@ class Helper_datasource_db extends Helper_datasource {
 				case 'date':
 					$data[$k] = $this->date($v); break;
 			}
+			if (is_null($data[$k])) {
+				unset($data[$k]);
+				continue;
+			}
 			if (!is_scalar($data[$k])) { return false; }
 
 			// Push primary key fields to $primary array
-			if (in_array($k,(array)$schema['keys']['primary'])) {
+			if (in_array($k,(array)$schema['keys']['primary']['fields'])) {
 				$primary[$k] = $data[$k];
 				unset($data[$k]);
 
@@ -109,7 +111,6 @@ class Helper_datasource_db extends Helper_datasource {
 			'metadata' => $metadata,
 			'content'  => $content,
 		);
-
 		// Iterate through each of the partitions
 		foreach($partitions as $partition => $values) {
 			// Determine whether the primary key has been set
@@ -122,12 +123,12 @@ class Helper_datasource_db extends Helper_datasource {
 			) {
 				continue;
 			}
-			
+
 			// Set the table name of the current partition
 			switch ($partition) {
 				case 'data':     $partname = $db->t($m); break;
-				case 'metadata': $partname = $db->t($m).'_metadata'; break;
-				case 'content':  $partname = $db->t($m).'_content'; break;
+				case 'metadata': $partname = $db->t($m.'_metadata'); break;
+				case 'content':  $partname = $db->t($m.'_content'); break;
 			}
 
 			// Build sql pieces for attributes and key
@@ -160,10 +161,10 @@ class Helper_datasource_db extends Helper_datasource {
 			// If primary key is not set or if row did not exist, insert
 			if (!$primarySet || !$result) {
 				if (!$primarySet) {
-					if (sizeof((array)$schema['keys']['primary'])>1) {
+					if (sizeof((array)$schema['keys']['primary']['fields'])>1) {
 						return false;
 					}
-					$key = reset($schema['keys']['primary']);
+					$key = reset($schema['keys']['primary']['fields']);
 					if (empty($schema['fields'][$key]['auto_increment'])) {
 						return false;
 					}
@@ -245,6 +246,7 @@ class Helper_datasource_db extends Helper_datasource {
 			}
 
 			// Get which partitions we are checking
+			$partitions = array();
 			foreach($schema['fields'] as $n => $f) {
 				// See if the current field is in the select
 				if (preg_grep("/^({$alias}\.)?(\*|$n)/",$options['select'])) {
@@ -344,18 +346,18 @@ class Helper_datasource_db extends Helper_datasource {
 		if (!empty($options['fetch']) && in_array($options['fetch'],array('one','row','col','all','assoc'))) {
 			$qtype = 'get'.ucfirst(strtolower($options['fetch']));
 		} elseif (sizeof($options['select'])==1 && !preg_match('/[*]/',$options['select'][0])) {
-			$qtype = ($limit==1) ? 'getOne' : 'getCol';
+			$qtype = ($options['limit']==1) ? 'getOne' : 'getCol';
 		} else {
-			$qtype = ($limit==1) ? 'getRow' : 'getAll';
+			$qtype = ($options['limit']==1) ? 'getRow' : 'getAll';
 		}
 
 		// The DB Query
 		$result = $db->$qtype("SELECT ".$select." FROM $from $where $group $order $limit",$conditions[1]);
 
 		// If result is a single valid row and we are selecting everything, get metadata and content
-		if (sizeof($models)==1 && is_a(reset($models),'Model') && $qtype=='getRow') {
+		if ($result && sizeof($models)==1 && is_a(reset($models),'Model') && $qtype=='getRow') {
 			$model = reset($models);
-			$model->assignVars($result);
+			$model->assignVars(reset($result));
 		}
 		return $result;
 	}
@@ -415,7 +417,8 @@ class Helper_datasource_db extends Helper_datasource {
 	function getSchema($model) {
 		// If $model is a string, load object
 		if (is_string($model)) {
-			$model = Load::Model($m);
+			$m = $model;
+			$model = Load::Model($model);
 		}
 
 		// Return model schema if available
@@ -426,37 +429,28 @@ class Helper_datasource_db extends Helper_datasource {
 			);
 		}
 
-		$raw = $this->db->getSchema($model);
-		$partitions = array();
+		$dbSchema = $this->db->getSchema($m);
 		$fields = array();
-		foreach(array('fields','metadata','content') as $partname) {
-			if (!empty($raw[$partname])) {
-				$partitions[] = $partname;
+		foreach($dbSchema['fields'] as $name => $r) {
+			$fa = $r;
+			if (array_key_exists($r['type'],$this->intTypes)) {
+				$fa['type'] = 'int';
+				$fa['range'] = pow(2,8*$this->intTypes[$r['type']]);
+				unset($fa['length']);
+			} elseif (in_array($r['type'],$this->stringTypes)) {
+				$fa['type'] = 'string';
+			} elseif (array_key_exists($r['type'],$this->contentTypes)) {
+				$fa['type'] = 'content';
+				$fa['length'] = pow(2,8*$this->contentTypes[$r['type']]);
 			}
-			foreach($raw[$partname] as $name => $r) {
-				$fa = $r;
-				if (array_key_exists($r['type'],$this->intTypes)) {
-					$fa['type'] = 'int';
-					$fa['range'] = pow(2,8*$this->intTypes[$r['type']]);
-					unset($fa['length']);
-				} elseif (in_array($r['type'],$this->stringTypes)) {
-					$fa['type'] = 'string';
-				} elseif (array_key_exists($r['type'],$this->contentTypes)) {
-					$fa['type'] = 'content';
-					$fa['length'] = pow(2,8*$this->contentTypes[$r['type']]);
-				}
-				if ($partname=='metadata') { $fa['metadata'] = TRUE; }
-				if (empty($fa['not_null'])) { $fa['null'] = TRUE; }
-				unset($fa['not_null']);
-				$fields[$name] = $fa;
-			}
+			$fields[$name] = $fa;
 		}
 		return array(
 			'fields' => $fields,
 		);
 	}
 
-	function _setSchema($model) {
+	function setSchema($model) {
 		// Get the model as an object
 		if (is_string($model) || is_array($model)) {
 			$model = Load::Model($model);
@@ -490,6 +484,7 @@ class Helper_datasource_db extends Helper_datasource {
 		}
 		return $this->db->setSchema($model->_m(),array(
 			'fields' => $fields,
+			'keys'   => $model->_schemaKeys,
 		));
 	}
 	

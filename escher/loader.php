@@ -473,7 +473,7 @@ class Load {
 			$keys = $_SESSION['user_id'];
 		}
 		$user = Load::Model('user',$keys);
-		if (!isset($user->id)) {
+		if (!isset($user->user_id)) {
 			return false;
 		}
 		return $user;

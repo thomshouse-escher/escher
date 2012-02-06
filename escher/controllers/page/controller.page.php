@@ -5,13 +5,15 @@ class Controller_page extends Controller {
 	function action_index($args) {
 		if (empty($this->id)) { Load::Error('500'); }
 		$page = Load::Model('page',$this->id);
-		$this->data['resource'] = array('page',$page->id);
+		$this->data['resource'] = array('page',$page->page_id);
 		$this->data['body'] = @$page->body;
 		$this->data['title'] = @$page->title;
 	}
 	
 	function manage_edit($args) {
-		$page = Load::Model('page',@$this->id);
+		if (!empty($this->id)) { $page = Load::Model('page',@$this->id); }
+		if (empty($page)) { $page = Load::Model('page'); }
+
 		$lockout = Load::Lockout();
 		if ($lockout->isLocked($page)) {
 			$this->headers->addNotification('This page is currently being edited by another user.','error');
