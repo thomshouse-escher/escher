@@ -30,7 +30,7 @@ class Controller_auth extends Controller {
 				if (!empty($user)) { $userauth = $user->getUserAuth(); }
 				if (!empty($userauth) && $userauth->login($input->post['username'],@$input->post['password'])) {
 					$session->regenerate();
-					$_SESSION['user_id'] = $user->id;
+					$_SESSION['user_id'] = $user->user_id;
 					if (!empty($input->post['persist'])) {
 						$_SESSION['persist'] = 1;
 					}

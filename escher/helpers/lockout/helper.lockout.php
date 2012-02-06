@@ -27,27 +27,33 @@ class Helper_lockout extends Helper {
 		} else { return false; }
 		
 		// Lock it!
-		$ds = Load::Datasource();
-		$ds->set('model_lockout',array('type'=>$rtype,'id'=>$rid,
-			'lock_time'=>$ds->time(NOW),'lock_type'=>$etype,'lock_id'=>$eid));
+		$lock = Load::Model('lockout');
+		$lock->assignVars(array(
+			'resource_type' => $rtype,
+			'resource_id'   => $rid,
+			'lock_time'     => NOW,
+			'locking_type'  => $etype,
+			'locking_id'    => $eid
+		));
+		$lock->save();
+
+		$headers = Load::Headers();
+
 		// Header Check... Unless this is an AJAX request, we need to add a javascript timer
-		$input = Load::Input();
-		if (!$input->isAjax()) {
+		if (!$headers->isAJAX()) {
 			$CFG = Load::Config();
-			$headers = Load::Headers();
 			$headers->addHeadHTML(
-/* Javascript function */'
-<script type="text/javascript" language="javascript">
-	window.setInterval(function() {
-		if (window.XMLHttpRequest) { xhttp=new XMLHttpRequest(); }
-		else { xhttp=new ActiveXObject("Microsoft.XMLHTTP"); }
-		xhttp.open("GET","'.$CFG['wwwroot'].'/lockout/'.$rtype.'/'.$rid.'/",false);
-		xhttp.setRequestHeader("X-Requested-With","XMLHttpRequest");
-		xhttp.send(null);
-		delete xhttp;
-	},'.($this->pollInterval*1000).');
-</script>'
-/* End Javascript */);
+				'<script type="text/javascript" language="javascript">'.
+				'	window.setInterval(function() {'.
+				'		if (window.XMLHttpRequest) { xhttp=new XMLHttpRequest(); }'.
+				'		else { xhttp=new ActiveXObject("Microsoft.XMLHTTP"); }'.
+				'		xhttp.open("GET","'.$CFG['wwwroot'].'/lockout/'.$rtype.'/'.$rid.'/",false);'.
+				'		xhttp.setRequestHeader("X-Requested-With","XMLHttpRequest");'.
+				'		xhttp.send(null);'.
+				'		delete xhttp;'.
+				'	},'.($this->pollInterval*1000).');'.
+				'</script>'
+			);
 
 		}
 	}
@@ -76,12 +82,17 @@ class Helper_lockout extends Helper {
 		} else { $etype = $eid = 0; }
 		
 		// Check the lock
-		$ds = Load::Datasource();
-		if ($ds->get('model_lockout',array(
-			'type'=>$rtype,'id'=>$rid,
-			'lock_time'=>array('>='=>$ds->time(NOW-$this->lockoutExpiration)),
-			array('NOT','lock_type'=>$etype,'lock_id'=>$eid)))) {
-				return true;
-		} else { return false; }
+		$lock = Load::Model('lockout',array(
+			'resource_type' => $rtype,
+			'resource_id'   => $rid,
+			array('NOT',
+				'locking_type'  => $etype,
+				'locking_id'    => $eid,
+			),
+		));
+		if ($lock && strtotime($lock->lock_time) >= NOW-$this->lockoutExpiration) {
+			return true;
+		}
+		return false;
 	}
 }

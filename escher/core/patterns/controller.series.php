@@ -46,7 +46,8 @@ abstract class Controller_Series extends Controller {
 	}
 	
 	function manage_edit($args) {
-		$page = Load::Model($this->seriesType,@$this->id);
+		if (!empty($this->id)) { $page = Load::Model($this->seriesType,$this->id); }
+		if (empty($page)) { $page = Load::Model($this->seriesType); }
 		$lockout = Load::Lockout();
 		if ($lockout->isLocked($page)) {
 			$headers = Load::Headers();
