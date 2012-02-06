@@ -14,7 +14,7 @@ class Model_upload extends File {
 		// Content
 		'resized_images' => 'array',
 	);
-		
+
 	protected $_doImageResizing = TRUE;
 	
 	function __construct($key=NULL) {

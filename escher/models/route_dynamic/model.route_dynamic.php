@@ -3,8 +3,8 @@
 class Model_route_dynamic extends Model {
 	protected $_schemaFields = array(
 		'parent_id'   => 'id',
-		'tag'         => 'string',
-		'title'       => 'title',
+		'tag'         => 'resource',
+		'title'       => 'string',
 		'controller'  => 'resource',
 		'instance_id' => 'id',
 		'subsite'     => 'bool',

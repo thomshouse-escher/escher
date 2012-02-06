@@ -9,7 +9,7 @@ unset($microtime_array);
 function die_r($arr) {
 	$args = func_get_args();
 	if (sizeof($args)>1) { $arr = $args; }
-	while (ob_list_handlers()) {
+	while (ob_get_level()) {
 		ob_end_flush();
 	}
 	print '<pre>'; print_r($arr); die('</pre>');
