@@ -3,6 +3,7 @@
 class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 	function authenticate() {
 		$headers = Load::Headers();
+		$hooks = Load::Hooks();
 
 		// Load FB API and session
 		$fb = loadFacebookAPI();
@@ -23,6 +24,7 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 		// If there is a local user with this facebook uid, log them in and redirect
 		if ($user = Load::User(array('facebook_uid'=>$uid))) {
 			$_SESSION['user_id'] = $user->id;
+			$hooks->runEvent('register_success');
 			return true;
 		}
 		
@@ -84,24 +86,28 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 	
 	// Registration is pretty straight forward...
 	function register($username,$password=NULL,$vars=array()) {
-			// We must know the facebook uid to register a facebook user
-			if (!isset($vars['facebook_uid'])) {
-				return false;
-			}
-			// Password will not get used, fill it with noise
-			$password = sha1($username.time());
-			
-			// Assign vars to the user and save
-			$user = Load::Model('user');
-			$vars['username'] = $username;
-			$vars['password'] = $password;
-			$vars['auth'] = 'facebook'; // fbconnect auth and oauth are either/or
-			$user->assignVars($vars);
-			if ($user->save()) {
-				return $user;
-			} else {
-				return false;
-			}
+		$hooks = Load::Hooks();
+
+		// We must know the facebook uid to register a facebook user
+		if (!isset($vars['facebook_uid'])) {
+			$hooks->runEvent('register_failure');
+			return false;
+		}
+		// Password will not get used, fill it with noise
+		$password = sha1($username.time());
+		
+		// Assign vars to the user and save
+		$user = Load::Model('user');
+		$vars['username'] = $username;
+		$vars['password'] = $password;
+		$vars['auth'] = 'facebook'; // fbconnect auth and oauth are either/or
+		$user->assignVars($vars);
+		if ($user->save()) {
+			return $user;
+		} else {
+			$hooks->runEvent('register_failure');
+			return false;
+		}
 	}
 
 	function onLogin() {
