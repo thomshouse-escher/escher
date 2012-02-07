@@ -467,7 +467,7 @@ class Helper_datasource_db extends Helper_datasource {
 							break;
 						}
 					}
-					$field['length'] = ceil(log10($field['range']));
+					$field['length'] = max(1,ceil(log10($field['range'])));
 					unset($field['range']);
 					break;
 				case 'string': $field['type'] = 'varchar'; break;
