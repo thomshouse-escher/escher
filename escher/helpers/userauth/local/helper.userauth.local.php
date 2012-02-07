@@ -12,13 +12,16 @@ class Helper_userauth_local extends Helper_userauth {
 	}
 
 	function register($username,$password,$vars=array()) {
-			$password = $this->encryptPassword($password);
-			$user = Load::Model('user');
-			$vars['username'] = $username;
-			$vars['password'] = $password;
-			$vars['auth'] = 'local';
-			$user->assignVars($vars);
-			$user->save();
+		$hooks = Load::Hooks();
+		$password = $this->encryptPassword($password);
+		$user = Load::Model('user');
+		$vars['username'] = $username;
+		$vars['password'] = $password;
+		$vars['auth'] = 'local';
+		$user->assignVars($vars);
+		$user->save();
+		$_SESSION['user_id'] = $user->id;
+		$hooks->runEvent('register_success');
 	}
 	
 	// Unimplemented

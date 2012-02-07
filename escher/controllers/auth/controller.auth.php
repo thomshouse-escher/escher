@@ -63,6 +63,8 @@ class Controller_auth extends Controller {
 	
 	function action_signup($args) {
 		$headers = Load::Headers();
+		$hooks = Load::Hooks();
+
 		if (Load::User()) { $headers->redirect(); }
 		$CFG = Load::Config();
 		$input = Load::Input();
@@ -70,7 +72,6 @@ class Controller_auth extends Controller {
 		$this->data['post'] = $data = $input->post;
 		$error = FALSE;
 		if (!empty($input->post)) {
-			$hooks = Load::Hooks();
 			if (empty($data['username'])) {
 				//$headers->addNotification('You must specify a username.','error');
 				$UI->setInputStatus('username','error','Please choose a username');
@@ -120,9 +121,11 @@ class Controller_auth extends Controller {
 				}
 				$userauth = Load::Helper('userauth',$CFG['userauth']['default']['type'],$CFG['userauth']['default']);
 				$userauth->register($input->post['username'],$input->post['password'],$vars);
-				$headers->addNotification('Registration was successful.  You may now login.');
+				$headers->addNotification('Registration was successful.');
 				$headers->redirect('~/');
 			}
+		} else {
+			$hooks->runEvent('register_failure');
 		}
 	}
 	

@@ -39,6 +39,7 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		$headers = Load::Headers();
 
 		$CFG = Load::Config();
+		$hooks = Load::Hooks();
 
 		/* If the oauth_token is old redirect to the connect page. */
 		if ($_SESSION['tw_oauth_token'] !== $_REQUEST['oauth_token']) {
@@ -76,14 +77,18 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		$userauth = Load::Helper(array('twitter','userauth'),'oauth');
 		if ($user = $userauth->register($vars['username'],'',$vars)) {
 			$_SESSION['user_id'] = $user->id;
+			$hooks->runEvent('register_success');
 			return true;
 		}
 		return false;
 	}
 	
 	function register($username,$password=NULL,$vars=array()) {
+		$hooks = Load::Hooks();
+
 		// We must know the twitter uid and token to register a twitter user
 		if (!isset($vars['twitter_uid']) || !isset($vars['twitter_token'])) {
+			$hooks->runEvent('register_failure');
 			return false;
 		}
 		// Password will not get used, fill it with noise
@@ -98,6 +103,7 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		if ($user->save()) {
 			return $user;
 		} else {
+			$hooks->runEvent('register_failure');
 			return false;
 		}
 	}
