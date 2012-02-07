@@ -231,17 +231,18 @@ class Escher_PDOdriver_mysql extends EscherObject {
 			}
 		}
 
-		// Protect the primary key
+		// Protect and/or distribute the primary key
+		$primaryFields = array();
 		if (array_key_exists('primary',$dbSchema['keys'])) {
-			$primaryFields = $dbSchema['keys']['primary']['fields'];
-			foreach($primaryFields as $p) {
-				unset($alterFields[$p]);
-				unset($dropFields[$p]);
+			foreach ($dbSchema['keys']['primary']['fields'] as $f) {
+				$primaryFields[$f] = $dbSchema['fields'][$f];
+				unset($alterFields[$f]);
+				unset($dropFields[$f]);
 			}
 		} elseif (array_key_exists('primary',$schema['keys'])) {
-			$primaryFields = $schema['keys']['primary']['fields'];
-		} else {
-			$primaryFields = array();
+			foreach ($schema['keys']['primary']['fields'] as $f) {
+				$primaryFields[$f] = $schema['fields'][$f];
+			}
 		}
 
 		// Split up the keys by partition
@@ -263,14 +264,27 @@ class Escher_PDOdriver_mysql extends EscherObject {
 			if (empty($oldParts[$part])) {
 				$sql = "CREATE TABLE IF NOT EXISTS {$this->pdo->n($part)} (";
 				$fieldsSql = array();
+				foreach($primaryFields as $name => $f) {
+					$fs = $this->pdo->n($name).' '.$this->_fieldSQL($f);
+					$fieldsSql[] = $fs;
+				}
 				foreach($createFields as $name => $f) {
-					if (in_array($name,$fields) || in_array($name,$primaryFields)) {
+					if (in_array($name,$fields)
+						&& !array_key_exists($name,$primaryFields)
+					) {
 						$fs = $this->pdo->n($name).' '.$this->_fieldSQL($f);
 						$fieldsSql[] = $fs;
 					}
 				}
+				if (!empty($primaryFields)) {
+					$fs = $this->_keySQL('primary',array(
+						'type'   => 'primary',
+						'fields' => array_keys($primaryFields),
+					));
+					$fieldsSql[] = $fs;
+				}
 				foreach($createKeys as $name => $f) {
-					if ($name=='primary' || in_array($name,$newKeyParts[$part])) {
+					if ($name!='primary' && in_array($name,$newKeyParts[$part])) {
 						$fs = $this->_keySQL($name,$f);
 						$fieldsSql[] = $fs;
 					}

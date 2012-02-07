@@ -435,13 +435,13 @@ class Helper_datasource_db extends Helper_datasource {
 			$fa = $r;
 			if (array_key_exists($r['type'],$this->intTypes)) {
 				$fa['type'] = 'int';
-				$fa['range'] = pow(2,8*$this->intTypes[$r['type']]);
+				$fa['range'] = pow(2,8*$this->intTypes[$r['type']])-1;
 				unset($fa['length']);
 			} elseif (in_array($r['type'],$this->stringTypes)) {
 				$fa['type'] = 'string';
 			} elseif (array_key_exists($r['type'],$this->contentTypes)) {
 				$fa['type'] = 'content';
-				$fa['length'] = pow(2,8*$this->contentTypes[$r['type']]);
+				$fa['length'] = pow(2,8*$this->contentTypes[$r['type']])-1;
 			}
 			$fields[$name] = $fa;
 		}

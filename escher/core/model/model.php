@@ -388,7 +388,7 @@ abstract class EscherModel extends EscherObject {
 				$default = array();
 				switch ($attrs['type']) {
 					// Integer types and shorthands
-					case 'int': $default['range'] = pow(2,32); break;
+					case 'int': $default['range'] = pow(2,32)-1; break;
 					case 'id':
 						$default['unsigned'] = TRUE;
 						$default['range'] = pow(2,32);
@@ -407,7 +407,7 @@ abstract class EscherModel extends EscherObject {
 					// Content types and shorthands
 					case 'array':
 					case 'content':
-						$default['length'] = pow(2,32); break;
+						$default['length'] = pow(2,32)-1; break;
 				}
 
 				// Merge defaults with attributes
