@@ -86,20 +86,13 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		if (!isset($vars['twitter_uid']) || !isset($vars['twitter_token'])) {
 			return false;
 		}
-		// Password will not get used, fill it with noise
-		$password = sha1($username.time());
 		
 		// Assign vars to the user and save
-		$user = Load::Model('user');
 		$vars['username'] = $username;
-		$vars['password'] = $password;
+		$vars['password'] = md5($username.NOW);
 		$vars['auth'] = 'twitter';
-		$user->assignVars($vars);
-		if ($user->save()) {
-			return $user;
-		} else {
-			return false;
-		}
+		$user = Load::Model('user');
+		return $user->register($vars);
 	}
 
 	protected function registrationVars($me) {
