@@ -64,7 +64,7 @@ function selectFile(form) {
 	<img src="<?php $E($u['thumburl']); ?>" onclick="uploadToggle(<?php $E($u['id']); ?>);" />
 <?php } ?>
 	<div class="filename" onclick="uploadToggle(<?php $E($u['id']); ?>);"><?php $E($u['filename']); ?><span class="filesize">
-		 (<?php $F($u['filesize'],'filesize',0); ?>)</span></div>
+		 (<?php $E($F($u['filesize'],'filesize',0)); ?>)</span></div>
 	<div class="details">
 		<?php if($popup) { ?>
 		<form onsubmit="return false;">

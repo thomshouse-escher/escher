@@ -1,6 +1,6 @@
 <?php if (isset($summary)) { ?>
 <div class="content-summary article-summary">
-<?php $F($summary,'decode'); ?>
+<?php $E($F($summary,'decode')); ?>
 <?php }
 
-$F($body,'decode'); ?>
+$E($F($body,'decode')); ?>

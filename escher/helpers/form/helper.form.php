@@ -17,8 +17,10 @@
  * @package Escher
  */
 class Helper_form extends Helper {
-	protected $actionsClass = 'actions';
-	protected $inputsClass = 'clearfix';
+	protected $fieldsetClass = 'form-horizontal';
+	protected $actionsClass = 'form-actions';
+	protected $inputsClass = 'control-group';
+	protected $inputClass = 'controls';
 	protected $blocktextClass = 'help-block';
 	protected $sidetextClass = 'help-inline';
 
@@ -88,14 +90,21 @@ class Helper_form extends Helper {
 		return $this->outputResult($content);
 	}
 
-	function openFieldset($attrs=array()) {
+	function openFieldset($legand='',$attrs=array()) {
 		$content = '';
 		if ($this->inFieldset) {
-			$content = $this->html->closeTo('fieldset');
+			$content = $this->html->closeTo('fieldset.'.$this->fieldsetClass);
 			$this->inWrapper = FALSE;
 		}
 		$this->inFieldset = TRUE;
-		$content .= $this->html->open('fieldset',$attrs);
+		$content .= $this->html->open('fieldset.'.$this->fieldsetClass,$attrs);
+
+		if (!empty($legand)) {
+			$content .= $this->html->open('legend');
+			$content .= $legand;
+			$content .= $this->html->closeTo('legend');
+		}
+
 		return $this->outputResult($content);
 	}
 
@@ -131,7 +140,7 @@ class Helper_form extends Helper {
 		}
 		$this->inWrapper = $this->inputsClass;
 		$content = $this->html->open('div.'.$this->inputsClass,$attrs);
-		$content .= $this->html->open('div.input');
+		$content .= $this->html->open('div.'.$this->inputClass);
 		return $this->outputResult($content);
 	}
 
@@ -180,20 +189,18 @@ class Helper_form extends Helper {
 		$attrs['name'] = $this->formatName($name);
 		$attrs['type'] = 'hidden';
 		$attrs['value'] = $checked_value==='1' ? '0' : '';
-		$content = $this->html->open('ul.inputs-list');
-		$content .= $this->html->open('li');
-		$content .= $this->html->open('label');
+		$content = $this->html->open('label.checkbox.inline');
 		$content .= $this->html->tag('input',NULL,$attrs);
 		$attrs['type'] = 'checkbox';
 		$attrs['value'] = $checked_value;
 		$content .= $this->html->tag('input',NULL,$attrs);
+		if ($inline) { $content .= ' '.$label; }
+		$content .= $this->html->closeTo('label.checkbox');
 		if ($inline) {
-			$content .= $this->html->tag('span',$label);
 			$content .= $this->_blocktext($helptext);
 		} else {
 			$content .= $this->_sidetext($helptext);
 		}
-		$content .= $this->html->closeTo('ul.inputs-list');
 		return $this->outputResult($this->wrapInput($content,$inline?'':$label,$name));
 	}
 
@@ -239,7 +246,7 @@ class Helper_form extends Helper {
 	function checkboxes($name,$options=array(),$label='',$attrs=array(),$blocktext='') {
 		$this->checkInputStatus($name,$attrs,$blocktext);
 		$oname = $this->formatName($name).'[]';
-		$content = $this->html->open('ul.inputs-list');
+		$content='';
 		foreach($options as $o) {
 			if (sizeof($o)<2) { continue; }
 			if (!isset($o[2])) { $o[2] = array(); }
@@ -255,20 +262,19 @@ class Helper_form extends Helper {
 			) {
 				$o[2]['checked'] = 'checked';
 			}
-			$content .= $this->html->open('li');
-			$content .= $this->html->open('label');
+			$content .= $this->html->open('label.checkbox');
 			$content .= $this->html->tag('input','',$o[2]);
-			$content .= $this->html->tag('span',$o[1]);
-			$content .= $this->html->closeTo('li');
+			$content .= ' '.$o[1];
+			$content .= $this->html->closeTo('label.checkbox');
 		}
-		$content .= $this->html->closeTo('ul.inputs-list');
+		$content .= $this->_blocktext($blocktext);
 		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
 
 	function radios($name,$options=array(),$label='',$attrs=array(),$blocktext='') {
 		$this->checkInputStatus($name,$attrs,$blocktext);
 		$oname = $this->formatName($name);
-		$content = $this->html->open('ul.inputs-list');
+		$content='';
 		foreach($options as $o) {
 			if (sizeof($o)<2) { continue; }
 			if (!isset($o[2])) { $o[2] = array(); }
@@ -278,13 +284,11 @@ class Helper_form extends Helper {
 			if (array_key_exists($name,$this->data) && $this->data[$name]==$o[0]) {
 				$o[2]['checked'] = 'checked';
 			}
-			$content .= $this->html->open('li');
-			$content .= $this->html->open('label');
+			$content .= $this->html->open('label.radio');
 			$content .= $this->html->tag('input','',$o[2]);
-			$content .= $this->html->tag('span',$o[1]);
-			$content .= $this->html->closeTo('li');
+			$content .= ' '.$o[1];
+			$content .= $this->html->closeTo('label.radio');
 		}
-		$content .= $this->html->closeTo('ul.inputs-list');
 		$content .= $this->_blocktext($blocktext);
 		return $this->outputResult($this->wrapInput($content,$label,$name));
 	}
@@ -317,7 +321,7 @@ class Helper_form extends Helper {
 	}
 
 	protected function _blocktext($text='') {
-		return $this->html->tag('div',$text,
+		return $this->html->tag('p',$text,
 			array('class'=>$this->blocktextClass)
 		);
 	}
@@ -336,7 +340,7 @@ class Helper_form extends Helper {
 		if (!empty($label)) {
 			$content .= $this->html->tag('label',$label);
 		}
-		$content .= $this->html->open('div.input');
+		$content .= $this->html->open('div.'.$this->inputClass);
 		$content .= $input;
 		$content .= $this->html->closeTo('div.'.$this->inputsClass);
 

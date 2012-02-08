@@ -1,1 +1,1 @@
-<?php $F($message,'decode'); ?>
+<?php $E($F($message,'decode')); ?>

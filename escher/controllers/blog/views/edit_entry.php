@@ -7,8 +7,8 @@
 		'onsubmit' => $_unload(),
 	));
 	$FORM->openFieldset();
-	$F($model_form,'decode');
-	$F($entry_form,'decode');
+	$E($F($model_form,'decode'));
+	$E($F($entry_form,'decode'));
 	$FORM->openActions();
 	if (!empty($entry['pub_status'])) {
 		$FORM->submit('',array('value' => 'Save'));

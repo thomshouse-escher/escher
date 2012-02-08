@@ -1,7 +1,7 @@
 <?php $HTML->open('header'); ?>
 <h1><?php $E($entry['title']); ?></h1>
 <?php $HTML->closeTo('header'); ?>
-<?php $F($model,'decode'); ?>
+<?php $E($F($model,'decode')); ?>
 <?php $HTML->open('footer'); ?>
 <?php if($_check($resource,'edit')) { ?>
 <div class="actions">

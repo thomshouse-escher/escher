@@ -4,7 +4,7 @@
 		'onsubmit' => $_unload,
 	));
 	$FORM->openFieldset();
-	$F($form,'decode');
+	$E($F($form,'decode'));
 	$FORM->openActions();
 	$FORM->submit('Save and Publish');
 	$FORM->submit('Save Draft',array('name' => 'save_draft'));
