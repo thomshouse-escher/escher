@@ -114,7 +114,7 @@ abstract class File extends Model {
 				imagecopyresampled($new_img,$orig,0,0,$x_start,$y_start,$resize_w,$resize_h,$x_length,$y_length);
 			} else {
 			// If we're not cropping, constrain dimensions
-				if ($resize_w >= $width && $resize_h >= $height && !$this->allowUpscaling) { continue; } // No sense in upsizing
+				if ($resize_w >= $width && $resize_h >= $height && !$this->_allowUpscaling) { continue; } // No sense in upsizing
 				$ratio = $width/$height;
 				if ($resize_w > $resize_h*$ratio) {
 					$resize_w = round($resize_h*$ratio);

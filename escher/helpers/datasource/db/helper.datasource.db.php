@@ -71,7 +71,7 @@ class Helper_datasource_db extends Helper_datasource {
 			switch ($schema['fields'][$k]['type']) {
 				// JSON-encode arrays
 				case 'array':
-					if (is_array($v)) { $data[$k] = json_encode($v); }
+					if (is_array($v)) { $data[$k] = json_encode($v); } break;
 				// Ensure dates & times are properly formatted
 				case 'time':
 				case 'datetime':
