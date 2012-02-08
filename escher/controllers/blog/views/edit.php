@@ -1,7 +1,7 @@
 <?php
 	$FORM->open(array('method' => 'POST','onsubmit' => $_unload()));
 	$FORM->openFieldset();
-	$F($form,'decode');
+	$E($F($form,'decode'));
 	$FORM->openActions();
 	$FORM->submit('Save');
 	$FORM->button('Cancel',array(
