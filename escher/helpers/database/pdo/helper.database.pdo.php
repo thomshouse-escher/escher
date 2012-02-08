@@ -9,6 +9,7 @@ class Helper_database_pdo extends Helper_database {
 	protected $password;
 	protected $db;
 	protected $statement;
+	var $debug = FALSE;
 	
 	function __construct($args) {
 		parent::__construct($args);
@@ -29,7 +30,9 @@ class Helper_database_pdo extends Helper_database {
 	function execute($sql,$vars=NULL) {
 		$this->connect();
 		$this->statement = $this->db->prepare($sql);
-		return $this->statement->execute($vars);
+		$result = $this->statement->execute($vars);
+		$this->debug($sql,$vars,$this->statement);
+		return $result;
 	}
 	
 	function insert($table,$data,$keys=NULL,$ignore=FALSE) {
@@ -95,8 +98,10 @@ class Helper_database_pdo extends Helper_database {
 		}
 
 		$this->connect();
-		$this->db->prepare($sql);
-		return $this->db->execute($values);
+		$this->statement = $this->db->prepare($sql);
+		$result = $this->statement->execute($values);
+		$this->debug($sql,$values,$this->statement);
+		return $result;
 	}
 
 	function replace($table,$data,$keys=NULL) {
@@ -121,6 +126,7 @@ class Helper_database_pdo extends Helper_database {
 		$this->connect();
 		$this->statement = $this->db->prepare($sql);
 		$this->statement->execute($vars);
+		$this->debug($sql,$vars,$this->statement);
 		return $this->statement->fetchAll(PDO::FETCH_ASSOC);
 	}
 	
@@ -128,6 +134,7 @@ class Helper_database_pdo extends Helper_database {
 		$this->connect();
 		$this->statement = $this->db->prepare($sql);
 		$this->statement->execute($vars);
+		$this->debug($sql,$vars,$this->statement);
 		if (!$dbresult = $this->statement->fetchAll(PDO::FETCH_ASSOC)) {
 			return array();
 		}
@@ -150,6 +157,7 @@ class Helper_database_pdo extends Helper_database {
 		$this->connect();
 		$this->statement = $this->db->prepare($sql);
 		$this->statement->execute($vars);
+		$this->debug($sql,$vars,$this->statement);
 		return $this->statement->fetchAll(PDO::FETCH_COLUMN, 0);
 	}
 	
@@ -161,6 +169,7 @@ class Helper_database_pdo extends Helper_database {
 		$this->connect();
 		$this->statement = $this->db->prepare($sql);
 		$this->statement->execute($vars);
+		$this->debug($sql,$vars,$this->statement);
 		return $this->statement->fetchColumn(0);
 	}
 	
@@ -168,6 +177,7 @@ class Helper_database_pdo extends Helper_database {
 		$this->connect();
 		$this->statement = $this->db->prepare($sql);
 		$this->statement->execute($vars);
+		$this->debug($sql,$vars,$this->statement);
 		return $this->statement->fetch(PDO::FETCH_ASSOC);
 	}
 	
@@ -252,6 +262,23 @@ class Helper_database_pdo extends Helper_database {
 		$dbSchema = $this->getSchema($table);
 		if (!$driver = $this->getDriver()) { return false; }
 		return $driver->setSchema($table,$schema,$dbSchema,$complete);
+	}
+
+	protected function debug($sql,$vars,$statement) {
+		if (!$this->debug) { return; }
+		$qc = substr_count($sql,'?');
+		if ($qc!=sizeof($vars)) {
+			echo "<div>Input array does not match ?: $sql</div>";
+		}
+		for ($i=0; $i<$qc; $i++) {
+			$rep = array_key_exists($i,$vars) ? $this->q($vars[$i]) : '';
+			$sql = preg_replace('/\?/',$rep,$sql,1);
+		}
+		echo "<hr />({$this->driver}): $sql<hr />";
+		$error = $statement->errorInfo();
+		if (!empty($error[2])) {
+			echo "<div>{$error[2]}</div>";
+		}
 	}
 
 	protected function getDriver() {
