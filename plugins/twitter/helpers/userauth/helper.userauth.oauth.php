@@ -90,7 +90,7 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		// Assign vars to the user and save
 		$vars['username'] = $username;
 		$vars['password'] = md5($username.NOW);
-		$vars['auth'] = 'twitter';
+		$vars['user_auth'] = 'twitter';
 		$user = Load::Model('user');
 		return $user->register($vars);
 	}

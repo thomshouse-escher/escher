@@ -23,10 +23,10 @@ class Model_user extends Model {
 		$this->assignVars($vars);
 		$hooks = Load::Hooks();
 		if ($this->save()) {
-			$hooks->runEvent('register_success');
 			if (empty($_SESSION['user_id'])) {
 				$_SESSION['user_id'] = $this->user_id;
 			}
+			$hooks->runEvent('register_success');
 			return $this;
 		}
 		$hooks->runEvent('register_error');

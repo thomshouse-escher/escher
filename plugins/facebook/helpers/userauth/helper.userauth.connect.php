@@ -92,7 +92,7 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 		// Assign vars to the user and save
 		$vars['username'] = $username;
 		$vars['password'] = md5($username.NOW);
-		$vars['auth'] = 'facebook';
+		$vars['user_auth'] = 'facebook';
 		$user = Load::Model('user');
 		return $user->register($vars);
 	}
