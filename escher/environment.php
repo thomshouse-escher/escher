@@ -16,9 +16,9 @@ function die_r($arr) {
 }
 
 if (!empty($_GET['_PATH_INFO'])) {
-	if (empty($_SERVER['PATH_INFO'])) {
-		$_SERVER['PATH_INFO'] = $_GET['_PATH_INFO'];
-	}
-	unset($_GET['_PATH_INFO'],$_REQUEST['_PATH_INFO']);
-	$_SERVER['QUERY_STRING'] = http_build_query($_GET);
+        if (empty($_SERVER['PATH_INFO'])) {
+                $_SERVER['PATH_INFO'] = $_GET['_PATH_INFO'];
+        }
+        unset($_GET['_PATH_INFO'],$GLOBALS['_REQUEST']['_PATH_INFO']);
+        $_SERVER['QUERY_STRING'] = http_build_query($_GET);
 }
