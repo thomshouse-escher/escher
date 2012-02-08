@@ -390,7 +390,7 @@ class Helper_datasource_db extends Helper_datasource {
 		} else {
 			$key = array_intersect_key(
 				(array)$key,
-				array_flip($model->schemaKeys['primary']['fields'])
+				array_flip($model->_schemaKeys['primary']['fields'])
 			);
 		}
 
@@ -400,7 +400,7 @@ class Helper_datasource_db extends Helper_datasource {
 		}
 
 		// Get SQL where clause from key
-		if ($where = $this->traverseConditions($key)) {
+		if (!$where = $this->traverseConditions($key)) {
 			return false;
 		}
 
