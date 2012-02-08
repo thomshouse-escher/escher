@@ -22,110 +22,85 @@
 		$m = new Mongo("mongodb://".$args['host'].":".$args['port']);
 		$this->mongodb = $m->selectDB($args['database']);
 	}
-	function set($model,$attrs=array(),$values=NULL,$options=array()) {
-		unset($options['this']); extract($options);
+	function set($model,$data=array(),$options=array()) {
 		if (is_object($model)) {
 			$collection = $model->_m();
-			$id = (int)@$model->id;
-			if (isset($attrs[$model->_m()."_id"])) { unset($attrs[$model->_m()."_id"]); $attrs['id'] = $id; }
-			foreach ($model as $k => $v) {
-				$attrs[$k] = $v;
-			}
-			$values = array();
-			if (!empty($attrs)) {
-				foreach($attrs as $k => $v) {
-					if (!isset($model->$k)) {
-						unset($attrs[$k]);
-					} else {
-						$values[$k] = $model->$k;
-					}
-				}
-			}
+			$data = get_object_vars($model);
 		} elseif (is_string($model)) {
 			$collection = $model;
 		} else { return false; }
 
-		// If an id is present, attempt to update
-		if (isset($id)) {
-			$attrs[$model->_m()."_id"] = $id;
-			$this->mongodb->selectCollection($collection)->update(array($collection.'_id'=>$id),$attrs);
-			$result = $this->mongodb->selectCollection($collection)->findOne(array($collection.'_id'=>$id));
-			if (empty($result)) {
-				$result = false;
-			} else {
-				$result = true;
-			}
-		}
-		
-		if (!isset($id) || !$result) {
-			$m = $this->mongodb->selectCollection('last_ids')->findOne(array('collection'=>$collection));
-			if (empty($m)) {
-				$this->mongodb->selectCollection('last_ids')->insert(array(
-					'collection'=>$collection,
-					'last'=>0)
-				);
-				$m = $this->mongodb->selectCollection('last_ids')->findOne(array('collection'=>$collection));
-			}
-			$attrs[$collection.'_id'] = $id = ++$m['last'];
-			$this->mongodb->selectCollection('last_ids')->update(array(
-					'collection'=>$collection
-				),
-				array(
-					'collection'=>$collection,
-					'last'=>$id
-				)
+		// If an id is present, attempt to upsert
+		if (isset($data[$collection."_id"])) {
+			$id = $data[$collection."_id"];
+			unset($data[$collection."_id"]);
+			$result = $this->mongodb->selectCollection($collection)->update(
+				array($collection.'_id'=>$id),
+				$data,
+				array('upsert' => TRUE,'safe' => TRUE);
 			);
-			$this->mongodb->selectCollection($collection)->insert($attrs);
-			$result = $this->mongodb->selectCollection($collection)->findOne(array($collection.'_id'=>$id));
-			if (empty($result)) {
-				$result = false;
-			} else {
-				$result = true;
-			}
+			return !empty($result['err']);
+		} else {
+			// Initialize the last_id for this collection
+			$this->mongodb->selectCollection('last_ids')->insert(array(
+				'_id'=>$collection,
+				'last'=>0
+			));
+			// Get the next available key and increment
+			$inc = $this->mongodb->command(array(
+				'findAndModify' => 'last_ids',
+				'query' => array('_id' => $collection),
+				'update' => array('$inc' => array('last' => 1)),
+			);
+			$data[$collection.'_id'] = $inc['last'];
 
+			$result = $this->mongodb->selectCollection($collection)->insert($data);
+			$result = !empty($result['err']);
 			if ($result) {
 				if (is_object($model)) {
-					$model->id = $id;	
+					$model->{$collection.'_id'} = $data[$collection.'_id'];	
 				}
+				return $data['_id'];
 			}
+			return false;
 		}
-
-		if ($result) {
-			// Return id on success
-			return $id;
-		}
-		// Return false on failure
-		return false;
 	}
 
 	function get($model,$conditions=array(),$options=array()) {
-		unset($options['this']); extract($options);
+		// Clean up the options
+		$options = array_merge(
+			array(
+				'select' => '*',
+				'limit'  => 1,
+				'order'  => '',
+				'group'  => '',
+				'joins'   => array(),
+			),
+			$options
+		);
 		if (is_object($model)) {
 			$collection = $model->_m();
 		} elseif (is_string($model)) {
 			$collection = $model;
 		} else { return false; }
-		
-		if (array_key_exists('id',$conditions)) { $conditions[$collection.'_id'] = $conditions['id']; unset($conditions['id']); }
-		if (!empty($limit) && !is_array($limit)) {
-			$l = $limit;
-			$limit=array();
-			$limit[0] = 0;
-			$limit[1] = $l;
-		} else if (empty($limit)) {
-			$limit=array();
-			$limit[0] = 0;
-			$limit[1] = 1;
+
+		if (empty($limit)) {
+			$limit=array(0,1);
+		} elseif (!is_array($limit)) {
+			$limit=array(0,$limit);
 		}
-		$data = $this->mongodb->selectCollection($collection)->find($conditions)->skip($limit[0])->limit($limit[1]);
+
+		$data = $this->mongodb->selectCollection($collection)
+			->find($conditions)
+			->skip($limit[0])
+			->limit($limit[1]);
 		$result=array();
 
 		foreach ($data as $d) {
 			unset($d['_id']);
-			$d['id'] = $d[$collection.'_id']; unset($d[$collection.'_id']);
 			$result[] = $d;
 		}
-		if (is_object($model) && !empty($result)) {
+		if (is_object($model) && !empty($result) && $limit[1]==1) {
 			$model->assignVars($result[0]);
 		}
 		return $result;
@@ -133,20 +108,17 @@
 
 	function delete($model,$id=NULL) {
 		if (is_object($model)) {
-			$id = $model->id;
+			$id = $model->{$model->_m().'_id'};
 			$model = $model->_m();
 		}
-		if (is_null($id)) {
+		if (is_null($id) || !is_string($model)) {
 			return false;
 		}
 		$result = $this->mongodb->selectCollection($model)->remove(array(
-				$modeldbn.'_id'=>$id
+				$model.'_id'=>$id
 			)
 		);
-		if ($result) {
-			return true;
-		}
-		return false;
+		return (bool)$result;
 	}
 
 	function getSchema($model) {
