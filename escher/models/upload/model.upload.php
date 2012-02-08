@@ -19,11 +19,11 @@ class Model_upload extends File {
 	
 	function __construct($key=NULL) {
 		parent::__construct($key);
-		$this->resize_parameters['thumb'] = array(100,100,TRUE);
+		$this->_resizeParameters['thumb'] = array(100,100,TRUE);
 	}
 	
-	function saveUploadedFile($file=array()) {
-		if (!parent::saveUploadedFile($file)) { return false; }
+	function parseUpload($file=array()) {
+		if (!parent::parseUpload($file)) { return false; }
 		$this->touch();
 		$this->save();
 	}

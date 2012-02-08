@@ -86,7 +86,7 @@ abstract class File extends Model {
 		}
 		$resized_images[] = array($width,$height,filesize($this->getFilePath().'/'.$this->getFilename(1)));
 		$this->resized_images = $resized_images;
-		if (!array($this->resize_parameters)) { return false; }
+		if (!array($this->_resizeParameters)) { return false; }
 		switch ($type) {
 			case IMAGETYPE_GIF: $orig = imagecreatefromgif($file); $savefunc = 'imagegif'; break;
 			case IMAGETYPE_JPEG: $orig = imagecreatefromjpeg($file); $savefunc = 'imagejpeg'; break;
@@ -94,7 +94,7 @@ abstract class File extends Model {
 			case IMAGETYPE_WBMP: $orig = imagecreatefromwbmp($file); $savefunc = 'imagewbmp'; break;
 			default: return false; break;
 		}
-		foreach($this->resize_parameters as $name => $size) {
+		foreach($this->_resizeParameters as $name => $size) {
 			@list($resize_w,$resize_h,$resize_type) = $size;
 			if ($resize_type=='crop') {
 			// If we're cropping, we've got to figure out the crop start & length
