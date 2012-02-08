@@ -1,1 +1,1 @@
-<?php $F($body,'decode'); ?>
+<?php $E($F($body,'decode')); ?>

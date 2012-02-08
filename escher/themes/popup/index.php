@@ -9,6 +9,6 @@ $E($this->headers->getHeaders());
  ?>
 </head>
 <body>
-<?php $F($CONTENT,'decode'); ?>
+<?php $E($F($CONTENT,'decode')); ?>
 </body>
 </html>

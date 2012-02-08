@@ -6,7 +6,7 @@ function escher_echo($text,$default='') {
 
 function escher_filter($text,$type,$default='') {
 	$filter = Load::Filter();
-	echo $filter->filter($text,$type,$default);
+	return $filter->filter($text,$type,$default);
 }
 
 function escher_run_event($event) {
