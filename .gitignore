@@ -1,0 +1,4 @@
+/plugins/*
+!/plugins/facebook
+!/plugins/tinymce
+!/plugins/twitter
