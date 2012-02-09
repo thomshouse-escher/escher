@@ -33,29 +33,30 @@
 		// If an id is present, attempt to upsert
 		if (isset($data[$collection."_id"])) {
 			$id = $data[$collection."_id"];
-			unset($data[$collection."_id"]);
 			$result = $this->mongodb->selectCollection($collection)->update(
 				array($collection.'_id'=>$id),
 				$data,
-				array('upsert' => TRUE,'safe' => TRUE);
+				array('upsert' => TRUE,'safe' => TRUE)
 			);
-			return !empty($result['err']);
+			return empty($result['err']);
 		} else {
 			// Initialize the last_id for this collection
 			$this->mongodb->selectCollection('last_ids')->insert(array(
 				'_id'=>$collection,
 				'last'=>0
 			));
+
 			// Get the next available key and increment
 			$inc = $this->mongodb->command(array(
-				'findAndModify' => 'last_ids',
+				'findandmodify' => 'last_ids',
 				'query' => array('_id' => $collection),
 				'update' => array('$inc' => array('last' => 1)),
-			);
-			$data[$collection.'_id'] = $inc['last'];
+				'new' => TRUE
+			));
 
-			$result = $this->mongodb->selectCollection($collection)->insert($data);
-			$result = !empty($result['err']);
+			$data[$collection.'_id'] = $inc['value']['last'];
+			$result = $this->mongodb->selectCollection($collection)->insert($data,array('safe'=>TRUE));
+			$result = empty($result['err']);
 			if ($result) {
 				if (is_object($model)) {
 					$model->{$collection.'_id'} = $data[$collection.'_id'];	
@@ -94,8 +95,8 @@
 			->find($conditions)
 			->skip($limit[0])
 			->limit($limit[1]);
-		$result=array();
 
+		$result=array();
 		foreach ($data as $d) {
 			unset($d['_id']);
 			$result[] = $d;
