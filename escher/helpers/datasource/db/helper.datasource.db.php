@@ -43,23 +43,35 @@ class Helper_datasource_db extends Helper_datasource {
 
 	function set($model,$data=array(),$options=array()) {
 		$db = $this->db;
-		// If $model is an object, get type and values
+
+		// If $model is an object, get type, values, and schema
 		if (is_a($model,'Model')) {
 			$m = $model->_m();
 			$data = get_object_vars($model);
-		// If $model is string, get the object
+			$schema = $this->getSchema($model);
+			// Update schema from model
+			$this->setSchema($model);
+
+		// If $model is string, get the object and schema
 		} elseif (is_string($model)) {
 			$m = $model;
-			$model = Load::Model($m);
+			if ($model = Load::Model($m)) {
+				$schema = $this->getSchema($model);
+			} else {
+				$schema = $this->getSchema($m);
+			}
+
+		// If $model is array, get the object and schema
+		} elseif (is_array($model)) {
+			$m = $model[1];
+			if ($model = Load::Model($m)) {
+				$schema = $this->getSchema($model);
+			} else {
+				$schema = $this->getSchema($m);
+			}
 		} else {
 			return false;
 		}
-		// Update schema from model
-		if (is_a($model,'Model')) {
-			$this->setSchema($model);
-		}
-		// Make the schema available
-		$schema = $this->getSchema($m);
 
 		// Clean and separate data
 		$data = array_intersect_key($data,$schema['fields']);
@@ -241,7 +253,7 @@ class Helper_datasource_db extends Helper_datasource {
 					'fields' => $model->_schemaFields,
 					'keys' => $model->_schemaKeys,
 				);
-			} elseif (!$schema = $this->_getSchema($m)) {
+			} elseif (!$schema = $this->getSchema($m)) {
 				return false;
 			}
 
@@ -415,9 +427,12 @@ class Helper_datasource_db extends Helper_datasource {
 	}
 	
 	function getSchema($model) {
-		// If $model is a string, load object
+		// If $model is a string or array, load object
 		if (is_string($model)) {
 			$m = $model;
+			$model = Load::Model($model);
+		} elseif (is_array($model)) {
+			$m = $model[1];
 			$model = Load::Model($model);
 		}
 
