@@ -20,9 +20,6 @@ abstract class EscherModel extends EscherObject {
 	}
 	
 	public function load($key=NULL) {
-		// If this object is already loaded, just reload (ignore provided keys)
-		if (!empty($this->id)) { $key = $this->id; }
-
 		// If we can't load from cache, load from datasources and cache it
 		if (!$this->loadCached($key)) {
 			if(!$this->loadUncached($key)) {
@@ -35,12 +32,12 @@ abstract class EscherModel extends EscherObject {
 	}
 	
 	function loadCached($key) {
+		// If this object is already loaded, just reload (ignore provided keys)
+		if ($this->id()) { $key = $this->id(); }
+
 		// If only the primary id was provided as key, format for datasource
-		if (is_scalar($key)
-			&& !empty($this->_schemaKeys['primary']['fields'])
-			&& sizeof($this->_schemaKeys['primary']['fields'])==1
-		) {
-			$key = array(reset($this->_schemaKeys['primary']['fields']) => $key);
+		if (is_scalar($key) && $this->_primaryKey()) {
+			$key = array($this->_primaryKey() => $key);
 		}
 		// And if our key is invalid, return false
 		if (!is_array($key) || empty($key)) { return false; }
@@ -58,12 +55,12 @@ abstract class EscherModel extends EscherObject {
 	}
 
 	function loadUncached($key) {
+		// If this object is already loaded, just reload (ignore provided keys)
+		if ($this->id()) { $key = $this->id(); }
+
 		// If only the primary id was provided as key, format for datasource
-		if (is_scalar($key)
-			&& !empty($this->_schemaKeys['primary']['fields'])
-			&& sizeof($this->_schemaKeys['primary']['fields'])==1
-		) {
-			$key = array(reset($this->_schemaKeys['primary']['fields']) => $key);
+		if (is_scalar($key) && $this->_primaryKey()) {
+			$key = array($this->_primaryKey() => $key);
 		}
 		// And if our key is invalid, return false
 		if (!is_array($key) || empty($key)) { return false; }
@@ -85,9 +82,12 @@ abstract class EscherModel extends EscherObject {
 	
 	public function save() {
 		// Touch the model if this is the first save
-		if (empty($this->id) && empty($this->ctime)) {
-			//TODO $this->touch();
+		if ($this->_primaryKey() && !$this->id()) {
+			$this->_runTriggers(array('create','touch'));
+		} else {
+			$this->_runTriggers('modify');
 		}
+
 		$sources = $this->_getDatasources();
 		// Iterate through the datasources and save
 		// Note: Only new objects should have to iterate
@@ -137,20 +137,11 @@ abstract class EscherModel extends EscherObject {
 		return true;
 	}
 	
-	function touch($fields=NULL,$model=NULL) {
+	function touch($fields=NULL,$model=NULL,$create=FALSE) {
 		// If no fields provided, try the triggers
 		if (empty($fields)) {
-			$fields = array();
-			if (!empty($this->_schemaTriggers['touch_create'])) {
-				$fields = array_merge($fields,
-					$this->_schemaTriggers['touch_create']
-				);
-			}
-			if (!empty($this->_schemaTriggers['touch_modify'])) {
-				$fields = array_merge($fields,
-					$this->_schemaTriggers['touch_modify']
-				);
-			}
+			$this->_runTriggers('touch',$model);
+			return;
 		}
 		// If no model provided, assume the current user
 		if (is_null($model)) { $model = Load::USER(); }
@@ -165,12 +156,11 @@ abstract class EscherModel extends EscherObject {
 
 		// Iterate through the fields and set the valid ones
 		foreach($fields as $f) {
-			if(!array_key_exists($f,$this->_schemaFields)
-				|| (in_array($f,$this->_schemaTriggers['touch_create'])
-					&& !empty($this->$f))
-			) { continue; }
+			if($create && !empty($this->$f)) {
+				continue;
+			}
 			switch ($this->_schemaFields[$f]['type']) {
-				case 'datetime': $this->$f = NOW; break;
+				case 'datetime': $this->$f = date('Y-m-d H:i:s',NOW); break;
 				case 'string': $this->$f = $mtype; break;
 				case 'int': $this->$f = $mid; break;
 			}
@@ -308,7 +298,10 @@ abstract class EscherModel extends EscherObject {
 			case '_schemaFields':
 			case '_schemaKeys':
 			case '_schemaTriggers':
-				return $this->$name; break;
+				return isset($this->$name)
+					? $this->$name
+					: NULL;
+				break;
 			default:
 				$trace = debug_backtrace();
 				trigger_error('Undefined property: '
@@ -442,7 +435,9 @@ abstract class EscherModel extends EscherObject {
 							array_keys($this->_schemaFields)
 					));
 					if (!empty($touch_create)) {
-						$this->_schemaTriggers['touch_create'] = $touch_create;
+						$this->_schemaTriggers['touch_create'] = array(
+							'fields' => $touch_create,
+						);
 					}
 				}
 				if (empty($this->_schemaTriggers['touch_modify'])) {
@@ -452,7 +447,9 @@ abstract class EscherModel extends EscherObject {
 							array_keys($this->_schemaFields)
 					));
 					if (!empty($touch_modify)) {
-						$this->_schemaTriggers['touch_modify'] = $touch_modify;
+						$this->_schemaTriggers['touch_modify'] = array(
+							'fields' => $touch_modify,
+						);
 					}
 				}
 
@@ -465,5 +462,61 @@ abstract class EscherModel extends EscherObject {
 		foreach($this->_schemaKeys as $k => $v) {
 			$this->_schemaKeys[$k]['fields'] = (array)$v['fields'];
 		}
+	}
+
+	final protected function _runTriggers($event) {
+		$args = array_slice(func_get_args(),1);
+		// Run triggers for each event by passing recursively
+		if (is_array($event)) {
+			$result = TRUE;
+			foreach($event as $e) {
+				$result = call_user_func_array(
+					array($this,'_runTriggers'),
+					array_merge(array($e),$args)
+					) && $result;
+			}
+			return $result;
+		}
+
+		// Run each event
+		$result = TRUE;
+		foreach($this->_schemaTriggers as $name => $trigger) {
+			switch ($name) {
+				case 'touch_create':
+					if ($event=='touch') {
+						$result = $this->touch(
+							$trigger['fields'],
+							!empty($args) ? reset($args) : NULL,
+							TRUE
+						) && $result;
+					}
+					break;
+				case 'touch_modify':
+					if ($event=='touch') {
+						$result = $this->touch(
+							$trigger['fields'],
+							!empty($args) ? reset($args) : NULL
+						) && $result;
+					}
+					break;
+				default:
+					if (!empty($trigger['event'])
+						&& in_array($event,(array)$trigger['event'])
+						&& !empty($trigger['action'])
+						&& method_exists($this,$trigger['action'])
+					) {
+						$params = !empty($trigger['fields'])
+							? $trigger['fields']
+							: array();
+						array_unshift($args,$params);
+						$result = call_user_func_array(
+							array($this,$trigger['action']),
+							$args
+						) && $result;
+					}
+					break;
+			}
+		}
+		return $result;
 	}
 }

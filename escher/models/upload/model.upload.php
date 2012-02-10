@@ -23,47 +23,48 @@ class Model_upload extends File {
 	}
 	
 	function parseUpload($file=array()) {
-		if (!parent::parseUpload($file)) { return false; }
+		// Touch to set created_at
 		$this->touch();
+
+		// Clean the filename
+		$filename = preg_replace('/[^\w\d_.-]+/','-',strtolower($file['name']));
+
+		// Split the filename and extension
+		preg_match('#(.+?)(\.[a-z0-9]*)$#',$filename,$parts);
+		list(,$name,$ext) = $parts;
+
+		// Check to see if there are any year/month/name collisions
+		$count = 1;
+		while ($this->find(
+			array(
+				'created_at' => array(
+					'>=' => date('Y-m-01 00:00:00',strtotime($this->created_at)),
+					'<=' => date('Y-m-t 23:59:59',strtotime($this->created_at)),
+				),
+				'filename' => $filename,
+			),
+			array('select' => 'upload_id')
+		)) {
+			// If found, increment the filename and repeat until safe
+			$count++;
+			$filename = "$name-$count$ext";
+		}
+		if (!parent::parseUpload($file,$filename)) { return false; }
 		$this->save();
 	}
 
-	function getPath($timestamp=NULL) {
-		if (is_null($timestamp)) {
-			if (empty($this->ctime)) {
-				$this->touch();
-			}
-			$timestamp = strtotime($this->ctime);
-		}
-		return date('Y/m',$timestamp);
+	function getFilePath() {
+		$CFG = Load::Config();
+		return $CFG['document_root'].'/'.$CFG['uploadpath'].'/uploads/'.$this->getPath();
+	}
+
+	function getWWWPath() {
+		$CFG = Load::Config();
+		return $CFG['wwwroot'].'/'.$CFG['uploadpath'].'/uploads/'.$this->getPath();
 	}
 	
-	function getFilename($size='') {
-		if (empty($this->filename)) { return false; }
-		if (preg_match('#(.+)(?:-(\d+))?\.([a-z0-9]+)$#',strtolower($this->filename),$parts)) {
-			list(,$name,$count,$ext) = $parts;
-			$name = preg_replace('/[^\w\d-]/','_',$name);
-			if (!empty($size)) {
-				return $name.(!empty($count) ? "-$count" : '').(is_string($size) ? ".$size" : '').".$ext";
-			} elseif (!empty($this->id)) {
-				return $this->filename;
-			} else {
-				$path = $this->getFilePath();
-				$count = 0;
-				if (file_exists($path)) {
-					$dir = scandir($path);
-					if (in_array("$name.$ext",$dir)) {
-						$count=2;
-						while (in_array("$name-$count.$ext",$dir)) {
-							$count++;
-						}
-					}
-				}
-			}
-			$filename = $name;
-			if (!empty($count)) { $filename .= "-$count"; }
-			$filename .= ".$ext";
-			return $this->filename = $filename;
-		}		
+	protected function getPath() {
+		if (empty($this->created_at)) { $this->touch(); }
+		return date('Y/m',strtotime($this->created_at));
 	}
 }

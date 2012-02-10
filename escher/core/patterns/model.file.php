@@ -17,11 +17,11 @@ abstract class File extends Model {
 
 	// Handles the saving of an uploaded file
 	// Descendant classes should incorporate save() into this function as appropriate
-	function parseUpload($file=array()) {
+	function parseUpload($file=array(),$name=NULL) {
 		if (empty($file)) {
 			return false;
 		}
-		$this->filename = $file['name'];
+		$this->filename = !empty($name) ? $name : $file['name'];
 		$this->filesize = $file['size'];
 		$this->mimetype = $file['type'];
 		$this->getImageType($file['tmp_name']);
@@ -60,18 +60,18 @@ abstract class File extends Model {
 		return $this->_imageType;
 	}
 
-	// Get the file-accessible path of the current file object
-	function getFilePath() {
-		$CFG = Load::Config();
-		return $CFG['document_root'].'/'.$CFG['uploadpath'].'/uploads/'.$this->getPath();
+	function getFilename($size='') {
+		if (empty($this->filename)) { return false; }
+		if (preg_match('#(.+?)(\.[a-z0-9]*)$#',$this->filename,$parts)) {
+			list(,$name,$ext) = $parts;
+			if (!empty($size)) {
+				return $name.(is_string($size) ? ".$size" : '')."$ext";
+			} else {
+				return $this->filename;
+			}
+		}		
 	}
-	
-	// Get the web-accessible path of the current file object
-	function getWWWPath() {
-		$CFG = Load::Config();
-		return $CFG['wwwroot'].'/'.$CFG['uploadpath'].'/uploads/'.$this->getPath();
-	}
-	
+
 	// Get the web-accessible filename (including path) of the current file
 	function getWWWFilename($size='') {
 		return $this->getWWWPath().'/'.$this->getFilename($size);
@@ -135,7 +135,7 @@ abstract class File extends Model {
 		$this->resized_images = $resized_images;
 		return true;
 	}
-	
-	abstract function getPath();
-	abstract function getFilename();
+
+	abstract function getFilePath();
+	abstract function getWWWPath();
 }

@@ -124,41 +124,57 @@ class EscherController extends EscherObject {
 		return (bool)($result || !empty($this->data));
 	}
 
-	final protected function dispatch($path,$args=array(),$options=array(),$display=FALSE) {
-		if (is_string($path)) {
-			$path = preg_split('#/#',$path,-1,PREG_SPLIT_NO_EMPTY);
+	final protected function dispatch($dispatch,$display=FALSE,$args=array(),$options=array()) {
+		// Split up the $dispatch string into its component parts
+		if (!preg_match('#^(?:([\w/-]+)@|)(?:(\w+):|)(:?\w+)(?:>(\w+)|)(/[\w/-]+|)$#',
+			$dispatch,$parts)
+		) { return false; }
+		list(,$base,$plugin,$controller,$action,$dispatchArgs) = $parts;
+		if (strpos($controller,':')===0) {
+			$hooks = Load::Hooks();
+			$controller = $hooks->getDispatch(substr($controller,1));
+		} elseif (!empty($plugin)) {
+			$controller = array($plugin,$controller);
 		}
+
+		// Explode $args to array
 		if (is_string($args)) {
 			$args = preg_split('#/#',$args,-1,PREG_SPLIT_NO_EMPTY);
+		} elseif (!is_array($args)) {
+			$args = array();
 		}
-		$base = $path;
-		$dispatch = array_pop($base);
-		$base = implode('/',$base);
-		if (strpos($dispatch,':')===0) {
-			$hooks = Load::Hooks();
-			$dispatch = $hooks->getDispatch(substr($dispatch,1));
-			if (empty($dispatch)) { Load::Error('404'); }
+		// Add args from $dispatch to array
+		if (!empty($dispatchArgs)) {
+			$args = array_merge(
+				preg_split('#/#',$dargs,-1,PREG_SPLIT_NO_EMPTY),
+				$dispatchArgs);
 		}
-		$controller = Load::Controller($dispatch,$args);
-		if (!empty($options)) { $controller->assignVars($options); }
-		$controller->router = Load::Helper('router','dispatch',
-			array(
-				'router' => $this->router,
-				'dispatch' => $dispatch,
-				'base' => $base,
-				'args' => $args
-			)
-		);
-		$result = $controller->execute();
-		if ($display) {
-			if (!$result && empty($controller->data)) {
-				Load::Error('404');
-			} else {
-				$controller->display($controller->getCalledAction(),$controller->data);
+
+		// Load the controller and begin to populate
+		if (!empty($controller) && $controller = Load::Controller($controller,$args)) {
+			if (!empty($action)) {
+				if (is_numeric($action)) { $controller->id = $action; }
+					else { $controller->action = $action; }
 			}
-		} else {
-			return $controller->render($controller->getCalledAction(),$controller->data);
-		}			
+			if (!empty($options)) { $controller->assignVars($options); }
+			$controller->router = Load::Helper('router','dispatch',
+				array(
+					'router' => $this->router,
+					'dispatch' => $dispatch,
+					'base' => $base,
+					'args' => $args,
+				)
+			);
+			$result = $controller->execute() || !empty($controller->data);
+		}
+
+		if (!empty($result)) {
+			if ($display) {
+				return $controller->display($controller->getCalledAction(),$controller->data);
+			} else {
+				return $controller->render($controller->getCalledAction(),$controller->data);
+			}
+		}
 	}
 	
 	// Display the specified view for this controller with the data provided

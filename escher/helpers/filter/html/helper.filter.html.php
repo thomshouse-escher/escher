@@ -18,10 +18,10 @@ class Helper_filter_html extends Helper_filter {
 		@[id|class|style|title|dir<ltr|rtl>|lang],
 		a[+href|+name|charset|class|hreflang|rel:nofollow|rev|target|title],abbr[+title],
 		acronym[+title],address,area[shape|coords|href|alt|target],bdo,-blockquote,
-		//br,caption,cite,-code,col[align|char|charoff|span|valign|width],
+		/br,caption,cite,-code,col[align|char|charoff|span|valign|width],
 		colgroup[align|char|charoff|span|valign|width],dd,del~strike~s[datetime|cite],
-		dfn,-div,dl,dt,em~i,-h1,-h2,-h3,-h4,-h5,-h6,//hr,
-		//img[ssrc|border|alt=|title|hspace|vspace|width|height|align],
+		dfn,-div,dl,dt,em~i,-h1,-h2,-h3,-h4,-h5,-h6,/hr,
+		/img[+src|border|alt=|title|hspace|vspace|width|height|align],
 		ins[datetime|cite],kbd,label[for],-li,map[+name],-ol,p,-pre,q[cite],samp,
 		-span,strong~b,-sub,-sup,
 		-table[border=0|cellspacing|cellpadding|width|height|bgcolor|background|bordercolor],
@@ -40,7 +40,8 @@ class Helper_filter_html extends Helper_filter {
 		$this->compileRules();
 		$this->dom = new DOMDocument();
 		libxml_use_internal_errors(true);
-		$this->dom->loadXML($data);
+		$data = preg_replace('/[\n\r]+/',"\n",$data);
+		$this->dom->loadHTML($data);
 		foreach ($this->dom->childNodes as $node) {
 			if (!$this->validateNode($node)) {
 				$this->dom->removeChild($node);
@@ -51,10 +52,12 @@ class Helper_filter_html extends Helper_filter {
 			array(
 				'/(\s*\n)+/',
 				'/^<\?xml[^\n]+\?>\n/i',
+				'/<!DOCTYPE[^>]+>/i',
 				'#(?<!\s)/>#',
 			),
 			array(
 				"\n",
+				'',
 				'',
 				' />',
 			),
@@ -72,152 +75,157 @@ class Helper_filter_html extends Helper_filter {
 	}
 
 	protected function validateNode($node) {
-		if (is_a($node,'DOMText')) { return true; }
 		if (!is_a($node,'DOMNode')) { return false; }
-		if (empty($node->tagName)) { return false; }
-		$tagName = strtolower($node->tagName);
+		if (!is_a($node,'DOMElement')) {
+			$valid = TRUE;
+			$passthru = FALSE;
+		} else {
+			if (empty($node->tagName)) { return false; }
+			$tagName = strtolower($node->tagName);
 
-		// Check to see if tag should be aliased
-		while (array_key_exists($tagName,$this->rules['aliases'])) {
-			$tagName = $this->rules['aliases'][$tagName];
-		}
-		// Replace the node with its alias
-		if ($tagName!=strtolower($node->tagName)) {
-			$newNode = $this->dom->createElement($tagName);
-			if ($node->hasAttributes()) {
-				foreach($node->attributes as $attr) {
-					$newNode->setAttributeNode($attr);
-				}
+			// Check to see if tag should be aliased
+			while (array_key_exists($tagName,$this->rules['aliases'])) {
+				$tagName = $this->rules['aliases'][$tagName];
 			}
-			if ($node->hasChildNodes()) {
-				foreach($node->childNodes as $child) {
-					$newNode->appendChild($child);
+			// Replace the node with its alias
+			if ($tagName!=strtolower($node->tagName)) {
+				$newNode = $this->dom->createElement($tagName);
+				if ($node->hasAttributes()) {
+					foreach($node->attributes as $attr) {
+						$newNode->setAttributeNode($attr);
+					}
 				}
-			}
-			$node->parentNode->replaceChild($newNode,$node);
-			$node = $newNode;
-		}
-
-		// Check if tag allowed
-		$valid = in_array($tagName,$this->rules['allow']);
-		$passthru = in_array($tagName,$this->rules['passthru']);
-
-		// If tag is valid, clean it up
-		if ($valid) {
-			$rules = $this->rules['tags'][$tagName];
-
-			// Force attributes
-			if (!empty($rules['forced'])) {
-				foreach($rules['forced'] as $attr => $value) {
-					$node->setAttribute($attr,$value);
+				if ($node->hasChildNodes()) {
+					foreach($node->childNodes as $child) {
+						$newNode->appendChild($child);
+					}
 				}
+				$node->parentNode->replaceChild($newNode,$node);
+				$node = $newNode;
 			}
 
-			// Add default attributes
-			if (!empty($rules['defaults'])) {
-				foreach($rules['defaults'] as $attr => $value) {
-					if (!$node->hasAttribute($attr)) {
+			// Check if tag allowed
+			$valid = in_array($tagName,$this->rules['allow']);
+			$passthru = in_array($tagName,$this->rules['passthru']);
+
+			// If tag is valid, clean it up
+			if ($valid) {
+				$rules = $this->rules['tags'][$tagName];
+
+				// Force attributes
+				if (!empty($rules['forced'])) {
+					foreach($rules['forced'] as $attr => $value) {
 						$node->setAttribute($attr,$value);
 					}
 				}
-			}
 
-			// Check required attributes
-			if (!empty($rules['required'])) {
-				$success = FALSE;
-				foreach($rules['required'] as $attr => $value) {
-					if ($node->hasAttribute($attr)) {
-						$success = TRUE;
-						break;
-					}
-				}
-				if (!$success) {
-					$passthru = TRUE;
-				}
-			}
-
-			// Check attributes
-			if ($node->hasAttributes()) {
-				// Iterate through tha attributes
-				$remove = array();
-				foreach ($node->attributes as $attrName => $attrNode) {
-					$attrName = strtolower($attrName);
-					// If attribute is allowed, check it against rules
-					if (array_key_exists($attrName,$rules['attrs'])
-						&& !empty($rules['attrs'][$attrName])
-					) {
-						// If this is the style attribute, do style logic
-						if ($attrName == 'style') {
-							if ($rules['styles']===TRUE) { continue; }
-							// Parse the styles
-							$css = preg_split('/\s*;\s*/',trim($attrNode->value),
-								-1,PREG_SPLIT_NO_EMPTY);
-							$styles = array();
-							foreach ($css as $s) {
-								$e = preg_split('/:\s*/',$s,2);
-								$styles[$e[0]] = trim($e[1]);
-							}
-							// Iterate through each style declaration
-							foreach ($styles as $k => $v) {
-								// If this style is not allowed, unset it
-								if (!array_key_exists($k,$rules['styles'])
-									|| empty($rules['styles'][$k])
-										|| (is_array($rules['styles'][$k])
-										&& !in_array($v,$rules['styles'][$k])
-								)) {
-									unset($styles[$k]);
-								}
-							}
-
-							// If there are no styles left, remove the attribute
-							if (empty($styles)) {
-								$remove[] = $attrNode->name;
-							// Else write the new styles
-							} else {
-								$attrNode->value = '';
-								foreach ($styles as $k => $v) {
-									$attrNode->value .= $k.': '.$v.';';
-								}
-							}
-
-						// Else if this is the class attribute, do class logic
-						} elseif ($attrName == 'class') {
-							if (is_array($rules['attrs']['class'])) {
-								$attr = array_intersect(
-									explode(' ',$attrNode->value),
-									$rules['attrs']['class']
-								);
-								if (empty($attr)) {
-									$remove[] = $attrNode->name;
-								} else {
-									$attrNode->value = implode(' ',$attr);
-								}
-							}
-
-						// Else do internal logic for other attributes
-						} else {
-							// Enforce attr values that are restricted to an array
-							if (is_array($rules['attrs'][$attrName])
-								&& !in_array($attrNode->value,$rules['attrs'][$attrName])
-							){
-								$remove[] = $attrNode->name;
-							}
+				// Add default attributes
+				if (!empty($rules['defaults'])) {
+					foreach($rules['defaults'] as $attr => $value) {
+						if (!$node->hasAttribute($attr)) {
+							$node->setAttribute($attr,$value);
 						}
-					// If attribute is not allowed, just remove it
-					} else {
-						$remove[] = $attrNode->name;
 					}
 				}
-				// Iterate through all of the attributes to remove
-				foreach($remove as $attr) {
-					$node->removeAttribute($attr);
+
+				// Check required attributes
+				if (!empty($rules['required'])) {
+					$success = FALSE;
+					foreach($rules['required'] as $attr => $value) {
+						if ($node->hasAttribute($attr)) {
+							$success = TRUE;
+							break;
+						}
+					}
+					if (!$success) {
+						$passthru = TRUE;
+					}
+				}
+
+				// Check attributes
+				if ($node->hasAttributes()) {
+					// Iterate through tha attributes
+					$remove = array();
+					foreach ($node->attributes as $attrName => $attrNode) {
+						$attrName = strtolower($attrName);
+						// If attribute is allowed, check it against rules
+						if (array_key_exists($attrName,$rules['attrs'])
+							&& !empty($rules['attrs'][$attrName])
+						) {
+							// If this is the style attribute, do style logic
+							if ($attrName == 'style') {
+								if ($rules['styles']===TRUE) { continue; }
+								// Parse the styles
+								$css = preg_split('/\s*;\s*/',trim($attrNode->value),
+									-1,PREG_SPLIT_NO_EMPTY);
+								$styles = array();
+								foreach ($css as $s) {
+									$e = preg_split('/:\s*/',$s,2);
+									$styles[$e[0]] = trim($e[1]);
+								}
+								// Iterate through each style declaration
+								foreach ($styles as $k => $v) {
+									// If this style is not allowed, unset it
+									if (!array_key_exists($k,$rules['styles'])
+										|| empty($rules['styles'][$k])
+											|| (is_array($rules['styles'][$k])
+											&& !in_array($v,$rules['styles'][$k])
+									)) {
+										unset($styles[$k]);
+									}
+								}
+
+								// If there are no styles left, remove the attribute
+								if (empty($styles)) {
+									$remove[] = $attrNode->name;
+								// Else write the new styles
+								} else {
+									$attrNode->value = '';
+									foreach ($styles as $k => $v) {
+										$attrNode->value .= $k.': '.$v.';';
+									}
+								}
+
+							// Else if this is the class attribute, do class logic
+							} elseif ($attrName == 'class') {
+								if (is_array($rules['attrs']['class'])) {
+									$attr = array_intersect(
+										explode(' ',$attrNode->value),
+										$rules['attrs']['class']
+									);
+									if (empty($attr)) {
+										$remove[] = $attrNode->name;
+									} else {
+										$attrNode->value = implode(' ',$attr);
+									}
+								}
+
+							// Else do internal logic for other attributes
+							} else {
+								// Enforce attr values that are restricted to an array
+								if (is_array($rules['attrs'][$attrName])
+									&& !in_array($attrNode->value,$rules['attrs'][$attrName])
+								){
+									$remove[] = $attrNode->name;
+								}
+							}
+						// If attribute is not allowed, just remove it
+						} else {
+							$remove[] = $attrNode->name;
+						}
+					}
+					// Iterate through all of the attributes to remove
+					foreach($remove as $attr) {
+						$node->removeAttribute($attr);
+					}
 				}
 			}
 		}
 
 		if ($node->hasChildNodes()) {
 			// If children are allowed, iterate through them
-			if ((!$valid && $passthru) // Tag not allowed, but content is
+			if (($valid && !is_a($node,'DOMElement')) // Node is not HTML
+				|| (!$valid && $passthru) // Tag not allowed, but content is
 				|| ($valid && empty($rules['selfClosing'])) // Tag allowed and does not collapse
 			){
 				$children = array();
@@ -237,7 +245,7 @@ class Helper_filter_html extends Helper_filter {
 					}
 				}
 			}
-		} elseif ($valid) {
+		} elseif ($valid && is_a($node,'DOMElement')) {
 			if (!$rules['allowEmpty']) { return false; }
 			if (!$rules['selfClosing']) {
 				$empty = $this->dom->createTextNode('');
@@ -313,7 +321,6 @@ class Helper_filter_html extends Helper_filter {
 			// Parse modifiers
 			switch ($t['mod']) {
 				case '-':  $rule['allowEmpty'] = FALSE; break;
-				case '//': $rule['collapse'] = TRUE;
 				case '/':  $rule['selfClosing'] = TRUE; break;
 			}
 
