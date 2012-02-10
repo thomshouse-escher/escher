@@ -104,7 +104,7 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 		// Let's track changes so we only save the model once!
 		$doSave = FALSE;
 
-		if ($USER->auth=='facebook') {
+		if ($USER->user_auth=='facebook') {
 			// Load FB API and session
 			$fb = loadFacebookAPI();
 			$fbsession = $fb->getSession();
@@ -126,8 +126,8 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 				$USER->facebook_username = $me['username'];
 				$doSave = TRUE;
 			}
-			if ($USER->full_name==$USER->facebook_full_name) {
-				$USER->full_name = $USER->facebook_full_name = $this->formatName($me);
+			if ($USER->display_name==$USER->facebook_display_name) {
+				$USER->display_name = $USER->facebook_display_name = $this->formatName($me);
 				$doSave = TRUE;
 			}
 		}
@@ -146,7 +146,7 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 
 	protected function registrationVars($me) {
 		$vars = array();
-		$vars['full_name'] = $vars['facebook_full_name'] = $this->formatName($me);
+		$vars['display_name'] = $vars['facebook_display_name'] = $this->formatName($me);
 		// If user has a facebook username and it doesn't exist locally, let them have it
 		if (!empty($me['username']) && !Load::User(array('username'=>$me['username']))) {
 			$vars['username'] = $me['username'];
