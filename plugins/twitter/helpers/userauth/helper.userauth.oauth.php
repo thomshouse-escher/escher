@@ -97,7 +97,7 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 
 	protected function registrationVars($me) {
 		$vars = array();
-		$vars['full_name'] = $vars['twitter_full_name'] = $me['name'];
+		$vars['display_name'] = $vars['twitter_full_name'] = $me['name'];
 		// If the user's twitter account name does not exist as a username, let them have it
 		if (!empty($me['screen_name']) && !Load::User(array('username'=>$me['screen_name']))) {
 			$vars['username'] = $me['screen_name'];
@@ -132,8 +132,8 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 				$USER->twitter_username = $me['screen_name'];
 				$doSave = TRUE;
 			}
-			if ($USER->full_name==$USER->twitter_full_name) {
-				$USER->full_name = $USER->twitter_full_name = $me['name'];
+			if ($USER->display_name==$USER->twitter_full_name) {
+				$USER->display_name = $USER->twitter_full_name = $me['name'];
 				$doSave = TRUE;
 			}
 
