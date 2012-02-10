@@ -1,14 +1,27 @@
 <?php
 
 class Helper_network extends Helper {
-	protected $proxies = array('127.0.0.1');
-	protected $local_ips = array('10.*','172.16-31.*','192.168.*');
+	protected $reverse_proxies = array('127.0.0.1');
+	protected $intranet_ips = array('10.*','172.16-31.*','192.168.*');
+
+	function __construct($args=array()) {
+		parent::__construct($args);
+		$CFG = Load::Config();
+		if (!empty($CFG['reverse_proxies'])) {
+			$this->reverse_proxies = $CFG['reverse_proxies'];
+		}
+		if (!empty($CFG['intranet_ips'])) {
+			$this->intranet_ips = $CFG['intranet_ips'];
+		}
+	}
 
 	function getRemoteIP() {
 		// If we don't have a remote address, return false
 		if (!isset($_SERVER['REMOTE_ADDR'])) { return false; }
 		// If there are no proxies or X-forwards, return REMOTE_ADDR
-		if (empty($this->proxies) || empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+		if (empty($this->reverse_proxies)
+			|| empty($_SERVER['HTTP_X_FORWARDED_FOR'])
+		) {
 			return $_SERVER['REMOTE_ADDR'];
 		}
 
@@ -18,7 +31,7 @@ class Helper_network extends Helper {
 		$fwds = preg_split('/\s*,\s*/',$_SERVER['HTTP_X_FORWARDED_FOR'],
 			-1, PREG_SPLIT_NO_EMPTY);
 		// Loop until we have our final ip
-		while (in_array($ip,$this->proxy_ips) && !empty($fwds)) {
+		while (in_array($ip,$this->reverse_proxies) && !empty($fwds)) {
 			$next = array_pop($fwds);
 			if($this->isValid($next)) { $ip = $next; }
 		}
@@ -26,7 +39,8 @@ class Helper_network extends Helper {
 	}
 	
 	function isIntranet($ip=NULL) {
-		$ip = $this->getRemoteIP();
+		if (is_null($ip)) { $ip = $this->getRemoteIP(); }
+		return $this->isValidIP($ip,$this->intranet_ips);
 	}
 
 	function isValidIP($ip,$range=NULL) {

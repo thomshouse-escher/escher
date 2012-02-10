@@ -45,10 +45,12 @@ class Helper_output_php extends Helper_output {
 		$hooks = Load::Hooks();
 		extract($hooks->getOutputFunctions());
 		$this->__old_cwd = getcwd();
+		$this->__old_err = error_reporting(E_ERROR | E_WARNING | E_PARSE);
 		ob_start();
 		chdir(dirname($filename));
 		include $filename;
 		chdir($this->__old_cwd);
+		error_reporting($this->__old_err);
 		$UI = Load::UI();
 		$UI->directOutput(FALSE);
 		array_shift(self::$instances);

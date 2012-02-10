@@ -4,10 +4,11 @@ class Controller_page extends Controller {
 	
 	function action_index($args) {
 		if (empty($this->id)) { Load::Error('500'); }
-		$page = Load::Model('page',$this->id);
-		$this->data['resource'] = array('page',$page->page_id);
-		$this->data['body'] = @$page->body;
-		$this->data['title'] = @$page->title;
+		$this->data['resource'] = array('page',$this->id);
+		if ($page = Load::Model('page',$this->id)) {
+			$this->data['body'] = $page->body;
+			$this->data['title'] = $page->title;
+		}
 	}
 	
 	function manage_edit($args) {

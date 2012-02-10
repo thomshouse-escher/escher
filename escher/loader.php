@@ -54,7 +54,9 @@ class Load {
 	 * @return object|false Returns an instance of the model, or false on failure.
 	 */
 	public function Model($name,$key=NULL) {
-		if (is_array($name)) {
+		if (is_a($name,'model')) {
+			$classname = get_class($name);
+		} elseif (is_array($name)) {
 			if (is_null($name[0])) {
 				$name = strtolower($name[1]);
 				if (Load::req(ESCHER_REAL_PATH.'/models/'.$name.'/model.'.$name.'.php') && class_exists("Model_$name")) {
