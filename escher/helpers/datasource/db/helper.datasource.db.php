@@ -294,7 +294,7 @@ class Helper_datasource_db extends Helper_datasource {
 				array_values(array_intersect_key($partnames,$partitions))
 			);
 		}
-
+		if (empty($tables)) { return FALSE; }
 		
 		// Get the SQL from (tables/joins) clause
 		$from = '';
@@ -551,15 +551,16 @@ class Helper_datasource_db extends Helper_datasource {
 		} elseif (is_array($value)) {
 			if (sizeof($value)==0) { return false; }
 			$first = reset($value);
-			if (is_numeric(key($value)) && $first == 'NOT') {
+			if (is_numeric(key($value)) && is_string($first) && $first == 'NOT') {
 				array_shift($value);
 				$result = $this->evalConditions($key,$value);
 				return array('NOT ('.$result[0].')',$result[1]);
-			} elseif (is_numeric(key($value)) && in_array($first,array('AND','&&','OR','||','XOR'))) {
+			} elseif (is_numeric(key($value)) && is_string($first)
+				&& in_array($first,array('AND','&&','OR','||','XOR'))
+			) {
 				array_shift($value);
 				return $this->evalConditions($key,$value,$first);
 			} elseif (sizeof(preg_grep('/\D/',array_keys($value)))==0) {
-				if (sizeof($value)==0) { die_r(func_get_args()); }
 				$in = array_fill(0,sizeof($value),'?');
 				return array("$qkey IN(".implode(',',$in).")",$value);
 			} else {

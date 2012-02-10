@@ -10,5 +10,6 @@ class Model_acl_rule extends Model {
 		'entity_type' => 'resource',
 		'entity_id' => 'id',
 		'rule' => array('type' => 'int','range' => 1),
+		'priority' => 'bool',
 	);
 }

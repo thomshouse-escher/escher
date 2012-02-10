@@ -279,6 +279,20 @@ abstract class EscherModel extends EscherObject {
 		return true;
 	}
 
+	function id() {
+		return $this->{$this->_primaryKey()};
+	}
+
+	function _primaryKey() {
+		if (array_key_exists('primary',$this->_schemaKeys)
+			&& sizeof($this->_schemaKeys['primary']['fields'])==1
+		) {
+			return reset($this->_schemaKeys['primary']['fields']);
+		} else {
+			return "{$this->_m()}_id";
+		}
+	}
+
 	// What is the name of this model?
 	final function _m() {
 		$class = get_class($this);
@@ -286,7 +300,7 @@ abstract class EscherModel extends EscherObject {
 	}
 
 	final function __get($name) {
-		$id = "{$this->_m()}_id";
+		$id = $this->_primaryKey();
 		switch ($name) {
 			case 'id':
 				return $this->$id; break;

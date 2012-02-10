@@ -19,7 +19,7 @@ class Helper_router_dynamic extends Helper_router {
 
 		$route['id'] = $CFG['root']['id'];
 		$current = $parent = $site = array();
-		$args = explode('/',$this->path);
+		$args = preg_split('#/#',$this->path,-1,PREG_SPLIT_NO_EMPTY);
 		while (!empty($args)
 			&& $m = Load::Model('route_dynamic',array(
 				'parent_id'=>$route['id'],'tag'=>$args[0]))
@@ -31,8 +31,8 @@ class Helper_router_dynamic extends Helper_router {
 			if (!empty($m->theme)) { $route['theme'] = $m->theme; }
 			if (!empty($m->subsite)) { $site = $current; }
 
-			$route['id'] = $m->id;
-			$route['route_ids'][] = $m->id;
+			$route['id'] = $m->route_id;
+			$route['route_ids'][] = $m->route_id;
 		}
 		
 		if (empty($current)) { return false; }

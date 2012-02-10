@@ -30,6 +30,7 @@ class Helper_acl extends Helper {
 	 * @return boolean
 	 */
 	function check($resource='all',$action=array(),$context='./',$inherit=TRUE,$entity=NULL) {
+
 		if ($resource=='all' || is_null($resource)) {
 			$resource = array('all');
 		} else {
@@ -39,9 +40,16 @@ class Helper_acl extends Helper {
 			// If $resource is not valid, return false
 			} else { return false; }
 		}
+
 		// Cast action to array and add 'all' 
 		$action = (array)$action;
 		$action[] = 'all';
+
+		// Sanitize entity (defaults to $USER)
+		if (is_null($entity)) { if (!$entity = Load::USER()) { $entity = array('guest',0); } }
+		if (!$entity = $this->sanitizeModel($entity)) { return false; }
+		$entity = array('all',$entity);
+
 		// ...and pass it all along to require (since this is just a kinder, gentler version)
 		return $this->determineAccess($resource,$action,$context,$inherit,$entity);
 	}
@@ -59,11 +67,16 @@ class Helper_acl extends Helper {
 	function req($resource,$action=array(),$context='./',$inherit=TRUE,$entity=NULL) {
 		// Sanitize $resource
 		if ($resource = $this->sanitizeModel($resource)) {
-			$resource = array($resource);
+			$resource = (array)$resource;
 		} else { return false; }
 		// Sanitize $action
 		if (empty($action)) { return false; }
 		$action = (array)$action;
+
+		// Sanitize entity (defaults to $USER)
+		if (is_null($entity)) { if (!$entity = Load::USER()) { $entity = array('guest',0); } }
+		if (!$entity = $this->sanitizeModel($entity)) { return false; }
+
 		// This is where the magic will happen
 		return $this->determineAccess($resource,$action,$context,$inherit,$entity);
 	}
@@ -90,16 +103,19 @@ class Helper_acl extends Helper {
 		} elseif (!is_a($context,'Model_route') && !is_a($context,'Model_route_dynamic')) {
 			return false;
 		}
-		if (empty($context->id)) { return false; }
-		// Sanitize entity (defaults to $USER)
-		if (is_null($entity)) { if (!$entity = Load::USER()) { return false; } }
-		if (!$entity = $this->sanitizeModel($entity)) { return false; }
+
+		if (!$context->id()) { return false; }
 
 		if (is_array($action) && sizeof($action)==1) {
 			$action = reset($action);
 		}
 
 		// Begin organizing entities by generation, type, and ids
+		$tryAllEntities = FALSE;
+		if (reset($entity)=='all') {
+			$tryAllEntities = TRUE;
+			$entity = next($entity);
+		}
 		$entities = array(
 			array($entity[0],array($entity[1]))
 			// Ex. array('user',array(123));
@@ -116,13 +132,17 @@ class Helper_acl extends Helper {
 
 		// Add generation for anonymous entity 
 		$entities[] = array($entity[0],array(0));
+		// And for "all" entities if requested
+		if ($tryAllEntities) {
+			$entities[] = array('all',array(0));
+		}
 
 		// Also get generation of contexts
 		if ($inherit) {
 			$contexts = array();
 			$cm = $context;
-			while (!empty($cm->id)) {
-				$contexts[] = $cm->id;
+			while (!empty($cm->route_id)) {
+				$contexts[] = $cm->id();
 				$cm = $cm->getParent();
 			}
 			$CFG = Load::Config();
@@ -136,7 +156,7 @@ class Helper_acl extends Helper {
 
 		// Build the array notation for $resource, since it's a bit weird
 		if ($resource[0]=='all') {
-			if (sizeof($resource)==2) {
+			if (array_key_exists(1,$resource) && is_array($resource[1])) {
 				$r_notation = array(
 					'OR',
 					array(
@@ -162,19 +182,28 @@ class Helper_acl extends Helper {
 		}
 
 		// Build the array notation for $entity
-		$e_notation = array(
-			'OR',
-			array(
-				'entity_type' => $entity[0],
-				'entity_id' => array($entity[1],0),
-			),
-		);
-		if (!empty($group_ids)) {
+		$etypes = array();
+		// Consolidate entities by type
+		foreach($entities as $e) {
+			if (array_key_exists($e[0],$etypes)) {
+				$etypes[$e[0]] = array_merge(
+					$etypes[$e[0]],
+					$e[1]
+				);
+			} else {
+				$etypes[$e[0]] = $e[1];
+			}
+		}
+		// Entity types joined by OR
+		$e_notation = array('OR');
+		foreach($etypes as $type => $e) {
+			$e = array_unique($e);
+			if (sizeof($e)==1) { $e = reset($e); }
 			$e_notation[] = array(
-				'entity_type' => 'usergroup',
-				'entity_id' => $group_ids,
+				'entity_type' => $type,
+				'entity_id' => $e,
 			);
-		};
+		}
 
 		// Get ALL relevant ACL rules
 		$rm = Load::Model('acl_rule');
@@ -189,43 +218,46 @@ class Helper_acl extends Helper {
 					'inheritable' => 1,
 				),
 				$e_notation,
-			)
+			),
+			array('order' => array('priority' => -1))
 		);
+		if (empty($rules)) { return NULL; }
 
-		if (empty($rules)) { return false; }
-
-		foreach($contexts as $c) {
-			foreach($entities as $e) {
-				$allow = FALSE;
-				$deny = FALSE;
-				foreach($rules as $r) {
-					if ($r['context']==$c
-						&& $r['entity_type']==$e[0]
-						&& in_array($r['entity_id'],$e[1])
-					) {
-						if ($r['rule']) { $allow = TRUE; }
-						else { $deny = TRUE; }
+		foreach(array(1,0) as $priority) {
+			foreach($contexts as $c) {
+				foreach($entities as $e) {
+					$allow = FALSE;
+					$deny = FALSE;
+					foreach($rules as $r) {
+						if ($r['priority'] != $priority) { continue; }
+						if ($r['context']==$c
+							&& $r['entity_type']==$e[0]
+							&& in_array($r['entity_id'],$e[1])
+						) {
+							if ($r['rule']) { $allow = TRUE; }
+							else { $deny = TRUE; }
+						}
 					}
+					if ($deny) { return FALSE; }
+					elseif ($allow) { return TRUE; }
 				}
-				if ($deny) { return FALSE; }
-				elseif ($allow) { return TRUE; }
 			}
 		}
 	}
 	
-	function allow($entity,$resource,$action='',$context=NULL,$inheritable=TRUE) {
-		$this->setRule($entity,1,$resource,$action,$context,$inheritable);
+	function allow($entity,$resource,$action='',$context=NULL,$inheritable=TRUE,$priority=FALSE) {
+		$this->setRule($entity,1,$resource,$action,$context,$inheritable,$priority);
 	}
 
-	function deny($entity,$resource,$action='',$context=NULL,$inheritable=TRUE) {
-		$this->setRule($entity,0,$resource,$action,$context,$inheritable);
+	function deny($entity,$resource,$action='',$context=NULL,$inheritable=TRUE,$priority=FALSE) {
+		$this->setRule($entity,0,$resource,$action,$context,$inheritable,$priority);
 	}
 
-	function remove($entity,$resource,$action='',$context=NULL,$inheritable=TRUE) {
-		$this->setRule($entity,-1,$resource,$action,$context,$inheritable);
+	function remove($entity,$resource,$action='',$context=NULL,$inheritable=TRUE,$priority=FALSE) {
+		$this->setRule($entity,-1,$resource,$action,$context,$inheritable,$priority);
 	}
 	
-	protected function setRule($entity,$rule,$resource,$action='all',$context=NULL,$inheritable=TRUE) {
+	protected function setRule($entity,$rule,$resource,$action='all',$context=NULL,$inheritable=TRUE,$priority=FALSE) {
 		// Sanitize entity
 		if (!$entity = $this->sanitizeModel($entity)) return false;
 		// Sanitize rule
@@ -238,7 +270,12 @@ class Helper_acl extends Helper {
 		if (is_null($context)) {
 			$router = Load::Router();
 			$context = $router->getContext();
-		} elseif (is_scalar($context)) {
+		} elseif(is_integer($context)) {
+			$router = Load::Router();
+			$context = $router->getPathById($context,FALSE);
+			$router = Load::Router($context);
+			$context = $router->getContext();
+		} elseif (is_string($context)) {
 			$router = Load::Router($context);
 			$context = $router->getContext();
 		} elseif (!is_object($context)) {
@@ -247,13 +284,13 @@ class Helper_acl extends Helper {
 		if (!$context->id) {
 			return false;
 		}
-		$ds = Load::Datasource('db');
+		$model = Load::Model('acl_rule');
 		$conditions = array(
 			'resource_type' => $resource[0],'resource_id' => $resource[1],
 			'action' => $action, 'context' => $context->id, 'inheritable' => $inheritable,
-			'entity_type' => $entity[0], 'entity_id' => $entity[1]);
-		$options = array('limit' => 0,'select' => 'id','fetch' => 'col');
-		$current_rules = $ds->get('acl_rule',$conditions,$options);
+			'entity_type' => $entity[0], 'entity_id' => $entity[1],'priority' => (int)$priority);
+		$options = array('limit' => 0,'select' => 'acl_rule_id','fetch' => 'col');
+		$current_rules = $model->find($conditions,$options);
 		if ($rule < 0 || sizeof($current_rules) > 1) {
 			foreach ($current_rules as $r) {
 				$ds->delete('acl_rule',$r);	
@@ -261,10 +298,11 @@ class Helper_acl extends Helper {
 		}
 		if ($rule>=0) {
 			$conditions['rule'] = $rule;
-			if (sizeof($current_rules)==1) {
-				$conditions['id'] = reset($current_rules);
+			if (is_array($current_rules) && sizeof($current_rules)==1) {
+				$conditions['acl_rule_id'] = reset($current_rules);
 			}
-			$ds->set('acl_rule',$conditions);
+			$model->assignVars($conditions);
+			$model->save();
 		}
 	}
 	
