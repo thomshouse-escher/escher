@@ -329,10 +329,17 @@ class Load {
 	 * @return string Returns the error page as a string.
 	 */
 	public function Error($error='404',$args=array()) {
+		$CFG=Load::CFG();
 		array_unshift($args,$error);
 		$session = Load::Session();
-		$session->remember_current_request = FALSE;
-		$controller = Load::Controller('errors',$args);
+		$session->remember_current_request = FALSE;;
+		// If error controller is set in the config.
+		if (isset($CFG['errorController'])) {
+			$controller = Load::Controller($CFG['errorController'],$args);
+			// If this error controller is not set in the config-- fall back on default.
+		} else {
+			$controller = Load::Controller('errors',$args);
+		}
 		die($controller->Execute());
 	}
 	
