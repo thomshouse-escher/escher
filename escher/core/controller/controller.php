@@ -39,6 +39,7 @@ class EscherController extends EscherObject {
 		$this->headers = Load::Headers();
 		$this->input = Load::Input();
 		$this->USER = Load::User();
+		$this->CFG = Load::CFG();
 	}
 	
 	/**
