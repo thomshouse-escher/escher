@@ -15,7 +15,6 @@ class Model_user extends Model {
 	);
 	protected $_schemaKeys = array(
 		'username' => array('type'=>'unique','fields'=>'username'),
-		'email' => array('type'=>'unique','fields'=>'email'),
 	);
 
 	function register($vars) {
