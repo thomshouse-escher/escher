@@ -49,22 +49,38 @@ class Model_upload extends File {
 			$count++;
 			$filename = "$name-$count$ext";
 		}
-		if (!parent::parseUpload($file,$filename)) { return false; }
+		$this->filename = $filename;
+		if (!parent::parseUpload($file)) { return false; }
 		$this->save();
 	}
 
-	function getFilePath() {
-		$CFG = Load::Config();
-		return $CFG['document_root'].'/'.$CFG['uploadpath'].'/uploads/'.$this->getPath();
+	function getFilePath($size=NULL) {
+		if ($path = $this->getPath($size)) {
+			$CFG = Load::Config();
+			return $CFG['document_root'].'/'.$CFG['uploadpath']
+				.'/uploads/'.$path;
+		} else {
+			return FALSE;
+		}
 	}
 
-	function getWWWPath() {
-		$CFG = Load::Config();
-		return $CFG['wwwroot'].'/'.$CFG['uploadpath'].'/uploads/'.$this->getPath();
+	function getURL($size=NULL) {
+		if ($path = $this->getPath($size)) {
+			$CFG = Load::Config();
+			return $CFG['wwwroot'].'/'.$CFG['uploadpath']
+				.'/uploads/'.$path;
+		} else {
+			return FALSE;
+		}
 	}
 	
-	protected function getPath() {
+	protected function getPath($size=NULL) {
 		if (empty($this->created_at)) { $this->touch(); }
-		return date('Y/m',strtotime($this->created_at));
+		$path = date('Y/m',strtotime($this->created_at));
+		if ($filename = $this->getFilename($size)) {
+			return $path.'/'.$filename;
+		} else {
+			return FALSE;
+		}
 	}
 }

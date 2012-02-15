@@ -23,6 +23,7 @@ class EscherController extends EscherObject {
 	protected $isACLRestricted = FALSE;
 	protected $ACLRestrictedActions = array();
 	protected $input = array();
+	protected $dispatchBase = array();
 	public $data = array();
 	
 	/**
@@ -70,12 +71,14 @@ class EscherController extends EscherObject {
 			&& $args[1]!=$this->defaultAction
 		) {
 			$action = $args[1];
+			$this->dispatchBase = array_slice($args,0,2);
 			array_splice($args,1,1);
 
 		// Priority 3: 1st Argument in case of valid manage function
 		} elseif (isset($args[0]) && method_exists($this,'manage_'.$args[0])
 			&& $args[0]!=$this->defaultAction
 		) {
+			$this->dispatchBase = array_slice($args,0,1);
 			$action = array_shift($args);
 			$functype = "manage";
 
@@ -83,6 +86,7 @@ class EscherController extends EscherObject {
 		} elseif (isset($args[0]) && method_exists($this,'action_'.$args[0])
 			&& $args[0]!=$this->defaultAction
 		) {
+			$this->dispatchBase = array_slice($args,0,1);
 			$action = array_shift($args);
 			$functype = "action";
 
@@ -137,6 +141,12 @@ class EscherController extends EscherObject {
 			$controller = array($plugin,$controller);
 		}
 
+		// Prepend $this->dispatchBase to $base
+		if (!empty($this->dispatchBase)) {
+			if (!empty($base)) { $base = '/'.$base; }
+			$base = implode('/',$this->dispatchBase).$base;
+		}
+
 		// Explode $args to array
 		if (is_string($args)) {
 			$args = preg_split('#/#',$args,-1,PREG_SPLIT_NO_EMPTY);
@@ -146,8 +156,8 @@ class EscherController extends EscherObject {
 		// Add args from $dispatch to array
 		if (!empty($dispatchArgs)) {
 			$args = array_merge(
-				preg_split('#/#',$dargs,-1,PREG_SPLIT_NO_EMPTY),
-				$dispatchArgs);
+				preg_split('#/#',$dispatchArgs,-1,PREG_SPLIT_NO_EMPTY),
+				$args);
 		}
 
 		// Load the controller and begin to populate

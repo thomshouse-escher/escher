@@ -26,25 +26,25 @@ class Helper_router_dispatch extends Helper_router {
 		if (isset($args['base'])) {
 			$this->base = $args['base'];
 		}
-		if (isset($args[3])) {
+		if (isset($args['args'])) {
 			$this->args = $args['args'];
 		}
 	}
 
+	function getRoute() { return $this->sourceRouter->getRoute(); }
+	function getContext() { return $this->sourceRouter->getRoute(); }
+
 	function getCurrentPath($absolute=TRUE, $args=FALSE) {
-		$path = $this->getParentPath($absolute).$this->dispatch;
+		$path = $this->getParentPath($absolute);
+		if (!empty($this->base)) { $path .= '/'.$this->base; }
 		if ($args && !empty($this->args)) {
 			$path .= '/'.implode('/',$this->args);
 		}
-		return $path.'/';
+		return $path;
 	}
 
 	function getParentPath($absolute=TRUE) {
-		$path = $this->sourceRouter->getCurrentPath($absolute);
-		if (!empty($this->pathToDispatch)) {
-			$path .= '/'.$this->pathToDispatch;
-		}
-		return $path.'/';
+		return $this->sourceRouter->getCurrentPath($absolute);
 	}
 
 	function getSitePath($absolute=TRUE) {
@@ -65,7 +65,7 @@ class Helper_router_dispatch extends Helper_router {
 
 	function resolvePath($url,$absolute=TRUE) {
 		if (preg_match('#^\.\./\.\.(/.*|)#',$url,$match)) {
-			return $this->sourceRouter->getCurrentPath($absolute).$match[1];
+			return $this->sourceRouter->getParentPath($absolute).$match[1];
 		} else {
 			return parent::resolvePath($url,$absolute);
 		}
