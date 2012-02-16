@@ -29,7 +29,7 @@ class Plugin_tinymce extends Plugin {
 
 			// Are we using gzip?
 			if (function_exists('gzcompress') && !ini_get('zlib.output_compression')) {
-				$headers->addJS("{$CFG['wwwroot']}/plugins/tinymce/js/tiny_mce_gzip.js");
+				$headers->addJS("{$CFG['wwwroot']}/plugins/tinymce/js/tiny_mce/tiny_mce_gzip.js");
 				$disk_cache = is_writable(dirname(__FILE__)) ? "true" : "false";
 		
 				$headers->addFootHTML('
@@ -45,7 +45,7 @@ class Plugin_tinymce extends Plugin {
 		
 			} else {
 				// If no Gzip, just load the regular js.
-				$headers->addJS("{$CFG['wwwroot']}/plugins/tinymce/js/tiny_mce.js");
+				$headers->addJS("{$CFG['wwwroot']}/plugins/tinymce/js/tiny_mce/tiny_mce.js");
 			}
 		
 			$headers->addFootHTML('
@@ -104,7 +104,7 @@ class Plugin_tinymce extends Plugin {
 	function popup() {
 		$CFG = Load::Config();
 		$headers = Load::Headers();
-		$headers->addJS("{$CFG['wwwroot']}/plugins/tinymce/js/tiny_mce_popup.js");
+		$headers->addJS("{$CFG['wwwroot']}/plugins/tinymce/js/tiny_mce/tiny_mce_popup.js");
 		$headers->addFootHTML('
 			<script language="javascript" type="text/javascript">
 			var FileBrowserDialogue = {
