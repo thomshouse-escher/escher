@@ -369,7 +369,12 @@ class Helper_datasource_db extends Helper_datasource {
 		// If result is a single valid row and we are selecting everything, get metadata and content
 		if ($result && sizeof($models)==1 && is_a(reset($models),'Model') && $qtype=='getRow') {
 			$model = reset($models);
-			$model->assignVars(reset($result));
+			foreach($model->_schemaFields as $name => $f) {
+				if ($f['type']=='array') {
+					$result[$name] = (array)json_decode($result[$name]);
+				}
+			}
+			$model->assignVars($result);
 		}
 		return $result;
 	}

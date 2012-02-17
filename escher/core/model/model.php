@@ -247,7 +247,7 @@ abstract class EscherModel extends EscherObject {
 		// Iterate through our datasources, waiting for results
 		foreach($sources as $s) {
 			$ds = Load::Datasource($s);
-			if ($result = $ds->get($this->_m(),$conditions,$options)) {
+			if ($result = $ds->get($this,$conditions,$options)) {
 				return $result;
 			}
 		}
