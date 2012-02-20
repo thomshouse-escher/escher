@@ -22,7 +22,7 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 
 		// If there is a local user with this facebook uid, log them in and redirect
 		if ($user = Load::User(array('facebook_uid'=>$uid))) {
-			$_SESSION['user_id'] = $user->id;
+			$_SESSION['user_id'] = $user->user_id;
 			return true;
 		}
 		
@@ -31,7 +31,7 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 		
 		// Load the fbconnect userauth, register and redirect
 		if ($user = $this->register($vars['username'],'',$vars)) {
-			$_SESSION['user_id'] = $user->id;
+			$_SESSION['user_id'] = $user->user_id;
 			return true;
 		}
 		return false;

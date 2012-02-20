@@ -64,7 +64,7 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 
 		// If there is a local user with this facebook uid, log them in and redirect
 		if ($user = Load::User(array('twitter_uid'=>$me['id']))) {
-			$_SESSION['user_id'] = $user->id;
+			$_SESSION['user_id'] = $user->user_id;
 			return true;
 		}
 		
@@ -75,7 +75,7 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		// Load the facebook (oauth) userauth, register, and redirect
 		$userauth = Load::Helper(array('twitter','userauth'),'oauth');
 		if ($user = $userauth->register($vars['username'],'',$vars)) {
-			$_SESSION['user_id'] = $user->id;
+			$_SESSION['user_id'] = $user->user_id;
 			return true;
 		}
 		return false;
