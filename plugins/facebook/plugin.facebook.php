@@ -6,7 +6,7 @@ class Plugin_facebook extends Plugin {
 		'login_success' => 'onLogin',
 	);
 	protected $modelMetadata = array(
-		'user' => array('facebook_uid','facebook_username','facebook_full_name'),
+		'user' => array('facebook_uid','facebook_username','facebook_display_name'),
 	);
 
 	function __construct() {
