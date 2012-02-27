@@ -152,7 +152,7 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 			$vars['username'] = $me['username'];
 		} else {
 			// Otherwise give them something that should be unique based on their uid
-			$vars['username'] = '@facebook:'.$me['id'];
+			$vars['username'] = 'facebook.com/'.$me['id'];
 		}
 		$vars['facebook_uid'] = $me['id'];
 		return $vars;

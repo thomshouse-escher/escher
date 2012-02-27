@@ -35,23 +35,17 @@ class EscherPlugin extends EscherObject {
 	 */
 	protected $models = array();
 	/**
-	 * Associative array where the key is the model name and
-	 * the value is an array of metadata fields.
-	 * @var array
-	 */
-	protected $modelMetadata = array();
-	/**
-	 * Associative array where the key is the model name and
-	 * the value is an array of content fields.
-	 * @var array
-	 */
-	protected $modelContent = array();
-	/**
 	 * Associative array where the key is the output function name
 	 * and the value is the real PHP function name.
 	 * @var array
 	 */
 	protected $outputFunctions = array();
+	/**
+	 * Multidimensional array where the key is the model name and
+	 * the value is an array of schema notation.
+	 * @var array
+	 */
+	protected $schemaFields = array();
 	/**
 	 * Associative array where the key is the auth name and
 	 * the value is the plugin's associated userauth helper.
@@ -91,13 +85,10 @@ class EscherPlugin extends EscherObject {
 			}
 		}
 
-		// Models, metadata and content
+		// Models and schema fields
 		$hooks->registerModelPlugin($this->models,$this->_p());
-		foreach($this->modelMetadata as $model => $fields) {
-			$hooks->registerMetadata($model,$fields);
-		}
-		foreach($this->modelContent as $model => $fields) {
-			$hooks->registerContent($model,$fields);
+		foreach($this->schemaFields as $model => $fields) {
+			$hooks->registerSchemaFields($model,$fields);
 		}
 
 		// Output functions

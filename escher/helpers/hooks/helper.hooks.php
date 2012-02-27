@@ -2,13 +2,12 @@
 
 class Helper_hooks extends Helper {
 	protected $dispatches = array();
-	protected $metadata = array();
-	protected $content = array();
 	protected $outputFunctions = array();
 	protected $userauths = array();
 	protected $events = array();
 	protected $filters = array();
 	protected $models = array();
+	protected $schemaFields = array();
 	protected $staticroutes = array();
 
 	function registerDispatch($dispatch,$controller) {
@@ -69,10 +68,7 @@ class Helper_hooks extends Helper {
 		return $value;
 	}
 
-	function registerMetadata($model,$fields) {
-		if (is_array($model) && sizeof($model)==2) {
-			$model = implode(':',$model);
-		}
+	function registerSchemaFields($model,$fields) {
 		if (!is_string($model)) return false;
 		$fields = (array)$fields;
 		foreach ($fields as $k => $v) {
@@ -80,63 +76,27 @@ class Helper_hooks extends Helper {
 				unset($fields[$k]);
 			}
 		}
-		if (empty($fields)) {
-			return false;
-		}
-		if (array_key_exists($model,$this->metadata)) {
-			$this->metadata[$model] = array_merge($fields,$this->metadata[$model]);
+		if (empty($fields)) { return false; }
+		if (array_key_exists($model,$this->schemaFields)) {
+			$this->schemaFields[$model] = array_merge(
+				$fields,
+				$this->schemaFields[$model]
+			);
 		} else {
-			$this->metadata[$model] = $fields;
+			$this->schemaFields[$model] = $fields;
 		}
 		return true;
 	}
 	
-	function getMetadata($model) {
-		if (is_array($model) && sizeof($model)==2) {
-			$model = implode(':',$model);
-		}
+	function getSchemaFields($model) {
 		if (!is_string($model)) return false;
-		if (!isset($this->metadata[$model])) {
-			return false;
+		if (!isset($this->schemaFields[$model])) {
+			return array();
 		} else {
-			return $this->metadata[$model];
+			return $this->schemaFields[$model];
 		}
 	}
-	
-	function registerContent($model,$fields) {
-		if (is_array($model) && sizeof($model)==2) {
-			$model = implode(':',$model);
-		}
-		if (!is_string($model)) return false;
-		$fields = (array)$fields;
-		foreach ($fields as $k => $v) {
-			if (!is_string($v)) {
-				unset($fields[$k]);
-			}
-		}
-		if (empty($fields)) {
-			return false;
-		}
-		if (array_key_exists($model,$this->content)) {
-			$this->content[$model] = array_merge($fields,$this->content[$model]);
-		} else {
-			$this->content[$model] = $fields;
-		}
-		return true;
-	}
-	
-	function getContent($model) {
-		if (is_array($model) && sizeof($model)==2) {
-			$model = implode(':',$model);
-		}
-		if (!is_string($model)) return false;
-		if (!isset($this->content[$model])) {
-			return false;
-		} else {
-			return $this->content[$model];
-		}
-	}
-	
+
 	function registerModelPlugin($model,$plugin='') {
 		if (is_array($model)) {
 			$result = TRUE;

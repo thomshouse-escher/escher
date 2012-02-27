@@ -103,7 +103,7 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 			$vars['username'] = $me['screen_name'];
 		} else {
 			// Otherwise give them something that should be unique based on their uid
-			$vars['username'] = '@twitter:'.$me['id'];
+			$vars['username'] = 'twitter.com/'.$me['id'];
 		}
 		$vars['twitter_uid'] = $me['id'];
 		return $vars;

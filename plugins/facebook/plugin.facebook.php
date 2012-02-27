@@ -5,8 +5,12 @@ class Plugin_facebook extends Plugin {
 		'authenticate_success' => 'onLogin',
 		'login_success' => 'onLogin',
 	);
-	protected $modelMetadata = array(
-		'user' => array('facebook_uid','facebook_username','facebook_display_name'),
+	protected $schemaFields = array(
+		'user' => array(
+			'facebook_uid' => 'string',
+			'facebook_username' => 'string',
+			'facebook_display_name' => string,
+		),
 	);
 
 	function __construct() {

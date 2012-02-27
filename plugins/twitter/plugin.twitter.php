@@ -6,8 +6,12 @@ class Plugin_twitter extends Plugin {
 		'authenticate_success' => 'onLogin',
 		'login_success' => 'onLogin',
 	);
-	protected $modelMetadata = array('user' => array('twitter_uid','icon_url'));
-	protected $modelContent = array('user' => array('twitter'));
+	protected $schemaFields = array(
+		'user' => array(
+			'twitter_uid' => 'string',
+			'twitter_token' => 'array',
+		),
+	);
 	protected $userAuth = array('twitter' => 'oauth');
 
 	function __construct() {

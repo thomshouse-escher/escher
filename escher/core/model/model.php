@@ -363,7 +363,7 @@ abstract class EscherModel extends EscherObject {
 		$hooks = Load::Hooks();
 		$source_fields = array(
 			'class'    => $this->_schemaFields,
-			'metadata' => array(), //$hooks->getModelFields($this->_m()),
+			'metadata' => $hooks->getSchemaFields($this->_m()),
 		);
 		
 		// Run class fields and hook fields on separate passes
