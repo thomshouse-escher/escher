@@ -9,7 +9,7 @@ class Plugin_facebook extends Plugin {
 		'user' => array(
 			'facebook_uid' => 'string',
 			'facebook_username' => 'string',
-			'facebook_display_name' => string,
+			'facebook_display_name' => 'string',
 		),
 	);
 
