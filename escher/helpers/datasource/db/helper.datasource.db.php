@@ -229,6 +229,7 @@ class Helper_datasource_db extends Helper_datasource {
 
 		$tables = array();
 		$joins = array();
+		$toDecode = array();
 		$j = 0; // Explicit join iterator
 
 		// Iterate through the models array
@@ -261,8 +262,11 @@ class Helper_datasource_db extends Helper_datasource {
 			$partitions = array();
 			foreach($schema['fields'] as $n => $f) {
 				// See if the current field is in the select
-				if (preg_grep("/^({$alias}\.)?(\*|$n)/",$options['select'])) {
+				if ($fields = preg_grep("/^({$alias}\.)?(\*|$n)$/",$options['select'])) {
 					if (in_array($f['type'],array('content','array'))) {
+						if($f['type']=='array') {
+							$toDecode[] = $n;
+						}
 						$partitions['content'] = TRUE;
 					} elseif (!empty($f['metadata'])) {
 						$partitions['metadata'] = TRUE;
@@ -366,14 +370,38 @@ class Helper_datasource_db extends Helper_datasource {
 		// The DB Query
 		$result = $db->$qtype("SELECT ".$select." FROM $from $where $group $order $limit",$conditions[1]);
 
+		// Logic for decoding array fields
+		if (!empty($toDecode)) {
+			if ($qtype=='getOne') {
+				if (in_array(reset($options['select']),$toDecode)) {
+					$result = json_decode($result);
+				}
+			} elseif ($qtype=='getCol') {
+				if (in_array(reset($options['select']),$toDecode)) {
+					foreach($result as $k => $r) {
+						$result[$k] = json_decode($r);
+					}
+				}
+			} elseif ($qtype=='getRow') {
+				foreach($toDecode as $decode) {
+					if (array_key_exists($decode,$result)) {
+						$result[$decode] = json_decode($result[$decode]);
+					}
+				}
+			} elseif ($qtype=='getAll') {
+				foreach($result as $k => $r) {
+					foreach($toDecode as $decode) {
+						if (array_key_exists($decode,$r)) {
+							$result[$k][$decode] = json_decode($r[$decode]);
+						}
+					}
+				}
+			}
+		}
+
 		// If result is a single valid row and we are selecting everything, get metadata and content
 		if ($result && sizeof($models)==1 && is_a(reset($models),'Model') && $qtype=='getRow') {
 			$model = reset($models);
-			foreach($model->_schemaFields as $name => $f) {
-				if ($f['type']=='array') {
-					$result[$name] = (array)json_decode($result[$name]);
-				}
-			}
 			$model->assignVars($result);
 		}
 		return $result;
