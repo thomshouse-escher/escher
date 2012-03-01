@@ -1,6 +1,6 @@
-<?php Load::core('patterns/model.series.php');
+<?php
 
-class Model_blog extends Series {
+class Model_blog extends Model {
 	protected $_schemaFields = array(
 		'blog_title' => 'string',
 		'blog_modified_at' => 'datetime',
@@ -10,12 +10,5 @@ class Model_blog extends Series {
 		'permalink_format' => array('metadata' => TRUE,'type' => 'string'),
 		// Content
 		'blog_description' => 'content',
-	);
-	protected $_schemaTriggers = array(
-		'touch_modify' => array(
-			'blog_modified_at',
-			'blog_modified_from',
-			'blog_modified_by'
-		),
 	);
 }

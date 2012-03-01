@@ -21,7 +21,7 @@
 <div class="content-entry blog-entry">
 	<!-- Entry title -->
 	<h2 class="content-entry-title blog-entry-title"><a href="<?php if(!empty($e['permalink'])) { $E($current_path.'/'.$e['permalink'].'/'); }
-		else { $E($current_path.'/entry/'.$e['id']).'/'; }?>"><?php $E($e['title']); ?></a></h2>
+		else { $E($current_path.'/entry/'.$e['model_id']).'/'; }?>"><?php $E($e['title']); ?></a></h2>
 	<!-- Entry preview -->
 	<div class="content-entry-preview blog-entry-preview"><?php $E($F($e['preview'],'decode')); ?></div>
 </div>
