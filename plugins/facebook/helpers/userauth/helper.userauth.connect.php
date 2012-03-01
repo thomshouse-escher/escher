@@ -148,11 +148,8 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 		$CFG = Load::CFG();
 		$vars = array();
 		$vars['display_name'] = $vars['facebook_display_name'] = $this->formatName($me);
-		// If user has a facebook username and it doesn't exist locally or it is not a reserved username, let them have it
-		if (!empty($me['username']) && !Load::User(array('username'=>$me['username'])) && 
-			!in_array(strtolower($me['username']), $CFG['reserved_usernames']) && 
-			!in_array($me['username'], $CFG['reserved_usernames'])
-		){
+		// If user has a facebook username and it is available, use it
+		if (!empty($me['username']) && $this->usernameIsAvailable($me['username'])) {
 			$vars['username'] = $me['username'];
 		} else {
 			// Otherwise give them something that should be unique based on their uid

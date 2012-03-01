@@ -71,16 +71,12 @@ class Controller_auth extends Controller {
 		$error = FALSE;
 		if (!empty($input->post)) {
 			$hooks = Load::Hooks();
+			$userauth = Load::Userauth();
 			if (empty($data['username'])) {
 				//$headers->addNotification('You must specify a username.','error');
 				$UI->setInputStatus('username','error','Please choose a username');
 				$error = TRUE;
-			} elseif (in_array(strtolower($data['username']), $CFG['reserved_usernames'])
-					|| in_array($data['username'], $CFG['reserved_usernames'])) {
-				//$headers->addNotification('You have selected an invalid username.','error');
-				$UI->setInputStatus('username','error','Invalid username');
-				$error = TRUE;
-			} elseif ($user = Load::User(array('username'=>$data['username']))) {
+			} elseif (!$userauth->usernameIsAvailable($data['username'])) {
 				//$headers->addNotification('The username you have selected is already in use.
 				//	Please try a different username.','error');
 				$UI->setInputStatus('username','error','Not available');
@@ -118,7 +114,6 @@ class Controller_auth extends Controller {
 				if (file_exists('terms.txt')) {
 					$vars['agreed_terms'] = md5_file('terms.txt');
 				}
-				$userauth = Load::Helper('userauth',$CFG['userauth']['default']['type'],$CFG['userauth']['default']);
 				$userauth->register($input->post['username'],$input->post['password'],$vars);
 				$headers->addNotification('Registration was successful.  You may now login.');
 				$headers->redirect('~/');

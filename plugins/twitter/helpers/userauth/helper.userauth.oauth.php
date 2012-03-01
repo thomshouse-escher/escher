@@ -99,11 +99,8 @@ class Plugin_twitter_Helper_userauth_oauth extends Helper_userauth {
 		$CFG = Load::CFG();
 		$vars = array();
 		$vars['display_name'] = $vars['twitter_display_name'] = $me['name'];
-		// If user has a twitter username and it doesn't exist locally or it is not a reserved username, let them have it
-		if (!empty($me['screen_name']) && !Load::User(array('username'=>$me['screen_name'])) && 
-			!in_array(strtolower($me['screen_name']), $CFG['reserved_usernames']) && 
-			!in_array($me['screen_name'], $CFG['reserved_usernames'])
-		){
+		// If user's twitter username is available locally, use it
+		if (!empty($me['username']) && $this->usernameIsAvailable($me['username'])) {
 			$vars['username'] = $me['screen_name'];
 		} else {
 			// Otherwise give them something that should be unique based on their uid

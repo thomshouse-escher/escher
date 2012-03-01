@@ -371,7 +371,7 @@ class Helper_datasource_db extends Helper_datasource {
 		$result = $db->$qtype("SELECT ".$select." FROM $from $where $group $order $limit",$conditions[1]);
 
 		// Logic for decoding array fields
-		if (!empty($toDecode)) {
+		if (!empty($result) && !empty($toDecode)) {
 			if ($qtype=='getOne') {
 				if (in_array(reset($options['select']),$toDecode)) {
 					$result = json_decode($result);

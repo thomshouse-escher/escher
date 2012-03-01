@@ -8,7 +8,7 @@ $FORM->useInputStatus();
 
 $FORM->openFieldset();
 $FORM->text('username','Username:');
-$FORM->text('full_name','Full name:');
+$FORM->text('display_name','Display name:');
 $FORM->text('email','Email:');
 $FORM->password('password','Password:');
 
