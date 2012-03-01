@@ -1,13 +1,12 @@
-<?php Load::core('patterns/model.entry.php');
+<?php
 
-class Model_blog_entry extends Entry {
+class Model_blog_entry extends Model {
 	protected $_schemaFields = array(
-		'id'             =>'int',
 		'title'          =>'string',
 		'series_type'    =>'resource',
 		'series_id'      =>'id',
-		'entry_type'     =>'resource',
-		'entry_id'       =>'id',
+		'model_type'     =>'resource',
+		'model_id'       =>'id',
 		'permalink'      =>'string',
 		'tagline'        =>'string',
 		'published'      =>'bool',
@@ -24,17 +23,19 @@ class Model_blog_entry extends Entry {
 		'preview' => 'content',
 	);
 		
-	function touch($fields=array('c','m'),$model=NULL) {
-		parent::touch($fields,$model);
+	function touch($fields=NULL,$model=NULL,$create=FALSE) {
+		parent::touch($fields,$model,$create);
 		if (empty($this->series_type) || empty($this->series_id)) { return false; }
 		$this->processTagline();
 		$this->processPermalink();
 	}
 	
-	function parseFormData($data,$uniqid=NULL) {
-		parent::parseFormData($data,$uniqid);
-		if (!empty($data['publish_entry']) && (empty($this->pub_time) || !preg_match('/[1-9]/',$this->pub_time))) {
-			$this->touch(array('pub_')); $this->pub_status=1;
+	function parseInput($uniqid=NULL) {
+		parent::parseInput($uniqid);
+		$input = Load::Input();
+		$data = $input->post;
+		if (!empty($data['publish_entry']) && (empty($this->published_at) || !preg_match('/[1-9]/',$this->published_at))) {
+			$this->touch(array('published_at','published_from','published_by')); $this->published=1;
 		}
 	}
 	
@@ -49,7 +50,7 @@ class Model_blog_entry extends Entry {
 		do {
 			if ($i>1) { $tagline = $this->tagline."-$i"; }
 			$conditions = array('series_type'=>$this->series_type,'series_id'=>$this->series_id,'tagline'=>$tagline);
-			if (!empty($this->id)) { $conditions['id'] = array('!='=>$this->id); }
+			if (!empty($this->blog_entry_id)) { $conditions['blog_entry_id'] = array('!='=>$this->blog_entry_id); }
 			$i++;
 		} while ($check = $ds->get($this->_m(),$conditions));
 		$this->tagline = $tagline;
@@ -59,17 +60,17 @@ class Model_blog_entry extends Entry {
 		$series = Load::Model($this->series_type,$this->series_id);
 		$format = $series->permalink_format;
 		if (empty($format)) { $format = '/entry/[id]/'; }
-		if (empty($this->id) && strpos($format,'[id]')!==FALSE) {
+		if (empty($this->blog_entry_id) && strpos($format,'[id]')!==FALSE) {
 			$this->permalink = '';
 			return;
 		}
-		if (@$this->pub_status) {
-			$time = strtotime($this->pub_time);
+		if (@$this->published) {
+			$time = strtotime($this->published_at);
 		} else {
-			$time = strtotime($this->mtime);
+			$time = strtotime($this->modified_at);
 		}
 		$permalink = str_replace(array('[yyyy]','[yy]','[mm]','[dd]','[tagline]','[id]'),
-			array(date('Y',$time),date('y',$time),date('m',$time),date('d',$time),$this->tagline,@$this->id),$format);
+			array(date('Y',$time),date('y',$time),date('m',$time),date('d',$time),$this->tagline,@$this->blog_entry_id),$format);
 		$this->permalink = preg_replace(array('#^/+#','#/+$#'),array('',''),$permalink);
 	}
 
