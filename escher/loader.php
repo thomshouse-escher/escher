@@ -316,7 +316,7 @@ class Load {
 				? $CFG['datasource'][$definition]['settings']
 				: array();
 			if (is_array($type)) {
-				return Load::PersistentHelper($definition,array($type[0],'datasource'),$type,$settings);
+				return Load::PersistentHelper($definition,array($type[0],'datasource'),$type[1],$settings);
 			} else {
 				return Load::PersistentHelper($definition,'datasource',$type,$settings);
 			}
