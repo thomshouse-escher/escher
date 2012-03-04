@@ -374,25 +374,25 @@ class Helper_datasource_db extends Helper_datasource {
 		if (!empty($result) && !empty($toDecode)) {
 			if ($qtype=='getOne') {
 				if (in_array(reset($options['select']),$toDecode)) {
-					$result = json_decode($result);
+					$result = json_decode($result,TRUE);
 				}
 			} elseif ($qtype=='getCol') {
 				if (in_array(reset($options['select']),$toDecode)) {
 					foreach($result as $k => $r) {
-						$result[$k] = json_decode($r);
+						$result[$k] = json_decode($r,TRUE);
 					}
 				}
 			} elseif ($qtype=='getRow') {
 				foreach($toDecode as $decode) {
 					if (array_key_exists($decode,$result)) {
-						$result[$decode] = json_decode($result[$decode]);
+						$result[$decode] = json_decode($result[$decode],TRUE);
 					}
 				}
 			} elseif ($qtype=='getAll') {
 				foreach($result as $k => $r) {
 					foreach($toDecode as $decode) {
 						if (array_key_exists($decode,$r)) {
-							$result[$k][$decode] = json_decode($r[$decode]);
+							$result[$k][$decode] = json_decode($r[$decode],TRUE);
 						}
 					}
 				}

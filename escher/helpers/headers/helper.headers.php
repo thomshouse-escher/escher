@@ -232,7 +232,7 @@ class Helper_headers extends Helper {
 		if (!empty($url)) {
 			$url = $router->resolvePath($url);
 		} elseif ($lastreq = $session->getFlash('last_request_url')) {
-			$url = $lastreq;
+			$url = $router->resolvePath($lastreq);
 		} else {
 			$url = $router->getSitePath();
 		}
