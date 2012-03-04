@@ -7,7 +7,7 @@ class Controller_page extends Controller {
 		$this->data['resource'] = array('page',$this->id);
 		if ($page = Load::Model('page',$this->id)) {
 			$this->data['body'] = $page->body;
-			$this->data['title'] = $page->title;
+			$this->data['title'] = $page->page_title;
 		}
 	}
 	
