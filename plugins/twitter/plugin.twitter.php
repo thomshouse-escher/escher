@@ -12,7 +12,7 @@ class Plugin_twitter extends Plugin {
 			'twitter_token' => 'array',
 		),
 	);
-	protected $userAuth = array('twitter' => 'oauth');
+	protected $userAuth = array('twitter' => 'default');
 
 	function __construct() {
 		$CFG = Load::Config();
