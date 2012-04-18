@@ -99,7 +99,7 @@ class Plugin_twitter_Helper_userauth extends Helper_userauth {
 		$vars = array();
 		$vars['display_name'] = $vars['twitter_display_name'] = $me['name'];
 		// If user's twitter username is available locally, use it
-		if (!empty($me['username']) && $this->usernameIsAvailable($me['username'])) {
+		if (!empty($me['screen_name']) && $this->usernameIsAvailable($me['screen_name'])) {
 			$vars['username'] = $me['screen_name'];
 		} else {
 			// Otherwise give them something that should be unique based on their uid
