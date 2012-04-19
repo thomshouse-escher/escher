@@ -60,25 +60,18 @@ class Plugin_google_Helper_userauth extends Helper_userauth {
 	}
 
 	function createUser($data,$token) {
-		// Start building the user array
-		$id = $data->id;
-		$login = substr('google.com/'.$id,0,35);
-		$data->login = $login;
 		$vars = array(
+			'username'      => 'profiles.google.com/'.$data->id,
 			'user_auth'     => 'google',
 			'display_name'  => $data->name,
 			'avatar_url'    => $data->picture,
 			'avatar_source' => 'google',
-			'google_id'     => $id,
+			'google_id'     => $data->id,
 			'google_name'   => $data->name,
-			'google_login'  => $login,
 			'google_token'  => $token,
 		);
-		if (!empty($data->login) && $this->usernameIsAvailable($login)) {
-			$vars['username'] = $login;
-		} else {
-			// Otherwise give them something that should be unique based on their uid
-			$vars['username'] = $login;
+		if (!$this->usernameIsAvailable($vars['username'])) {
+			return false;
 		}
 		$user = Load::Model('user');
 		return $user->register($vars);

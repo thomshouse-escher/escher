@@ -10,7 +10,6 @@ class Plugin_google extends Plugin {
 		'user' => array(
 			'google_id'    => 'resource',
 			'google_name'  => 'string',
-			'google_login' => 'resource',
 			'google_token' => 'string',
 		),
 	);

@@ -3,6 +3,7 @@
 class Plugin_google_Helper_oauth extends Helper {
 	protected $authURL  = 'https://accounts.google.com/o/oauth2/auth';
 	protected $tokenURL = 'https://accounts.google.com/o/oauth2/token';
+	protected $defaultScope = 'https://www.googleapis.com/auth/userinfo.profile';
 	protected $clientId;
 	protected $secret;
 
@@ -40,8 +41,9 @@ class Plugin_google_Helper_oauth extends Helper {
 		}
 		// Clean up scope
 		if (empty($scope)) {
-			$scope = '';
-		} elseif (is_array($scope)) {
+			$scope = $this->defaultScope;
+		}
+		if (is_array($scope)) {
 			$scope = '&scope='.implode(',',$scope);
 		} else {
 			$scope = "&scope=$scope";
