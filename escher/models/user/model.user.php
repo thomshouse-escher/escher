@@ -2,7 +2,7 @@
 
 class Model_user extends Model {
 	protected $_schemaFields = array(
-		'username'     => array('type' => 'string','length' => '32'),
+		'username'     => 'resource',
 		'user_auth'    => 'resource',
 		'password'     => array('type' => 'string'),
 		'email'        => 'email',
