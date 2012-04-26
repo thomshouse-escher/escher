@@ -10,6 +10,7 @@ class Plugin_twitter extends Plugin {
 		'user' => array(
 			'twitter_uid' => 'string',
 			'twitter_token' => 'array',
+			'twitter_display_name' => 'string',
 		),
 	);
 	protected $userAuth = array('twitter' => 'default');

@@ -139,7 +139,17 @@ class Plugin_twitter_Helper_userauth extends Helper_userauth {
 
 			// If avatar is coming from Twitter or doesn't exist, grab it
 			if (empty($USER->avatar_source) || $USER->avatar_source=='twitter') {
-				$USER->avatar_url = $me['profile_image_url'];
+				if (isset($CFG['twitter_image_size'])
+					&& in_array($CFG['twitter_image_size'],
+						array('mini','bigger','original')
+				)) {
+					$USER->avatar_url = $this->getUserImage(
+						$USER->twitter_uid,
+						$CFG['twitter_image_size']
+					);
+				} else {
+					$USER->avatar_url = $me['profile_image_url'];
+				}
 				$USER->avatar_source = 'twitter';
 				$doSave = TRUE;
 			}
@@ -149,5 +159,21 @@ class Plugin_twitter_Helper_userauth extends Helper_userauth {
 			$USER->save();
 		}
 
+	}
+
+	protected function getUserImage($user,$size) {
+		$curl = curl_init('https://api.twitter.com/1/users/profile_image/'
+			.$user.'?size='.$size
+		);
+		curl_setopt_array($curl,array(
+			CURLOPT_RETURNTRANSFER => TRUE,
+			CURLOPT_HEADER => TRUE,
+			CURLOPT_FOLLOWLOCATION => FALSE,
+		));
+		$response = curl_exec($curl);
+		if(preg_match('/Location: (\S+)/i',$response,$match)) {
+			return $match[1];
+		}
+		return null;
 	}
 }
