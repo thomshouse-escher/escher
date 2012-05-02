@@ -11,9 +11,8 @@ function escher_filter($text,$type,$default='') {
 
 function escher_run_event($event) {
 	$args = func_get_args();
-	array_shift($args);
 	$hooks = Load::Hooks();
-	return $hooks->runEvent($event,$args);
+	return call_user_func_array(array($hooks,'runEvent'),$args);
 }
 
 function escher_match_browser() {

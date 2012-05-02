@@ -30,8 +30,9 @@ class Helper_hooks extends Helper {
 		return true;
 	}
 	
-	function runEvent($event,$args=array()) {
+	function runEvent($event) {
 		if (!array_key_exists($event,$this->events)) { return array(); }
+		$args = array_slice(func_get_args(),1);
 		$callbacks = $this->events[$event];
 		ksort($callbacks);
 		$result = array();
