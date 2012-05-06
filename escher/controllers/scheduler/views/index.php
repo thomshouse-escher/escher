@@ -74,7 +74,7 @@ if (!empty($failed)) { ?>
 		} else {
 			$p_percent = 100;
 		}
-		$p_class = 'pprogress pprogress-danger';
+		$p_class = 'progress progress-danger';
 		echo "<tr>";
 		echo "<td>{$j['node']}</td>";
 		echo '<td>'.(!empty($j['plugin']) ? "({$j['plugin']}) " : '&mdash;').'</td>';
