@@ -26,6 +26,10 @@ class Helper_database_pdo extends Helper_database {
 			}
 		}
 	}
+
+	function disconnect() {
+		$this->db = NULL;
+	}
 	
 	function execute($sql,$vars=NULL) {
 		$this->connect();

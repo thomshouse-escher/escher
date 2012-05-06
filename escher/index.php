@@ -71,11 +71,11 @@ class EscherInit {
 	}
 
 	/**
-	 * Handle cron execution
+	 * Handle command-line execution
 	 *
-	 * The cron() function is the initialization function for handling the
-	 * execution of scheduled or automated functionality. Cron handling depends
-	 * on command-line arguments passed to cron.php in the install root.
+	 * The proc() function is the initialization function for handling the
+	 * execution of scheduled or automated functionality. CLI handling depends
+	 * on command-line arguments passed to proc.php in the install root.
 	 *
 	 * Command-line arguments should be, in order:
 	 *
@@ -84,7 +84,7 @@ class EscherInit {
 	 * * Function name.
 	 * * Arguments to pass (optional, separated by spaces).
 	 */
-	function cron() {
+	function proc() {
 		$this->initCommon();
 
 		$CFG = $this->CFG;
