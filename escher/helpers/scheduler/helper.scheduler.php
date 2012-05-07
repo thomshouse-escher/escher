@@ -3,7 +3,7 @@
 class Helper_scheduler extends Helper {
 	public static $shutdown = 0;
 
-	function add($controller,$method,$data=array(),$time=NULL,$resource=NULL) {
+	function add($controller,$method,$data=array(),$resource=NULL,$time=NULL) {
 		// Sanitize resource
 		if (is_a($resource,'Model')) {
 			$r_type = $resource->_m();
