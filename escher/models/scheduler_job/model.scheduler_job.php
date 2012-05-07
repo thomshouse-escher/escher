@@ -18,6 +18,7 @@ class Model_scheduler_job extends Model {
 		'progress'      => 'smallint',
 		'total'         => 'smallint',
 		'message'       => 'content',
+		'errors'        => 'array',
 	);
 
 	function save() {

@@ -18,7 +18,8 @@ class Helper_scheduler extends Helper {
 
 		// Get plugin (if present)
 		if (is_array($controller)) {
-			list($plugin,$controller) = $controller;
+			$plugin = reset($controller);
+			$controller = next($controller);
 		} else {
 			$plugin = '';
 		}
@@ -55,6 +56,6 @@ class Helper_scheduler extends Helper {
 			$time = 0;
 		}
 		$CFG = Load::Config();
-		pclose(popen("php {$CFG['document_root']}/proc.php - scheduler process $time > /dev/null &",'r'));
+		pclose(popen("php {$CFG['document_root']}/proc.php - scheduler process $time >/dev/null 2>&1 &",'r'));
 	}
 }
