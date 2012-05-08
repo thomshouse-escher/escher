@@ -10,7 +10,7 @@ class Controller_uploads extends Controller {
 		if (!empty($_FILES)) {
 			foreach($_FILES as $f) {
 				$upload = Load::Model('upload');
-				$upload->saveUploadedFile($f);
+				$upload->parseUpload($f);
 			}
 			$headers = Load::Headers();
 			$headers->redirect('./?'.($popup?'popup=true&':'')."type=$type");
@@ -25,8 +25,8 @@ class Controller_uploads extends Controller {
 		$uploads = array();
 		$result = $ds->get('upload',array(),array('limit'=>0));
 		foreach($result as $r) {
-			$r = Load::Model('upload',$r['id']);
-			$r->url = $r->getWWWFilename();
+			$r = Load::Model('upload',$r['upload_id']);
+			$r->url = $r->getURL();
 			if (!empty($r->resized_images)) {
 				$r->sizes = array();
 				$unsorted = array();
@@ -35,7 +35,8 @@ class Controller_uploads extends Controller {
 					$size = ($k===0) ? 'Original' : ucwords($k);
 					$unsorted[$size] = array(
 						'w' => $v[0], 'h'=> $v[1], 'filesize' => $v[2],
-						'size'=>$size, 'url' => $r->getWWWFilename($k));
+						'size'=>$size, 'url' => $r->getURL($k)
+					);
 					$byarea[$size] = $v[0]*$v[1];
 					if ($k=='thumb') {
 						$r->thumburl = $unsorted[$size]['url'];

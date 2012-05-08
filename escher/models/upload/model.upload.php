@@ -75,6 +75,7 @@ class Model_upload extends File {
 	}
 	
 	protected function getPath($size=NULL) {
+		if ($size=='original') { $size = NULL; }
 		if (empty($this->created_at)) { $this->touch(); }
 		$path = date('Y/m',strtotime($this->created_at));
 		if ($filename = $this->getFilename($size)) {

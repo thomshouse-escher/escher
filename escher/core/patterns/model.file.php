@@ -20,7 +20,9 @@ abstract class File extends Model {
 	function parseUpload($file=array()) {
 		if (empty($file)) { return FALSE; }
 		if (!$path = $this->getFilePath()) { return FALSE; }
-		if (!file_exists(dirname($path))) { mkdir(dirname($path),0777,TRUE); }
+		if (!file_exists(dirname($path))) {
+			if (!mkdir(dirname($path),0777,TRUE)) { return FALSE; }
+		}
 		if (!copy($file['tmp_name'],$path)) { return FALSE; }
 		$this->filesize = $file['size'];
 		$this->mimetype = $file['type'];

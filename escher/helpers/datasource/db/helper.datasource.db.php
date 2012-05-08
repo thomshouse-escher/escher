@@ -325,6 +325,9 @@ class Helper_datasource_db extends Helper_datasource {
 				return false;
 			}
 			$where = "WHERE ".$conditions[0];
+		} else {
+			$where = '';
+			$conditions = array('',array());
 		}
 
 		// Get SQL order clause

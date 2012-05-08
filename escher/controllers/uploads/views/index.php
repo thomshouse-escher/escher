@@ -40,12 +40,6 @@ function selectFile(form) {
 	var url;
 	if (form.url) {
 		url = form.url.value;
-	} else {
-		for(i in form.urls) {
-			if(form.urls[i].checked) {
-				url = form.urls[i].value;
-			}
-		}
 	}
 <?php foreach($selectfuncs as $f) {
 	$E("\t$f(url);\n");
@@ -59,20 +53,24 @@ function selectFile(form) {
 <ul id="uploads"<?php if($popup) { $E(' class="popup"'); } ?>>
 <?php foreach($uploads as $u) { ?>
 
-<li class="upload-collapsed <?php $E(empty($u['thumburl'])?'no-thumb':'thumb'); ?>" id="upload-<?php $E($u['id']); ?>">
+<li class="upload-collapsed <?php $E(empty($u['thumburl'])?'no-thumb':'thumb'); ?>" id="upload-<?php $E($u['upload_id']); ?>">
 <?php if(!empty($u['thumburl'])) { ?>
 	<img src="<?php $E($u['thumburl']); ?>" onclick="uploadToggle(<?php $E($u['id']); ?>);" />
 <?php } ?>
-	<div class="filename" onclick="uploadToggle(<?php $E($u['id']); ?>);"><?php $E($u['filename']); ?><span class="filesize">
+	<div class="filename" onclick="uploadToggle(<?php $E($u['upload_id']); ?>);"><?php $E($u['filename']); ?><span class="filesize">
 		 (<?php $E($F($u['filesize'],'filesize',0)); ?>)</span></div>
 	<div class="details">
 		<?php if($popup) { ?>
 		<form onsubmit="return false;">
-		<?php } if($popup && !empty($u['sizes'])) { ?><div class="sizes"><table><tr>
+		<?php } if($popup && !empty($u['sizes'])) { ?>
+		<label for="url">Image Size:</label> 
+		<select name="url">
 		<?php $i=0; foreach($u['sizes'] as $k => $v) { ?>
-			<td><?php $E('<b>'.$k.'</b><br />'.$v['w'].'x'.$v['h']); ?><br />
-			<input type="radio" name="urls" value="<?php $E($v['url']); ?>"<?php if($i==0) { $E(' checked="checked"'); } ?> /></td>
-		<?php $i++; } ?></tr></table></div><?php } else { ?>
+			<option value="<?php $E($v['url']); ?>"<?php if($i==0) { $E(' checked="checked"'); }
+				?>><?php $E("$k ({$v['w']}x{$v['h']})"); ?></option>
+		<?php $i++; } ?>
+		</select>
+		<?php } else { ?>
 			<div>Uploaded: <?php $E(date('F j, g:ia',strtotime($u['ctime']))); ?></div>
 			<?php if ($popup) { ?><input type="hidden" name="url" value="<?php $E($u['url']); ?>" />
 		<?php }} if($popup) { ?>
