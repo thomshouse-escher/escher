@@ -1,4 +1,5 @@
 /plugins/*
+!/plugins/bootstrap
 !/plugins/facebook
 !/plugins/google
 !/plugins/tinymce

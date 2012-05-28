@@ -19,20 +19,25 @@
  */
 class Helper_config extends Helper implements ArrayAccess {
 	/**
+	 * Install mode flag
+	 * @var bool
+	 */
+	protected $install = FALSE;
+	/**
 	 * Configuration settings from the database/cache
 	 * @var array
 	 */
-	protected $saved;
+	protected $saved = array();
 	/**
 	 * All configuration settings
 	 * @var array
 	 */
-	protected $settings;
+	protected $settings = array();
 	/**
 	 * Configuration settings from defaults and config.php
 	 * @var array
 	 */
-	protected $static;
+	protected $static = array();
 
 	/**
 	 * Config constructor
@@ -41,9 +46,14 @@ class Helper_config extends Helper implements ArrayAccess {
 	 * merging/reconciliation of default and specified values.
 	 */
 	function __construct() {
-		include(ESCHER_REAL_PATH.'/defaults.php');
-		$this->static = get_defined_vars();
-		$this->settings = $this->static;
+		if (file_exists(ESCHER_DOCUMENT_ROOT.'/config.php')) {
+			require(ESCHER_REAL_PATH.'/core/defaults.php');
+			$this->static = array_diff_key(get_defined_vars(),array('this'=>0));
+			$this->settings = $this->static;
+		} else {
+			$this->settings = $this->static = $this->getInstallSettings();
+			$this->install = TRUE;
+		}
 	}
 
 	/**
@@ -51,28 +61,20 @@ class Helper_config extends Helper implements ArrayAccess {
 	 *
 	 * Saves an individual config setting to the database.
 	 *
-	 * If the setting is present in $this->static and is not an array,
-	 * the operation will not occur.
-	 *
 	 * @param string Name of the setting
 	 * @param mixed Value of the setting
 	 */
 	function save($name,$value) {
-		if (is_string($name) && !is_array($value) &&
-			!array_key_exists($name,$this->static)
-		) {
-			$db = Load::DB();
-			$cache = Load::Cache();
-			if (is_scalar($value)) {
-				$db->replace('escher_config',
-					array('name'=>$name,'value'=>$value,'serialized'=>0)
-				);
-			} else {
-				$db->replace('escher_config',
-					array('name'=>$name,'value'=>serialize($value),'serialized'=>1)
-				);
+		if (is_string($name)) {
+			if (!$model = Load::Model('config',$name)) {
+				$model = Load::Model('config');
 			}
-			if (is_object($cache)) {
+			$model->assignVars(array(
+				'config_id'    => $name,
+				'config_value' => $value,
+			));
+			$model->save();
+			if ($cache = Load::Cache()) {
 				$cache->delete('escher_config');
 			}
 			$this->loadSettings();
@@ -85,32 +87,44 @@ class Helper_config extends Helper implements ArrayAccess {
 	 * Loads saved settings from the cache or database
 	 */
 	function loadSettings() {
+		if ($this->install) { return; }
 		$cache = Load::Cache();
 		$saved = is_object($cache) ? $cache->get('escher_config') : FALSE;
 		if (!$saved) {
-			$db = Load::DB();
-			$result = $db->getAssoc(
-				'SELECT * FROM '.$db->t('escher_config').' ORDER BY name ASC'
-			);
-			if (!empty($result)) {
-				$saved = array();
-				foreach($result as $k => $r) {
-					if ($r['serialized']) {
-						$saved[$k] = unserialize($r['value']);
-					} else {
-						$saved[$k] = $r['value'];
-					}
-				}
-				if (is_object($cache)) {
-					$cache->set('escher_config',$saved);
-				}
+			$model = Load::Model('config');
+			$saved = $model->find(NULL,array('fetch'=>'assoc'));
+			if ($saved && $cache) {
+				$cache->set('escher_config',$saved);
 			}
 		}
 		if ($saved) {
 			$this->saved = $saved;
-			$this->settings =
-				$this->mergeSettings($this->settings,$this->saved,$this->static);
+			$this->settings = $this->mergeSettings(
+				$this->static,
+				$this->saved,
+				$this->settings
+			);
 		}
+
+		// Load install settings if no root found
+		if (empty($this->settings['root'])) {
+			$this->settings = $this->mergeSettings(
+				$this->getInstallSettings(),
+				$this->static,
+				$this->saved,
+				$this->settings
+			);
+		}
+	}
+
+	/**
+	 * Load install settings
+	 *
+	 * Returns the settings required for Escher installation
+	 */
+	function getInstallSettings() {
+		require(ESCHER_REAL_PATH.'/core/install.php');
+		return array_diff_key(get_defined_vars(),array('this'=>0));
 	}
 
 	/**
@@ -127,14 +141,18 @@ class Helper_config extends Helper implements ArrayAccess {
 	 * @param mixed Value of the setting
 	 */
 	protected function mergeSettings() {
-		$args = func_get_args();
+		$args = array_reverse(func_get_args());
 		$settings = array();
 		foreach($args as $array) {
 			foreach($array as $k => $v) {
 				if (!is_string($k)) { continue; }
-				if (array_key_exists($k,$settings) && is_array($v)) {
-					$settings[$k] =
-						array_merge($v,array_diff_key($settings[$k],$v));
+				if (array_key_exists($k,$settings)
+					&& is_array($settings[$k])
+					&& is_array($v)
+				) {
+					$settings[$k] = array_merge($v,
+						array_diff_key($settings[$k],$v)
+					);
 				} else {
 					$settings[$k] = $v;
 				}
