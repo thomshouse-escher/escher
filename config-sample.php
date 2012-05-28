@@ -12,13 +12,13 @@ $wwwroot = 'http://www.mywebsite.com';
 
 // Database
 $database['default'] = array(
-	'type' => 'adodb',
-	'adotype' => 'mysqli',
-	'address' => '127.0.0.1',
+	'type'     => 'pdo',
+	'driver'   => 'mysql',
+	'host'     => '127.0.0.1',
 	'username' => '',
 	'password' => '',
 	'database' => '',
-	'prefix' => 'esc_'
+	'prefix'   => 'esc_'
 );
 
 // Site config variables
@@ -28,7 +28,7 @@ $theme = 'popup';
 // Routes
 $static_routes = array(
 	'about' => array('controller' => 'page','id' => 2,'title' => 'About'),
-	'blog' => array('controller' => 'blog','id' => 1,'title' => 'Blog')
+	'blog'  => array('controller' => 'blog','id' => 1,'title' => 'Blog')
 	);
 
 // Determines "active" plugins for running hooks

@@ -1,9 +1,9 @@
 <?php
 
 class Helper_database_pdo extends Helper_database {
-	protected $schemas = array();
+	protected static $schemas = array();
 	protected $driver = 'mysql';
-	protected $address = '127.0.0.1';
+	protected $host = '127.0.0.1';
 	protected $database;
 	protected $username;
 	protected $password;
@@ -19,12 +19,13 @@ class Helper_database_pdo extends Helper_database {
 		if (!$this->isConnected()) {
 			try {
 				$this->db = new PDO(
-					"{$this->driver}:host={$this->address};dbname={$this->database}",
+					"{$this->driver}:host={$this->host};dbname={$this->database}",
 					$this->username,$this->password);
 			} catch(PDOException $e) {
 				$this->db = NULL;
 			}
 		}
+		return !is_null($this->db);
 	}
 
 	function disconnect() {
@@ -32,7 +33,7 @@ class Helper_database_pdo extends Helper_database {
 	}
 	
 	function execute($sql,$vars=NULL) {
-		$this->connect();
+		if (!$this->connect()) { return FALSE; }
 		$this->statement = $this->db->prepare($sql);
 		$result = $this->statement->execute($vars);
 		$this->debug($sql,$vars,$this->statement);
@@ -101,7 +102,7 @@ class Helper_database_pdo extends Helper_database {
 			$sql = 'INSERT'.($ignore ? ' IGNORE':'').' INTO '.$this->t($table).' ('.implode(',',$keys_sql).') VALUES '.implode(',',$values);
 		}
 
-		$this->connect();
+		if (!$this->connect()) { return FALSE; }
 		$this->statement = $this->db->prepare($sql);
 		$result = $this->statement->execute($values);
 		$this->debug($sql,$values,$this->statement);
@@ -113,21 +114,17 @@ class Helper_database_pdo extends Helper_database {
 	}
 	
 	function affectedRows() {
-		if (!$this->isConnected()) {
-			return false;
-		}
+		if (!$this->isConnected()) { return FALSE; }
 		return $this->statement->rowCount();
 	}
 	
 	function lastID() {
-		if (!$this->isConnected()) {
-			return false;
-		}
+		if (!$this->isConnected()) { return FALSE; }
 		return $this->db->lastInsertId();
 	}
 	
 	function getAll($sql,$vars=NULL) {
-		$this->connect();
+		if (!$this->connect()) { return FALSE; }
 		$this->statement = $this->db->prepare($sql);
 		$this->statement->execute($vars);
 		$this->debug($sql,$vars,$this->statement);
@@ -135,7 +132,7 @@ class Helper_database_pdo extends Helper_database {
 	}
 	
 	function getAssoc($sql,$vars=NULL,$force_array=FALSE) {
-		$this->connect();
+		if (!$this->connect()) { return FALSE; }
 		$this->statement = $this->db->prepare($sql);
 		$this->statement->execute($vars);
 		$this->debug($sql,$vars,$this->statement);
@@ -143,7 +140,7 @@ class Helper_database_pdo extends Helper_database {
 			return array();
 		}
 		$result = array();
-		if (!$force_array && sizeof($dbresult[0])==1) {
+		if (!$force_array && sizeof($dbresult[0])==2) {
 			foreach($dbresult as $r) {
 				$rkey = array_shift($r);
 				$result[$rkey] = array_shift($r);
@@ -158,7 +155,7 @@ class Helper_database_pdo extends Helper_database {
 	}
 	
 	function getCol($sql,$vars=NULL) {
-		$this->connect();
+		if (!$this->connect()) { return FALSE; }
 		$this->statement = $this->db->prepare($sql);
 		$this->statement->execute($vars);
 		$this->debug($sql,$vars,$this->statement);
@@ -170,7 +167,7 @@ class Helper_database_pdo extends Helper_database {
 	}
 	
 	function getOne($sql,$vars=NULL) {
-		$this->connect();
+		if (!$this->connect()) { return FALSE; }
 		$this->statement = $this->db->prepare($sql);
 		$this->statement->execute($vars);
 		$this->debug($sql,$vars,$this->statement);
@@ -178,7 +175,7 @@ class Helper_database_pdo extends Helper_database {
 	}
 	
 	function getRow($sql,$vars=NULL) {
-		$this->connect();
+		if (!$this->connect()) { return FALSE; }
 		$this->statement = $this->db->prepare($sql);
 		$this->statement->execute($vars);
 		$this->debug($sql,$vars,$this->statement);
@@ -186,9 +183,7 @@ class Helper_database_pdo extends Helper_database {
 	}
 	
 	function getAutoId($sql=NULL,$vars=NULL) {
-		if (!$this->isConnected()) {
-			return false;
-		}
+		if (!$this->isConnected()) { return FALSE; }
 		return $this->db->lastInsertId();
 	}
 
@@ -213,7 +208,7 @@ class Helper_database_pdo extends Helper_database {
 	function q($str) {
 		// PDO doesn't handle NULLs properly
 		if (is_null($str)) { return "NULL"; }
-		$this->connect();
+		if (!$this->connect()) { return FALSE; }
 		return $this->db->quote($str);
 	}
 
@@ -251,21 +246,44 @@ class Helper_database_pdo extends Helper_database {
 	}
 
 	function getSchema($table) {
+		if (array_key_exists($table,self::$schemas)) {
+			return self::$schemas[$table];
+		}
 		if ($cache = Load::Cache()) {
-			if ($schema = $cache->get("PDO:{$this->driver}>SCHEMA>$table")) {
+			if ($schema = $cache->get("PDO:{$this->driver}:tableSchema:$table")) {
 				return $schema;
 			}
 		}
 		if (!$driver = $this->getDriver()) { return false; }
 		if (!$schema = $driver->getSchema($table)) { return false; }
-		$this->schemas[$table] = $schema;
+		self::$schemas[$table] = $schema;
+		if ($cache) {
+			$cache->set("PDO:{$this->driver}:tableSchema:$table",$schema);
+		}
 		return $schema;
 	}
 
 	function setSchema($table,$schema,$complete=FALSE) {
-		$dbSchema = $this->getSchema($table);
+		$oldSchema = $this->getSchema($table);
+		$newSchema = $schema;
+		// Skip the set if schema hasn't changed
+		ksort($oldSchema['fields']);
+		ksort($newSchema['fields']);
+		ksort($oldSchema['keys']);
+		ksort($newSchema['keys']);
+		if (md5(json_encode($oldSchema['fields']))
+			== md5(json_encode($newSchema['fields']))
+			&& md5(json_encode($oldSchema['keys']))
+			== md5(json_encode($newSchema['keys']))
+		) {
+			return array('fields' => array(), 'keys' => array());
+		}
 		if (!$driver = $this->getDriver()) { return false; }
-		return $driver->setSchema($table,$schema,$dbSchema,$complete);
+		self::$schemas[$table] = $schema;
+		if ($cache = Load::Cache()) {
+			$cache->set("PDO:{$this->driver}:tableSchema:$table",$schema);
+		}
+		return $driver->setSchema($table,$schema,$oldSchema,$complete);
 	}
 
 	protected function debug($sql,$vars,$statement) {
@@ -279,6 +297,9 @@ class Helper_database_pdo extends Helper_database {
 			$sql = preg_replace('/\?/',$rep,$sql,1);
 		}
 		echo "<hr />({$this->driver}): $sql<hr />";
+		if (is_int($this->debug) && $this->debug>1) {
+			echo '<pre>'; debug_print_backtrace(); echo '</pre>';
+		}
 		$error = $statement->errorInfo();
 		if (!empty($error[2])) {
 			echo "<div>{$error[2]}</div>";

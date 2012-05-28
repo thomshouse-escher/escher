@@ -1,40 +1,40 @@
 <?php
 
 /**
- * Helper_datasource_memcache.php
+ * Helper_datasource_cache.php
  * 
- * Datasource (ArrCache) Helper class
+ * Cache Datasource Helper class
  * @author Thom Stricklin <code@thomshouse.net>
  * @version 1.0
  * @package Escher
  */
 
 /**
- * Datasource Memcache Helper class
+ * Datasource Cache Helper class
  * @package Escher
  */
-class Helper_datasource_memcache extends Helper_datasource {
-	protected $memcache;
+class Helper_datasource_cache extends Helper_datasource {
+	protected $cache;
 
 	function __construct($args) {
 		parent::__construct($args);
-		$this->memcache = Load::Helper('cache','memcache',$args);
+		$type = $args['type'];
+		unset($args['type']);
+		$this->cache = Load::Helper('cache',$type,$args);
 	}
 
-	function set($model,$attrs=array(),$values=NULL) {
+	function set($model,$data=array(),$values=NULL) {
 		$sets = array();
 		if (is_object($model)) {
 		// If object provided, set data to the object
 			$m = $model->_m();
-			$data = $model;
-			$attrs = get_object_vars($model);
+			$data = get_object_vars($model);
 		} elseif (is_string($model)) {
 		// Else set data to an associative array
 			$m = $model;
-			if (array_keys($attrs)==array_keys(array_values($attrs))) {
-				$attrs = array_combine($attrs,$values);
+			if (array_keys($data)==array_keys(array_values($data))) {
+				$data = array_combine($data,$values);
 			}
-			$data = $attrs;
 		} else { return false; }
 		// Cache all unique keys
 		if (is_object($model)) {
@@ -42,13 +42,13 @@ class Helper_datasource_memcache extends Helper_datasource {
 				ksort($c['fields']);
 				$keyset = array();
 				foreach($c['fields'] as $k) {
-					if (!isset($attrs[$k])) {
+					if (!isset($data[$k])) {
 						continue 2;
 					}
-					$keyset[] = "{$k}={$attrs[$k]}";
+					$keyset[] = "{$k}={$data[$k]}";
 				}
 				$keyset = implode('&',$keyset);
-				$this->memcache->set($m.'?'.$keyset,$data);
+				$this->cache->set($m.'?'.$keyset,$data);
 			}
 		}
 		return true;
@@ -68,11 +68,8 @@ class Helper_datasource_memcache extends Helper_datasource {
 			}
 			$name .= implode('&',$c);
 		} else { return false; }
-		if (!$result = $this->memcache->get($name)) {
+		if (!$result = $this->cache->get($name)) {
 			return false;
-		}
-		if (is_object($model) && is_object($result) && get_class($model)==get_class($result)) {
-				$model->assignVars(get_object_vars($result));
 		}
 		return $result;
 	}
@@ -91,7 +88,20 @@ class Helper_datasource_memcache extends Helper_datasource {
 				$keyset[] = "{$k}={$model->$k}";
 			}
 			$keyset = implode('&',$keyset);
-			$this->memcache->expire($model->_m().'?'.$keyset);
+			$this->cache->expire($model->_m().'?'.$keyset);
+		}
+		// Rinse and repeat for loaded values
+		foreach($model->_schemaKeys as $c) {
+			ksort($c['fields']);
+			$keyset = array();
+			foreach($c['fields'] as $k) {
+				if (!isset($model->_savedValues[$k])) {
+					continue 2;
+				}
+				$keyset[] = "{$k}={$model->_savedValues[$k]}";
+			}
+			$keyset = implode('&',$keyset);
+			$this->cache->expire($model->_m().'?'.$keyset);
 		}
 		return true;
 	}

@@ -22,3 +22,10 @@ if (!empty($_GET['_PATH_INFO'])) {
 	unset($_GET['_PATH_INFO'],$GLOBALS['_REQUEST']['_PATH_INFO']);
 	$_SERVER['QUERY_STRING'] = http_build_query($_GET);
 }
+
+// Error-to-exception handler
+if (!function_exists('exception_error_handler')) {
+	function exception_error_handler($errno, $errstr, $errfile, $errline ) {
+		throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+	}
+}

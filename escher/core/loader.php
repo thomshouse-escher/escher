@@ -154,11 +154,11 @@ class Load {
 			$newhelper = new $classname($args);
 			if (is_array($helper)) {
 				$newhelper->plugin = strtolower($helper[0]);
-				$newhelper->type = strtolower($helper[1]);
+				$newhelper->helper = strtolower($helper[1]);
 			} else {
-				$newhelper->type = strtolower($helper);
+				$newhelper->helper = strtolower($helper);
 			}
-			$newhelper->flavor = strtolower($type);
+			$newhelper->type = strtolower($type);
 			return $newhelper;
 		} else {
 			return false;
@@ -194,8 +194,8 @@ class Load {
 			if ($plugin!='core') {
 				$PHelpers[$helpername][$plugin][$type][$name]->plugin = $plugin;
 			}
-			$PHelpers[$helpername][$plugin][$type][$name]->type = $helpername;
-			$PHelpers[$helpername][$plugin][$type][$name]->flavor = $type;
+			$PHelpers[$helpername][$plugin][$type][$name]->helper = $helpername;
+			$PHelpers[$helpername][$plugin][$type][$name]->type = $type;
 			return $PHelpers[$helpername][$plugin][$type][$name];
 		} else {
 			return false;
@@ -263,14 +263,32 @@ class Load {
 	 * Shorthand for loading the default cache handler for the current Escher configuration.
 	 * @return object|bool Returns the cache helper object, or false on failure.
 	 */
-	public function Cache($name='default') {
+	public function Cache($name=NULL) {
 		$CFG = Load::Config();
-		if (empty($CFG['cache'])) { return false; }
-		$cache = $CFG['datasource'][$CFG['cache']];
-		if (is_array($cache['type'])) {
-			return Load::PersistentHelper($name,array($cache['type'][0],'cache'),$cache['type'][1],$cache['settings']);
+		if (is_null($name)) {
+			foreach($CFG['datasource_cache_order']['all'] as $n) {
+				if ($CFG['datasource'][$n]['helper']=='cache') {
+					$name = $n;
+					$args = $CFG['datasource'][$n];
+					break;
+				}
+			}
+			if (is_null($name)) { return FALSE; }
+		} elseif (array_key_exists($name,$CFG['datasource'])
+			&& !empty($args['helper'])
+			&& $args['helper']=='cache'
+		) {
+			$args = $CFG['datasource'][$name];
 		} else {
-			return Load::PersistentHelper($name,'cache',$cache['type'],$cache['settings']);
+			return FALSE;
+		}
+		$type = $args['type'];
+		unset($args['helper'],$args['type']);
+		if (is_array($type)) {
+			return Load::PersistentHelper($name,array($type[0],'cache'),
+				$type[1],$args);
+		} else {
+			return Load::PersistentHelper($name,'cache',$type,$args);
 		}
 	}
 	
@@ -288,37 +306,51 @@ class Load {
 	 * Shorthand for loading the default database for the current Escher configuration.
 	 * @return object|bool Returns the database helper object, or false on failure.
 	 */
-	public function DB($name='default') {
+	public function DB($name=NULL) {
 		$CFG = Load::Config();
-		$args = $CFG['database'][$name];
+		if (is_null($name)) {
+			foreach($CFG['datasource_order']['all'] as $n) {
+				if ($CFG['datasource'][$n]['helper']=='database') {
+					$name = $n;
+					$args = $CFG['datasource'][$n];
+					break;
+				}
+			}
+			if (is_null($name)) { return FALSE; }
+		} elseif (array_key_exists($name,$CFG['datasource'])
+			&& !empty($args['helper'])
+			&& $args['helper']=='database'
+		) {
+			$args = $CFG['datasource'][$name];
+		} else {
+			return FALSE;
+		}
 		$type = $args['type'];
-		unset($args['type']);
+		unset($args['helper'],$args['type']);
 		if (is_array($type)) {
-			return Load::PersistentHelper($name,array($type[0],'database'),$type[1],$args);
+			return Load::PersistentHelper($name,array($type[0],'database'),
+				$type[1],$args);
 		} else {
 			return Load::PersistentHelper($name,'database',$type,$args);
 		}
 	}
 	
 	/**
-	 * Shorthand for loading a Datasource object.
+	 * Shorthand for loading a config-defined Datasource.
 	 * @return object Returns the Datasource object.
 	 */
-	public function Datasource($definition='db') {
+	public function Datasource($definition) {
 		$CFG = Load::Config();
-		if ($definition=='db' && !isset($CFG['datasource']['db'])) {
-			return Load::PersistentHelper('db','datasource','db');
-		} elseif ($definition=='arrcache' && !isset($CFG['datasource']['arrcache'])) {
-			return Load::PersistentHelper('arrcache','datasource','arrcache');
-		} elseif (isset($CFG['datasource'][$definition]['type'])) {
-			$type = $CFG['datasource'][$definition]['type'];
-			$settings = !empty($CFG['datasource'][$definition]['settings'])
-				? $CFG['datasource'][$definition]['settings']
-				: array();
-			if (is_array($type)) {
-				return Load::PersistentHelper($definition,array($type[0],'datasource'),$type[1],$settings);
+		if (isset($CFG['datasource'][$definition]['helper'])) {
+			$settings = $CFG['datasource'][$definition];
+			$helper = $settings['helper'];
+			unset($settings['helper']);
+			if (is_array($helper)) {
+				return Load::PersistentHelper($definition,
+					array($helper[0],'datasource'),$helper[1],$settings);
 			} else {
-				return Load::PersistentHelper($definition,'datasource',$type,$settings);
+				return Load::PersistentHelper($definition,'datasource',
+					$helper,$settings);
 			}
 		}
 		return false;
@@ -451,8 +483,12 @@ class Load {
 	 * @return object|bool Returns the session helper object, or false on failure.
 	 */
 	public function Session() {
-		$CFG = Load::Config();
-		$args = $CFG['session'];
+		static $session;
+		if (is_null($session)) {
+			$CFG = Load::Config();
+			$session = $CFG['session'];
+		}
+		$args = $session;
 		$type = $args['type'];
 		unset($args['type']);
 		self::$internalCall = true;

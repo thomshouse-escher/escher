@@ -13,7 +13,7 @@ class Escher_PDOdriver_mysql extends EscherObject {
 	function getSchema($table) {
 		// Save the name of the metadata table.  We'll reuse this
 		$metadataTable = $this->pdo->t($table.'_metadata',FALSE);
-	
+
 		// Get the column info from information_schema
 		$result = $this->pdo->getAll(
 			'SELECT * FROM ' . $this->pdo->n('information_schema.COLUMNS')
@@ -30,7 +30,9 @@ class Escher_PDOdriver_mysql extends EscherObject {
 
 		// Build the fields array
 		$fields = array();
+		$tables = array();
 		foreach($result as $r) {
+			$tables[] = $r['TABLE_NAME'];
 			if(array_key_exists($r['COLUMN_NAME'],$fields)) { continue; }
 			$field = array(
 				'type'           => $r['DATA_TYPE'],
@@ -56,7 +58,11 @@ class Escher_PDOdriver_mysql extends EscherObject {
 
 		// Get the key info from information_schema
 		$keys = array();
-		foreach(array($table,$table.'_metadata',$table.'_content') as $t) {
+		$tables = array_intersect(
+			array($table,$table.'_metadata',$table.'_content'),
+			$tables
+		);
+		foreach($tables as $t) {
 			$kresult = $this->pdo->getAll('SHOW KEYS FROM ' . $this->pdo->t($t));
 			foreach($kresult as $r) {
 				$kname = $r['Key_name'];
@@ -265,6 +271,10 @@ class Escher_PDOdriver_mysql extends EscherObject {
 				$sql = "CREATE TABLE IF NOT EXISTS {$this->pdo->n($part)} (";
 				$fieldsSql = array();
 				foreach($primaryFields as $name => $f) {
+					// Only the primary partition should have an auto-increment
+					if ($part!=$fieldsTable) {
+						unset($f['auto_increment']);
+					}
 					$fs = $this->pdo->n($name).' '.$this->_fieldSQL($f);
 					$fieldsSql[] = $fs;
 				}

@@ -5,7 +5,10 @@ abstract class EscherModel extends EscherObject {
 	protected $_schemaKeys = array();
 	protected $_schemaTriggers = array();
 	protected $_outputType = 'php';
+	protected $_new = TRUE;
+	protected $_savedValues = array();
 
+	// Used to keep track of parsed form inputs for new models
 	protected static $_parsedNew = array();
 
 	public function __construct($key=NULL) {
@@ -47,7 +50,9 @@ abstract class EscherModel extends EscherObject {
 		foreach($sources as $s) {
 			$ds = Load::Datasource($s);
 			if ($result = $ds->get($this,$key)) {
-				// Assign class vars (metadata, content, etc.) and return
+				$this->assignVars($result);
+				$this->_savedValues = (array)$result;
+				$this->_new = FALSE;
 				return true;
 			}
 		}
@@ -74,6 +79,8 @@ abstract class EscherModel extends EscherObject {
 				$this->_datasource = $s;
 				// Assign class vars (metadata, content, etc.)
 				$this->assignVars($result);
+				$this->_savedValues = (array)$result;
+				$this->_new = FALSE;
 				return true;
 			}
 		}
@@ -88,16 +95,39 @@ abstract class EscherModel extends EscherObject {
 			$this->_runTriggers('modify');
 		}
 
+		$values = array();
+		foreach($this->_schemaFields as $k => $p) {
+			if (isset($this->$k)) {
+				$values[$k] = $this->$k;
+			} elseif (array_key_exists($k,$this->_savedValues)) {
+				$values[$k] = '';
+			}
+		}
+
+		// Set datasource options
+		$options = array(
+			'mode' => $this->_new
+				? 'insert'
+				: 'update'
+		);
+
 		$sources = $this->_getDatasources();
 		// Iterate through the datasources and save
 		// Note: Only new objects should have to iterate
 		foreach($sources as $s) {
 			$ds = Load::Datasource($s);
-			if ($ds->set($this)) {
+			if ($id = $ds->set($this->_m(),$values,$options)) {
+				$this->_new = FALSE;
+				if ($this->_primaryKey() && !$this->id()) {
+					$this->setValues(array(
+						$this->_primaryKey() => $id,
+					));
+				}
 				if (!isset($this->_datasource)) {
 					$this->_datasource = $s;
 				}
-				$this->cache();
+				$this->expire();
+				$this->_savedValues = $values;
 				return true;
 			}
 		}
@@ -214,13 +244,8 @@ abstract class EscherModel extends EscherObject {
 		$CFG = Load::Config();
 		if (isset($CFG['datasource_cache_order'][$this->_m()])) {
 			$sources = $CFG['datasource_cache_order'][$this->_m()];
-		} elseif (isset($CFG['datasource_cache_order']['all'])) {
-			$sources = $CFG['datasource_cache_order']['all'];
 		} else {
-			$sources = array('arrcache');
-		}
-		if (!in_array('arrcache',$sources)) {
-			array_unshift($sources,'arrcache');
+			$sources = $CFG['datasource_cache_order']['all'];
 		}
 		return $sources;
 	}
@@ -255,7 +280,9 @@ abstract class EscherModel extends EscherObject {
 	}
 
 	// Override assignVars to protect class variables
-	public function assignVars($vars) {
+	public function assignVars($vars) { return $this->setValues($vars); }
+
+	public function setValues($vars) {
 		if (!is_array($vars) || array_values($vars)==$vars) {
 			return false;
 		}
@@ -267,6 +294,16 @@ abstract class EscherModel extends EscherObject {
 			$this->$key = $val;
 		}
 		return true;
+	}
+
+	public function getValues() {
+		$values = array();
+		foreach($this->_schemaFields as $k => $props) {
+			if (isset($this->$k)) {
+				$values[$k] = $this->$k;
+			}
+		}
+		return $values;
 	}
 
 	function id() {
@@ -298,6 +335,7 @@ abstract class EscherModel extends EscherObject {
 			case '_schemaFields':
 			case '_schemaKeys':
 			case '_schemaTriggers':
+			case '_savedValues':
 				return isset($this->$name)
 					? $this->$name
 					: NULL;

@@ -121,7 +121,7 @@ class EscherInit {
 	 * Initialize environment settings
 	 */
 	protected function initEnvironment() {
-		require_once($this->fileroot.'/escher/environment.php');
+		require_once($this->fileroot.'/escher/core/environment.php');
 	}
 
 	/**
@@ -145,7 +145,7 @@ class EscherInit {
 	 * Initialize loader class
 	 */
 	protected function initLoader() {
-		require_once($this->fileroot.'/escher/loader.php');
+		require_once($this->fileroot.'/escher/core/loader.php');
 	}
 
 	/**

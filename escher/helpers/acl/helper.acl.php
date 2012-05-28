@@ -269,27 +269,28 @@ class Helper_acl extends Helper {
 		// Sanitize $action
 		if (!is_string($action)) return false;
 		// Sanitize $context
-		if (is_null($context)) {
-			$router = Load::Router();
-			$context = $router->getContext();
-		} elseif(is_integer($context)) {
-			$router = Load::Router();
-			$context = $router->getPathById($context,FALSE);
-			$router = Load::Router($context);
-			$context = $router->getContext();
-		} elseif (is_string($context)) {
-			$router = Load::Router($context);
-			$context = $router->getContext();
-		} elseif (!is_object($context)) {
-			return false;
-		}
-		if (!$context->id) {
-			return false;
+		if ($context!==0) {
+			if (is_null($context)) {
+				$router = Load::Router();
+				$context = $router->getContext();
+			} elseif(is_integer($context)) {
+				$router = Load::Router();
+				$context = $router->getPathById($context,FALSE);
+				$router = Load::Router($context);
+				$context = $router->getContext();
+			} elseif (is_string($context)) {
+				$router = Load::Router($context);
+				$context = $router->getContext();
+			} elseif (!is_object($context)) {
+				return false;
+			}
+			if (!$context->id()) { return false; }
+			$context = $context->id();
 		}
 		$model = Load::Model('acl_rule');
 		$conditions = array(
 			'resource_type' => $resource[0],'resource_id' => $resource[1],
-			'action' => $action, 'context' => $context->id, 'inheritable' => $inheritable,
+			'action' => $action, 'context' => $context, 'inheritable' => $inheritable,
 			'entity_type' => $entity[0], 'entity_id' => $entity[1],'priority' => (int)$priority);
 		$options = array('limit' => 0,'select' => 'acl_rule_id','fetch' => 'col');
 		$current_rules = $model->find($conditions,$options);

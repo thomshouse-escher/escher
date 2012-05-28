@@ -3,7 +3,7 @@
 /**
  * Helper_datasource_db.php
  * 
- * Datasource (DB) Helper class
+ * Database Datasource Helper class
  * @author Thom Stricklin <code@thomshouse.net>
  * @version 1.0
  * @package Escher
@@ -11,10 +11,10 @@
 
 /**
  * Datasource DB Helper class
- * Note: The Escher DB Datasource provides passive support for metadata/content tables.
+ * Note: The Escher Database Datasource provides passive support for metadata/content tables.
  * @package Escher
  */
-class Helper_datasource_db extends Helper_datasource {
+class Helper_datasource_database extends Helper_datasource {
 	protected $db;
 	protected $intTypes = array(
 		'tinyint'   => 1, // 256 (Range)
@@ -57,8 +57,10 @@ class Helper_datasource_db extends Helper_datasource {
 			$m = $model;
 			if ($model = Load::Model($m)) {
 				$schema = $this->getSchema($model);
+				$this->setSchema($model);
 			} else {
 				$schema = $this->getSchema($m);
+				$this->setSchema($m);
 			}
 
 		// If $model is array, get the object and schema
@@ -66,8 +68,10 @@ class Helper_datasource_db extends Helper_datasource {
 			$m = $model[1];
 			if ($model = Load::Model($m)) {
 				$schema = $this->getSchema($model);
+				$this->setSchema($model);
 			} else {
 				$schema = $this->getSchema($m);
+				$this->setSchema($m);
 			}
 		} else {
 			return false;
@@ -123,11 +127,20 @@ class Helper_datasource_db extends Helper_datasource {
 			'metadata' => $metadata,
 			'content'  => $content,
 		);
+
+		// Determine whether the primary key has been set
+		$primarySet = (sizeof($primary)==sizeof(
+			(array)$schema['keys']['primary']['fields']));
+
+		// Determine set mode (insert or update)
+		$mode = !empty($options['mode'])
+			? $options['mode']
+			: 'update';
+		if (!$primarySet) { $mode = 'insert'; }
+
 		// Iterate through each of the partitions
 		foreach($partitions as $partition => $values) {
-			// Determine whether the primary key has been set
-			$primarySet =
-				sizeof($primary)==sizeof((array)$schema['keys']['primary']['fields']);
+			$result = FALSE;
 
 			// Skip content and metadata partition if nothing to save
 			if (in_array($partition,array('metadata','content'))
@@ -154,32 +167,40 @@ class Helper_datasource_db extends Helper_datasource {
 			}
 
 			// If primary key is set, perform an update
-			if ($primarySet) {
-				$result = $db->Execute(
+			if ($mode=='update') {
+				$db->Execute(
 					"UPDATE " . $partname. " SET " . implode(',',$attr_sql)
 						. " WHERE " . implode(' && ',$primary_sql),
 					array_merge(array_values($values),array_values($primary))
 				);
 				// Check to make sure update occurred
-				if (!($db->affectedRows() || $db->getOne(
+				if ($db->affectedRows() || $db->getOne(
 						"SELECT COUNT(*) FROM " . $partname
 							. " WHERE " . implode(' && ',$primary_sql),
 						array_values($primary)
-				))) {
-					$result = false;
+				)) {
+					$result = TRUE;
 				}
 			}
 
 			// If primary key is not set or if row did not exist, insert
-			if (!$primarySet || !$result) {
+			if (!$primarySet || empty($result)) {
 				if (!$primarySet) {
+					$mode = 'insert';
 					if (sizeof((array)$schema['keys']['primary']['fields'])>1) {
 						return false;
 					}
-					$key = reset($schema['keys']['primary']['fields']);
+					$key = is_array($schema['keys']['primary']['fields'])
+						? reset($schema['keys']['primary']['fields'])
+						: $schema['keys']['primary']['fields'];
 					if (empty($schema['fields'][$key]['auto_increment'])) {
 						return false;
 					}
+				}
+				if (in_array($partition,array('metadata','content'))
+					&& empty($values)
+				) {
+					//continue;
 				}
 				$result = $db->Execute(
 					"INSERT INTO " . $partname . " SET "
@@ -190,9 +211,8 @@ class Helper_datasource_db extends Helper_datasource {
 				if (!$primarySet) {
 					$id = $db->getAutoId();
 					$primary = array($key => $id);
-					if (is_object($model)) {
-						$model->$key = $id;	
-					}
+					$primarySet = (sizeof($primary)==sizeof(
+						(array)$schema['keys']['primary']['fields']));
 				}
 			}
 		}
@@ -377,36 +397,49 @@ class Helper_datasource_db extends Helper_datasource {
 		if (!empty($result) && !empty($toDecode)) {
 			if ($qtype=='getOne') {
 				if (in_array(reset($options['select']),$toDecode)) {
-					$result = json_decode($result,TRUE);
+					$decoded = json_decode($result,TRUE);
+					if (!json_last_error()) { $result = $decoded; }
 				}
 			} elseif ($qtype=='getCol') {
 				if (in_array(reset($options['select']),$toDecode)) {
 					foreach($result as $k => $r) {
-						$result[$k] = json_decode($r,TRUE);
+						$decoded = json_decode($r,TRUE);
+						if (!json_last_error()) { $result[$k] = $decoded; }
 					}
 				}
 			} elseif ($qtype=='getRow') {
 				foreach($toDecode as $decode) {
 					if (array_key_exists($decode,$result)) {
-						$result[$decode] = json_decode($result[$decode],TRUE);
+						$decoded = json_decode($result[$decode],TRUE);
+						if (!json_last_error()) { $result[$decode] = $decoded; }
 					}
 				}
 			} elseif ($qtype=='getAll') {
 				foreach($result as $k => $r) {
 					foreach($toDecode as $decode) {
 						if (array_key_exists($decode,$r)) {
-							$result[$k][$decode] = json_decode($r[$decode],TRUE);
+							$decoded = json_decode($r[$decode],TRUE);
+							if (!json_last_error()) { $result[$k][$decode] = $decoded; }
+						}
+					}
+				}
+			} elseif ($qtype=='getAssoc') {
+				foreach($result as $k => $r) {
+					if (is_string($r)) {
+						$decoded = json_decode($r,TRUE);
+						if (!json_last_error()) { $result[$k] = $decoded; }
+					} else {
+						foreach($toDecode as $decode) {
+							if (array_key_exists($decode,$r)) {
+								$decoded = json_decode($r[$decode],TRUE);
+								if (!json_last_error()) { $result[$k][$decode] = $decoded; }
+							}
 						}
 					}
 				}
 			}
 		}
 
-		// If result is a single valid row and we are selecting everything, get metadata and content
-		if ($result && sizeof($models)==1 && is_a(reset($models),'Model') && $qtype=='getRow') {
-			$model = reset($models);
-			$model->assignVars($result);
-		}
 		return $result;
 	}
 	

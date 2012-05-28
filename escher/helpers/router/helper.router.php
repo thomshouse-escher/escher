@@ -127,7 +127,9 @@ abstract class Helper_router extends Helper {
 	}
 
 	function resolvePath($url,$absolute=TRUE) {
-		if ($absolute && preg_match('#^(/.*)#',$url,$match)) {
+		if (preg_match('/^#/',$url)) {
+			return $url;
+		} elseif ($absolute && preg_match('#^(/.*)#',$url,$match)) {
 			return $this->getRootPath().$match[1];
 		} elseif (preg_match('#^~(/.*|)#',$url,$match)) {
 			return $this->getSitePath($absolute).$match[1];

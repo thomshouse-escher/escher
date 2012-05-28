@@ -1,13 +1,5 @@
 <?php
 
-// Convenience declarations
-$title = 'My Website';
-$subtitle = 'Powered by Escher';
-$wwwroot = '';
-
-// Data sources (read/write priority)
-$datasource_order['all'] = array('db');
-
 // Router allows arguments sent to the root controller
 $allow_root_args = TRUE;
 
@@ -37,7 +29,6 @@ $resized_images = array(
 );
 
 // Maintenance mode defaults
-$maintenance_mode = FALSE;
 $maintenance_message = 'This website is currently undergoing maintenance.';
 $maintenance_root = array(
 	'controller'=>'errors',
@@ -71,13 +62,34 @@ $reserved_usernames = array_merge(
 	array('admin','administrator','system')
 );
 
-// Translate Cache datasource to default Cache
-if (!isset($cache)
-	&& !empty($datasource_cache_order['all'])
-	&& is_array($datasource_cache_order['all'])
-) {
-	$cache = $datasource_cache_order['all'][0];
+// Set datasource order
+if (empty($datasource_order['all'])) {
+	$datasource_order['all'] = array();
+	foreach($datasource as $name => $ds) {
+		if (!empty($ds['helper']) && $ds['helper']=='database') {
+			$datasource_order['all'][] = $name;
+		}
+	}
+	unset($ds,$name);
 }
+
+// Set cache order
+if (empty($datasource_cache_order['all'])) {
+	$datasource_cache_order['all'] = array();
+	foreach($datasource as $name => $ds) {
+		if (!empty($ds['helper']) && $ds['helper']=='cache') {
+			$datasource_cache_order['all'][] = $name;
+		}
+	}
+	unset($ds,$name);
+}
+
+// Add the request cache (static array)
+$datasource['request'] = array(
+	'helper' => 'cache',
+	'type' => 'request',
+);
+//array_unshift($datasource_cache_order['all'],'request');
 
 // Document root and Escher path
 $document_root = ESCHER_DOCUMENT_ROOT;

@@ -58,9 +58,6 @@
 			$result = $this->mongodb->selectCollection($collection)->insert($data,array('safe'=>TRUE));
 			$result = empty($result['err']);
 			if ($result) {
-				if (is_object($model)) {
-					$model->{$collection.'_id'} = $data[$collection.'_id'];	
-				}
 				return $data['_id'];
 			}
 			return false;
@@ -100,9 +97,6 @@
 		foreach ($data as $d) {
 			unset($d['_id']);
 			$result[] = $d;
-		}
-		if (is_object($model) && !empty($result) && $limit[1]==1) {
-			$model->assignVars($result[0]);
 		}
 		return $result;
 	}
