@@ -1,8 +1,10 @@
 <?php
 
 $FORM->useInputStatus();
-$FORM->text('page_title','Title:');
+$FORM->openFieldset(NULL,array('class'=>'form-vertical'));
+$FORM->text('page_title','Title:',array('class'=>'span12'));
 $FORM->textarea('body', NULL, array(
-	'style' => 'width: 95%; height: 24em;',
-	'class' => implode(' ',$H('rte_classname')),
+	'style' => 'height: 24em;',
+	'class' => array_merge(array('span12'),$H('rte_classname')),
 ));
+$FORM->closeFieldset();

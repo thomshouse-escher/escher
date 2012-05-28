@@ -25,6 +25,10 @@ class Helper_ui extends Helper {
 		if (!empty($CFG['subtitle'])) {
 			$this->siteSubtitle = $CFG['subtitle'];
 		}
+		$session = Load::Session();
+		if ($status = $session->getFlash('input_status',TRUE)) {
+			$this->inputStatus = $status;
+		}
 	}
 	
 	function directOutput($bool=NULL) {
@@ -72,6 +76,10 @@ class Helper_ui extends Helper {
 			}
 		}
 	}
+	function getMenu($menu) {
+		if (!isset($this->menus[$menu])) { return array(); }
+		return $this->menus[$menu];
+	}
 	function theme($theme=NULL) {
 		if (!is_null($theme)) {
 			$this->theme = $theme;
@@ -94,6 +102,8 @@ class Helper_ui extends Helper {
 		if (is_string($message)) {
 			$this->inputStatus[$name]['message'] = $message;
 		}
+		$session = Load::Session();
+		$session->setFlash('input_status',$this->inputStatus);
 	}
 
 	function getInputStatus($fields=array(),$format=NULL) {

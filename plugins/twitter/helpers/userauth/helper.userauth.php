@@ -37,7 +37,7 @@ class Plugin_twitter_Helper_userauth extends Helper_userauth {
 	
 	protected function oauth_verify() {
 		$headers = Load::Headers();
-
+		$hooks = Load::Hooks();
 		$CFG = Load::Config();
 
 		/* If the oauth_token is old redirect to the connect page. */
@@ -64,20 +64,15 @@ class Plugin_twitter_Helper_userauth extends Helper_userauth {
 
 		// If there is a local user with this facebook uid, log them in and redirect
 		if ($user = Load::User(array('twitter_uid'=>$me['id']))) {
-			$_SESSION['user_id'] = $user->user_id;
-			return true;
+			return $user;
 		}
 		
 		// Setup registration vars (username, fullname, etc.)
 		$vars = $this->registrationVars($me);
 		$vars['twitter_token'] = $access_token;
 
-		// Load the facebook (oauth) userauth, register, and redirect
-		if ($user = $this->register($vars['username'],'',$vars)) {
-			$_SESSION['user_id'] = $user->user_id;
-			return true;
-		}
-		return false;
+		// Attempt to register a new user
+		return $this->register($vars['username'],'',$vars);
 	}
 	
 	function register($username,$password=NULL,$vars=array()) {

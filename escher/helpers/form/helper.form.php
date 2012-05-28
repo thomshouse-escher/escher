@@ -18,6 +18,9 @@
  */
 class Helper_form extends Helper {
 	protected $fieldsetClass = 'form-horizontal';
+	protected $fieldsetClasses = array(
+		'form-horizontal','form-vertical','form-inline','form-submit'
+	);
 	protected $actionsClass = 'form-actions';
 	protected $inputsClass = 'control-group';
 	protected $inputClass = 'controls';
@@ -28,6 +31,7 @@ class Helper_form extends Helper {
 	protected $inForm = FALSE;
 	protected $inFieldset = FALSE;
 	protected $inWrapper = FALSE;
+	protected $hasSubmit = FALSE;
 	protected $nameFormat = '';
 	protected $data = array();
 	protected $inputStatus = array();
@@ -86,22 +90,35 @@ class Helper_form extends Helper {
 	function close() {
 		if (!$this->inForm) { return; }
 		$this->inForm = FALSE;
+		$this->hasSubmit = FALSE;
 		$content = $this->html->closeTo('form');
 		return $this->outputResult($content);
 	}
 
-	function openFieldset($legand='',$attrs=array()) {
+	function openFieldset($legend='',$attrs=array()) {
 		$content = '';
 		if ($this->inFieldset) {
-			$content = $this->html->closeTo('fieldset.'.$this->fieldsetClass);
+			$content = $this->html->closeTo('fieldset');
 			$this->inWrapper = FALSE;
 		}
+		$fieldsetClass = $this->fieldsetClass;
+		if (!empty($attrs['class'])) {
+			if (is_string($attrs['class'])) {
+				$attrs['class'] = explode(' ',$attrs['class']);
+			}
+			if ($fc = array_intersect($attrs['class'],$this->fieldsetClasses)) {
+				$fieldsetClass = reset($fc);
+			}
+			$attrs['class'] = array_diff(
+				$attrs['class'],$this->fieldsetClasses);
+			if (empty($attrs['class'])) { unset($attrs['class']); }
+		}
 		$this->inFieldset = TRUE;
-		$content .= $this->html->open('fieldset.'.$this->fieldsetClass,$attrs);
+		$content .= $this->html->open('fieldset.'.$fieldsetClass,$attrs);
 
 		if (!empty($legand)) {
 			$content .= $this->html->open('legend');
-			$content .= $legand;
+			$content .= $legend;
 			$content .= $this->html->closeTo('legend');
 		}
 
@@ -132,7 +149,7 @@ class Helper_form extends Helper {
 		return $this->outputResult($content);
 	}
 
-	function openInputs($attrs=array(),$name='') {
+	function openInputs($attrs=array(),$label='',$name='') {
 		$this->checkInputStatus($name,$attrs,$helptext);
 		$content = '';
 		if ($this->inWrapper) {
@@ -140,6 +157,9 @@ class Helper_form extends Helper {
 		}
 		$this->inWrapper = $this->inputsClass;
 		$content = $this->html->open('div.'.$this->inputsClass,$attrs);
+		if (!empty($label)) {
+			$content .= $this->html->tag('label.control-label',$label);
+		}
 		$content .= $this->html->open('div.'.$this->inputClass);
 		return $this->outputResult($content);
 	}
@@ -187,19 +207,23 @@ class Helper_form extends Helper {
 			$attrs['checked'] = 'checked';
 		}
 		$attrs['name'] = $this->formatName($name);
-		$attrs['type'] = 'hidden';
-		$attrs['value'] = $checked_value==='1' ? '0' : '';
-		$content = $this->html->open('label.checkbox.inline');
-		$content .= $this->html->tag('input',NULL,$attrs);
 		$attrs['type'] = 'checkbox';
 		$attrs['value'] = $checked_value;
+		$hattrs = array(
+			'name'  => $attrs['name'],
+			'type'  => 'hidden',
+			'value' => $checked_value==='1' ? '0' : '',
+		);
+		$content = $this->html->open('label.checkbox.inline');
+		$content .= $this->html->tag('input',NULL,$hattrs);
 		$content .= $this->html->tag('input',NULL,$attrs);
-		if ($inline) { $content .= ' '.$label; }
-		$content .= $this->html->closeTo('label.checkbox');
 		if ($inline) {
+			$content .= ' '.$label;
+			$content .= $this->html->closeTo('label.checkbox');
 			$content .= $this->_blocktext($helptext);
 		} else {
 			$content .= $this->_sidetext($helptext);
+			$content .= $this->html->closeTo('label.checkbox');
 		}
 		return $this->outputResult($this->wrapInput($content,$inline?'':$label,$name));
 	}
@@ -216,18 +240,32 @@ class Helper_form extends Helper {
 	function submit($label='',$attrs=array()) {
 		$attrs['type'] = 'submit';
 		if (!empty($label)) { $attrs['value'] = $label; }
+		if (empty($attrs['class'])) { $attrs['class'] = array(); }
+		if (is_string($attrs['class'])) { $attrs['class'] = explode(' ',$attrs['class']); }
+		if (in_array('btn-primary',$attrs['class'])) { $this->hasSubmit = TRUE; }
+		$attrs['class'][] = 'btn';
+		if (empty($attrs['name']) && !$this->hasSubmit) {
+			$attrs['class'][] = 'btn-primary';
+			$this->hasSubmit = TRUE;
+		}
 		return $this->outputResult($this->wrapInput($this->html->tag('input',NULL,$attrs)));
 	}
 
 	function reset($label='',$attrs=array()) {
 		$attrs['type'] = 'reset';
 		if (!empty($label)) { $attrs['value'] = $label; }
+		if (empty($attrs['class'])) { $attrs['class'] = array(); }
+		if (is_string($attrs['class'])) { $attrs['class'] = explode(' ',$attrs['class']); }
+		$attrs['class'][] = 'btn';
 		return $this->outputResult($this->wrapInput($this->html->tag('input',NULL,$attrs)));
 	}
 
 	function button($label='',$attrs=array()) {
 		$attrs['type'] = 'button';
 		if (!empty($label)) { $attrs['value'] = $label; }
+		if (empty($attrs['class'])) { $attrs['class'] = array(); }
+		if (is_string($attrs['class'])) { $attrs['class'] = explode(' ',$attrs['class']); }
+		$attrs['class'][] = 'btn';
 		return $this->outputResult($this->wrapInput($this->html->tag('input',NULL,$attrs)));
 	}
 
@@ -262,7 +300,7 @@ class Helper_form extends Helper {
 			) {
 				$o[2]['checked'] = 'checked';
 			}
-			$content .= $this->html->open('label.checkbox');
+			$content .= $this->html->open('label.checkbox',$attrs);
 			$content .= $this->html->tag('input','',$o[2]);
 			$content .= ' '.$o[1];
 			$content .= $this->html->closeTo('label.checkbox');
@@ -284,7 +322,7 @@ class Helper_form extends Helper {
 			if (array_key_exists($name,$this->data) && $this->data[$name]==$o[0]) {
 				$o[2]['checked'] = 'checked';
 			}
-			$content .= $this->html->open('label.radio');
+			$content .= $this->html->open('label.radio',$attrs);
 			$content .= $this->html->tag('input','',$o[2]);
 			$content .= ' '.$o[1];
 			$content .= $this->html->closeTo('label.radio');
@@ -327,7 +365,7 @@ class Helper_form extends Helper {
 	}
 
 	protected function label($content,$attrs='') {
-		return $this->html->tag('label',$content,$attrs);
+		return $this->html->tag('label.control-label',$content,$attrs);
 	}
 
 	protected function wrapInput($input,$label='',$name='') {
@@ -338,7 +376,7 @@ class Helper_form extends Helper {
 		}
 		$content = $this->html->open('div.'.$this->inputsClass,$attrs);
 		if (!empty($label)) {
-			$content .= $this->html->tag('label',$label);
+			$content .= $this->html->tag('label.control-label',$label);
 		}
 		$content .= $this->html->open('div.'.$this->inputClass);
 		$content .= $input;

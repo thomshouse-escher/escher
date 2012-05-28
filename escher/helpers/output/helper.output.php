@@ -96,16 +96,16 @@ abstract class Helper_output extends Helper {
 		}
 
 		// Determine plugin/core dir and theme dir
-		if (!empty($plugin)) { $plugin_dir = '/plugins/'.$plugin; }
+		if (!empty($plugin)) { $plugin_dir = "/plugins/$plugin/"; }
 		else { $plugin_dir = '/escher/'; }
-		$theme_dir = $plugin_dir.'/themes/'.$theme;
-
-		// Load Config (for fileroot)
-		$CFG = Load::Config();
+		$theme_dir = $plugin_dir.'themes/'.$theme;
 
 		// Get the real output helper
-		include_once($CFG['document_root']."$theme_dir/theme.php");
+		include_once(ESCHER_DOCUMENT_ROOT."$theme_dir/theme.php");
 		$out = Load::Output($type);
+
+		// Load Config (for wwwroot)
+		$CFG = Load::Config();
 
 		// Assign variables
 		$out->assignVars($this->getAssignedVars());
@@ -121,7 +121,7 @@ abstract class Helper_output extends Helper {
 		$out->assign('notifications',$notifications);
 
 		// Display
-		return $out->display($CFG['document_root']."$theme_dir/index");
+		return $out->display(ESCHER_DOCUMENT_ROOT."$theme_dir/index");
 	}	
 	
 	function doEcho($text,$default='') {

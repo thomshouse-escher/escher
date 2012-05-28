@@ -4,23 +4,28 @@ class Plugin_facebook_Helper_userauth_oauth extends Helper_userauth {
 	protected $me = NULL;
 
 	function authenticate() {
+		$CFG = Load::Config();
 		$headers = Load::Headers();
 
-		// User should be reaching this URL from a Facebook Oauth response
-		// If user authorized site, query string will include "code"
+		// If no code, redirect to facebook
 		$input = Load::Input();
-		if(!empty($input->get['code'])) {
-			$CFG = Load::Config();
-			// Attempt to get Oauth access token using the provided code
-			$response = @file_get_contents('https://graph.facebook.com/oauth/access_token?client_id='.$CFG['facebook_appId'].
-				'&redirect_uri='.urlencode($CFG['wwwroot'].'/login/facebook/').
-				'&client_secret='.$CFG['facebook_secret'].
-				'&code='.$input->get['code']);
+		if(empty($input->get['code'])) {
+			$browser = Load::UserAgent();
+			$headers->redirect(
+				'https://www.facebook.com/dialog/oauth?client_id='
+				.$CFG['facebook_appId'].'&redirect_uri='
+				.urlencode($CFG['wwwroot'].'/login/facebook/')
+				.($browser->match('mobile')? '&amp;display=touch' : '')
+			);
 		}
-		// If there was no code, or we cannot get a valid response, return false
-		if(empty($input->get['code']) || empty($response)) {
-			return false;
-		}
+
+		// Attempt to get Oauth access token using the provided code
+		$response = @file_get_contents('https://graph.facebook.com/oauth/access_token?client_id='.$CFG['facebook_appId'].
+			'&redirect_uri='.urlencode($CFG['wwwroot'].'/login/facebook/').
+			'&client_secret='.$CFG['facebook_secret'].
+			'&code='.$input->get['code']);
+
+		if(empty($response)) { return false; }
 
 		// Parse the response and save it to the session
 		parse_str($response,$rarr);
@@ -34,19 +39,14 @@ class Plugin_facebook_Helper_userauth_oauth extends Helper_userauth {
 
 		// If there is a local user with this facebook uid, log them in and redirect
 		if ($user = Load::User(array('facebook_uid'=>$me['id']))) {
-			$_SESSION['user_id'] = $user->user_id;
-			return true;
+			return $user;
 		}
 
 		// Setup registration vars (username, fullname, etc.)
 		$vars = $this->registrationVars($me);
 
-		// Load the facebook (oauth) userauth, register, and redirect
-		if ($user = $this->register($vars['username'],'',$vars)) {
-			$_SESSION['user_id'] = $user->user_id;
-			return true;
-		}
-		return false;
+		// Attempt to register a new user
+		return $this->register($vars['username'],'',$vars);
 	}
 
 	// If our token expires, we need to redirect the user to authenticate with facebook

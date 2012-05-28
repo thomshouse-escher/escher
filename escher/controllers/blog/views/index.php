@@ -1,3 +1,5 @@
+<div class="page-header">
+
 <!-- Blog title -->
 <h1 class="content-title blog-title"><?php $E($title,'Untitled Blog'); ?></h1>
 
@@ -8,12 +10,14 @@
 <!-- Blog actions -->
 <div class="content-actions blog-actions">
 <?php if($_check($resource,'edit')) { ?>
-<a href="<?php $E($current_path.'/edit/'); ?>"><?php $L('Edit'); ?></a> 
+<a class="btn btn-mini" href="<?php $E($current_path.'/edit/'); ?>"><?php $L('Edit'); ?></a> 
 <?php } if($_check($resource,'add_entry')) { ?>
-<a href="<?php $E($current_path.'/add_entry/'); ?>"><?php $L('Add Entry'); ?></a> 
+<a class="btn btn-mini" href="<?php $E($current_path.'/add_entry/'); ?>"><?php $L('Add Entry'); ?></a> 
 <?php } ?>
 </div>
 <?php } ?>
+
+</div>
 
 <!-- Blog entries -->
 <div class="content-entries blog-entries">

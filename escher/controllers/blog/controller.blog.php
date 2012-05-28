@@ -11,7 +11,7 @@ class Controller_blog extends Controller {
 	protected $feedLimit = 25;
 	
 	protected function parseEntryDataFromModel($entry,$model) {
-		if (empty($model->id())) { Load::Error('500'); }
+		if (!$model->id()) { Load::Error('500'); }
 		if (empty($entry->model_id)) { $entry->model_id = $model->id(); }
 		$entry->title = $model->title;
 		$entry->preview = @$model->summary;
@@ -108,6 +108,7 @@ class Controller_blog extends Controller {
 		$this->data['model'] = $model->display('index');
 		$this->data['entry'] = $entry;
 		$this->data['resource'] = array($this->seriesType,$this->id);
+		$this->data['page'] = Load::Model($this->seriesType,$this->id);
 	}
 	
 	function manage_add_entry($args) {
@@ -162,7 +163,7 @@ class Controller_blog extends Controller {
 			$headers->addNotification('This entry is currently being edited by another user.','error');
 			$headers->redirect('./entry/'.$entry->id);
 		}
-		if (!empty($entry->id())) { $lockout->lock($entry); }
+		if ($entry->id()) { $lockout->lock($entry); }
 		$this->data['entry_form'] = $entry->display('edit');
 		$this->data['model_form'] = $model->display('edit');
 		$this->data['entry'] = $entry;
@@ -180,7 +181,7 @@ class Controller_blog extends Controller {
 		if (empty($entry->published) && !$acl->check(array($this->seriesType,$this->id),'preview')) {
 			Load::Error('404');
 		}
-		if (!empty($entry->id())) {
+		if ($entry->id()) {
 			$this->calledAction = 'entry';
 			return parent::action_entry(array($entry->id()));
 		}

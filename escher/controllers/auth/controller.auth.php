@@ -10,7 +10,11 @@ class Controller_auth extends Controller {
 
 		if(!empty($args)) {
 			$userauth = Load::UserAuth($args[0]);
-			if(!empty($userauth) && $userauth->authenticate()) {
+			if(!empty($userauth) && $user = $userauth->authenticate()) {
+				$_SESSION['user_id'] = $user->user_id;
+				if (strtotime($user->created_at)==NOW) {
+					$hooks->runEvent('register_success');
+				}
 				$hooks->runEvent('authenticate_success');
 				$this->postLoginRedirect();
 			} else {
@@ -45,7 +49,21 @@ class Controller_auth extends Controller {
 		}
 		return true;
 	}
-	
+
+	function postLoginRedirect() {
+		$continue = $this->input->get('continue');
+		if (!empty($continue)
+			&& is_array($_SESSION['post_login_urls'])
+			&& in_array($continue,$_SESSION['post_login_urls'])
+		) {
+			unset($_SESSION['post_login_urls'][array_search($continue,
+				$_SESSION['post_login_urls'])]);
+			$this->headers->redirect($continue);
+		} else {
+			$this->headers->redirect();
+		}
+	}
+
 	function action_logout($args) {
 		if ($user = Load::User()) {
 			$ua = $user->getUserAuth();
@@ -62,37 +80,36 @@ class Controller_auth extends Controller {
 	}
 	
 	function action_signup($args) {
-		$headers = Load::Headers();
-		if (Load::User()) { $headers->redirect(); }
+		$hooks = Load::Hooks();
+		if (Load::User()) { $this->headers->redirect(); }
 		$CFG = Load::Config();
 		$input = Load::Input();
 		$UI = Load::UI();
 		$this->data['post'] = $data = $input->post;
 		$error = FALSE;
 		if (!empty($input->post)) {
-			$hooks = Load::Hooks();
 			$userauth = Load::Userauth();
 			if (empty($data['username'])) {
-				//$headers->addNotification('You must specify a username.','error');
+				$this->headers->addNotification('You must specify a username.','error');
 				$UI->setInputStatus('username','error','Please choose a username');
 				$error = TRUE;
 			} elseif (!$userauth->usernameIsAvailable($data['username'])) {
-				//$headers->addNotification('The username you have selected is already in use.
+				$this->headers->addNotification('The username you have selected is already in use.
 				//	Please try a different username.','error');
 				$UI->setInputStatus('username','error','Not available');
 				$error = TRUE;
 			}
 			if (empty($data['email'])) {
-				//$headers->addNotification('You must specify an email address.','error');
+				$this->headers->addNotification('You must specify an email address.','error');
 				$UI->setInputStatus('email','error','Email required');
 				$error = TRUE;
 			} elseif ($user = Load::User(array('email'=>$data['email']))) {
-				//$headers->addNotification('The email you provided is already in use.','error');
+				$this->headers->addNotification('The email you provided is already in use.','error');
 				$UI->setInputStatus('email','error','This email is already registered');
 				$error = TRUE;
 			}
 			if (empty($data['password'])) {
-				//$headers->addNotification('Please select a password.','error');
+				$this->headers->addNotification('Please select a password.','error');
 				$UI->setInputStatus('password','error','Please choose a password');
 				$error = TRUE;
 			}
@@ -105,7 +122,7 @@ class Controller_auth extends Controller {
 			}
 
 			if (empty($data['agree_terms'])) {
-				$headers->addNotification('You must agree to the terms of service to register for this website.','error');
+				$this->headers->addNotification('You must agree to the terms of service to register for this website.','error');
 				$error = TRUE;
 			}
 
@@ -114,9 +131,17 @@ class Controller_auth extends Controller {
 				if (file_exists('terms.txt')) {
 					$vars['agreed_terms'] = md5_file('terms.txt');
 				}
-				$userauth->register($input->post['username'],$input->post['password'],$vars);
-				$headers->addNotification('Registration was successful.  You may now login.');
-				$headers->redirect('~/');
+				if ($user = $userauth->register($input->post['username'],
+					$input->post['password'],$vars)
+				) {
+					$_SESSION['user_id'] = $user->user_id;
+					$hooks->runEvent('register_success');
+					$this->headers->addNotification('Registration was successful.','success');
+					$this->headers->redirect('~/');
+				} else {
+					$hooks->runEvent('register_failure');
+					$this->headers->addNotification('Registration failed.','error');
+				}
 			}
 		}
 	}
@@ -125,19 +150,5 @@ class Controller_auth extends Controller {
 		$lockout = Load::Lockout();
 		$USER = Load::User();
 		$lockout->lock($args,$USER);
-	}
-
-	function postLoginRedirect() {
-		$continue = $this->input->get('continue');
-		if (!empty($continue)
-			&& is_array($_SESSION['post_login_urls'])
-			&& in_array($continue,$_SESSION['post_login_urls'])
-		) {
-			unset($_SESSION['post_login_urls'][array_search($continue,
-				$_SESSION['post_login_urls'])]);
-			$this->headers->redirect($continue);
-		} else {
-			$this->headers->redirect();
-		}
 	}
 }

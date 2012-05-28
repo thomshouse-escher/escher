@@ -3,6 +3,7 @@
 class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 	function authenticate() {
 		$headers = Load::Headers();
+		$hooks->runEvent('register_failure');
 
 		// Load FB API and session
 		$fb = loadFacebookAPI();
@@ -22,19 +23,14 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 
 		// If there is a local user with this facebook uid, log them in and redirect
 		if ($user = Load::User(array('facebook_uid'=>$uid))) {
-			$_SESSION['user_id'] = $user->user_id;
-			return true;
+			return $user;
 		}
 		
 		// Setup registration vars (username, fullname, etc.)
 		$vars = $this->registrationVars($me);
 		
-		// Load the fbconnect userauth, register and redirect
-		if ($user = $this->register($vars['username'],'',$vars)) {
-			$_SESSION['user_id'] = $user->user_id;
-			return true;
-		}
-		return false;
+		// Attempt to register a new user
+		return $this->register($vars['username'],'',$vars);
 	}
 
 	// fbconnect userauth is very closely tied to a user's FB session, reauth is essential.

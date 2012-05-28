@@ -40,6 +40,7 @@ class EscherController extends EscherObject {
 		$this->headers = Load::Headers();
 		$this->input = Load::Input();
 		$this->USER = Load::User();
+		$this->UI = Load::UI();
 	}
 	
 	/**
@@ -188,7 +189,7 @@ class EscherController extends EscherObject {
 	}
 	
 	// Display the specified view for this controller with the data provided
-	final function display($view,$data=array(),$themed=TRUE,$type=NULL) {
+	function display($view,$data=array(),$themed=TRUE,$type=NULL) {
 		if ($result = $this->render($view,$data,$themed,$type)) {
 			$headers = Load::Headers();
 			$headers->sendHTTP();
@@ -198,18 +199,17 @@ class EscherController extends EscherObject {
 	}
 	
 	// Render the specified view for this controller with the data provided
-	final function render($view,$data=array(),$themed=FALSE,$type=NULL) {
+	function render($view,$data=array(),$themed=FALSE,$type=NULL) {
 		if (is_null($type)) {
 			$type = $this->output_type;
 		}
-		$out = Load::Output($type,$this);
+		$out = Load::Output($type);
 		$out->assignVars($data);
 		if (!$themed) {
 			return $out->displayControllerView($this,$view);
 		} else {
-			if (!$content = $out->displayControllerView($this,$view)) {
-				return false;
-			}
+			$content = $out->displayControllerView($this,$view);
+			if ($content===FALSE) { return FALSE; }
 			$ui = Load::UI();
 			return $out->displayTheme($ui->theme(),$content);
 		}

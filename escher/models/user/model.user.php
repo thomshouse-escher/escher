@@ -10,6 +10,7 @@ class Model_user extends Model {
 		// Metadata
 		'enctype'       => array('metadata' => TRUE,'type' => 'resource'),
 		'agreed_terms'  => array('metadata' => TRUE,'type' => 'md5'),
+		'created_at'    => array('metadata' => TRUE,'type' => 'datetime'),
 		'avatar_url'    => array('metadata' => TRUE,'type' => 'string'),
 		'avatar_source' => array('metadata' => TRUE,'type' => 'resource'),
 	);
@@ -21,14 +22,7 @@ class Model_user extends Model {
 		if (!empty($this->user_id)) { return; }
 		$this->assignVars($vars);
 		$hooks = Load::Hooks();
-		if ($this->save()) {
-			if (empty($_SESSION['user_id'])) {
-				$_SESSION['user_id'] = $this->user_id;
-			}
-			$hooks->runEvent('register_success');
-			return $this;
-		}
-		$hooks->runEvent('register_error');
+		if ($this->save()) { return $this; }
 		return FALSE;
 	}
 

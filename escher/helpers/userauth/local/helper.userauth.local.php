@@ -33,7 +33,7 @@ class Helper_userauth_local extends Helper_userauth {
 		$user = Load::Model('user');
 		if ($user->register($vars)) {
 			$best = $this->bestEncryption();
-			$user->assignVars(array(
+			$user->setValues(array(
 				'password' => $this->encryptPassword(
 					$password, $user->user_id, $best
 				),
@@ -48,7 +48,7 @@ class Helper_userauth_local extends Helper_userauth {
 	// Unimplemented
 	// function resetPass($username,$password) { }
 	
-	protected function encryptPassword($password,$salt='',$algo=NULL) {
+	function encryptPassword($password,$salt='',$algo=NULL) {
 		if (is_null($algo)) { $algo = $this->bestEncryption(); }
 		switch ($algo) {
 			case 'bcrypt':
@@ -74,7 +74,7 @@ class Helper_userauth_local extends Helper_userauth {
 		return $password;
 	}
 
-	protected function bestEncryption() {
+	function bestEncryption() {
 		// If encryption is hard-coded, return it
 		if ($this->enctype!='best') { return $this->enctype; }
 

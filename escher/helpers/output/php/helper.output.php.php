@@ -33,6 +33,7 @@ class Helper_output_php extends Helper_output {
 			$FORM->setNameFormat($this->modelVars[1]);
 		}
 		$UI = Load::UI();
+		$headers = Load::Headers();
 		$HTML->directOutput(TRUE);
 		$FORM->directOutput(TRUE);
 		$UI->directOutput(TRUE);
