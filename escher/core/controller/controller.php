@@ -39,6 +39,7 @@ class EscherController extends EscherObject {
 		// Convenient access for commonly used objects
 		$this->headers = Load::Headers();
 		$this->input = Load::Input();
+		$this->session = Load::Session();
 		$this->USER = Load::User();
 		$this->UI = Load::UI();
 	}

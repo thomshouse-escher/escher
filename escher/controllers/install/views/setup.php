@@ -58,11 +58,10 @@ $FORM->closeFieldset();
 
 $FORM->openFieldset('Administrative Options');
 $FORM->text('admin[username]','Username:');
-$FORM->password('admin[password]','Password:',array('autocomplete'=>'off'));
-$FORM->password('admin[password2]','Confirm Password:',array('autocomplete'=>'off'));
 $FORM->text('admin[display_name]','Display Name:');
 $FORM->text('admin[email]','Email Address:');
-$FORM->text('adminUrl','Admin Home:',array('class'=>'input-small url-tag'),"$www/admin");
+$FORM->password('admin[password]','Password:',array('autocomplete'=>'off'));
+$FORM->password('admin[password2]','Confirm Password:',array('autocomplete'=>'off'));
 $FORM->closeFieldset(); ?>
 	</div>
 </div>

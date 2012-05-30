@@ -206,6 +206,16 @@ class Helper_headers extends Helper {
 		return implode($del,$titles);
 	}
 
+	function getReferer($crossSite=FALSE) {
+		if (!isset($_SERVER['HTTP_REFERER'])) { return; }
+		$router = Load::Router();
+		if (strpos($_SERVER['HTTP_REFERER'],$router->getRootPath())===0) {
+			return substr($_SERVER['HTTP_REFERER'],strlen($router->getRootPath()));
+		}
+		if ($crossSite) { return $_SERVER['HTTP_REFERER']; }
+		return;
+	}
+
 	function isAJAX() {
 		return isset($_SERVER['HTTP_X_REQUESTED_WITH'])
 			&& strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
@@ -224,17 +234,21 @@ class Helper_headers extends Helper {
 		}
 	}
 
-	function redirect($url=NULL,$qsa=FALSE) {
+	function redirect($url=NULL,$crossSite=FALSE) {
 		$session = Load::Session();
-		$session->remember_current_request = FALSE;
 		$session->preserveFlash = TRUE;
 		$router = Load::Router();
 		if (!empty($url)) {
+			if (!$crossSite && strpos($url,':')) {
+				$url = '/';
+			}
 			$url = $router->resolvePath($url);
-		} elseif ($lastreq = $session->getFlash('last_request_url')) {
-			$url = $router->resolvePath($lastreq);
+		} elseif ($referer = $this->getReferer()
+			&& $referer != $router->getCurrentPath(FALSE,TRUE,TRUE)
+		) {
+			$url = $_SERVER['HTTP_REFERER'];
 		} else {
-			$url = $router->getSitePath();
+			$url = $router->resolvePath('~/'); // Site root
 		}
 		if ($qsa && !empty($_SERVER['QUERY_STRING'])) {
 			$url .= ((strpos($url,'?')===FALSE) ? '?' : '&')
@@ -261,8 +275,8 @@ class Helper_headers extends Helper {
 		$this->addHTTP('Connection: close');
 		$this->addHTTP('Content-Length: '.$size);
 		$this->sendHTTP();
+		$session = Load::Session();
+		$session->close();
 		echo $response;
-		while(ob_get_level()) { ob_end_flush(); }
-		flush();
 	}
 }

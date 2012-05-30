@@ -51,9 +51,9 @@ class Controller_install extends Controller {
 						'Memcache class is not available.','error');
 					$continue = FALSE;
 				} else {
-					$mc = Load::Helper('cache','memcached',$post['cache']);
-					if ($mc->set('escherInstalled',1)) {
-						$mc->delete('escherInstalled');
+					$cache = Load::Helper('cache','memcached',$post['cache']);
+					if ($cache->set('escherInstalled',1)) {
+						$cache->flush();
 					} else {
 						$this->headers->addNotification(
 							'Could not connect to memcached.','error');
@@ -66,9 +66,9 @@ class Controller_install extends Controller {
 						'APC is not available.','error');
 					$continue = FALSE;
 				} else {
-					$mc = Load::Helper('cache','apc');
-					if ($mc->set('escherInstalled',1)) {
-						$mc->delete('escherInstalled');
+					$cache = Load::Helper('cache','apc');
+					if ($cache->set('escherInstalled',1)) {
+						$cache->flush();
 					} else {
 						$this->headers->addNotification(
 							'Could not write to APC.','error');
@@ -204,8 +204,13 @@ class Controller_install extends Controller {
 				),TRUE).";\n\n";
 		}
 
+		// Set up the starter set of static routes
+		$file .= "\$static_routes = array(\n"
+			."\t'admin' => array('controller' => 'admin'),\n"
+			.");\n\n";
+
 		// Register the session handler and router
-		$file .= "\$session['type'] = 'datasource';\n\n"
+		$file .= "\$session['type'] = 'datasource';\n"
 			."\$router['type'] = 'dynamic';\n\n";
 
 		// Clean up the file contents
@@ -255,7 +260,6 @@ class Controller_install extends Controller {
 
 		if (!empty($args) && $args[0]=='complete') {
 			$this->setupComplete();
-			die('hmm');
 		}
 
 		if (!empty($this->input->post)) {
@@ -291,10 +295,6 @@ class Controller_install extends Controller {
 				$this->UI->setInputStatus('admin[email]','error','Required');
 				$continue = FALSE;
 			}
-			if (empty($post['adminUrl'])) {
-				$this->UI->setInputStatus('adminUrl','error','Required');
-				$continue = FALSE;
-			}
 
 			if ($continue) {
 				$this->headers->redirect('./setup/complete/');
@@ -309,7 +309,6 @@ class Controller_install extends Controller {
 			'config[wwwroot]'     => $config['wwwroot'],
 			'config[subtitle]'    => 'Powered by Escher',
 			'admin[username]'     => 'admin',
-			'adminUrl'            => 'admin',
 		);
 		$pages = 0;
 		if (!empty($_SESSION['setup'])) {
@@ -328,7 +327,6 @@ class Controller_install extends Controller {
 				$values["admin[$k]"] = $v;
 			}
 			unset($values['admin[password]'],$values['admin[password2]']);
-			$values['adminUrl'] = $_SESSION['setup']['adminUrl'];
 		}
 		$this->data['values'] = $values;
 		$this->data['pages'] = $pages;
@@ -355,6 +353,7 @@ class Controller_install extends Controller {
 		$setup['config']['theme'] = array('bootstrap','strapped');
 		$setup['config']['wwwroot'] = preg_replace('#/+$#','',
 			$setup['config']['wwwroot']);
+		$setup['config']['active_plugins'] = array('tinymce');
 
 		// Save config settings
 		$config = Load::Config();
@@ -376,16 +375,6 @@ class Controller_install extends Controller {
 		$acl->allow($user,'all','all',0,TRUE,TRUE);
 		$acl->allow($user,'all','sysadmin',0,TRUE,TRUE);
 
-		// Setup route to admin controller
-		$route = Load::Model('route_dynamic');
-		$route->assignVars(array(
-			'title'      => 'Admin Center',
-			'tag'        => $setup['adminUrl'],
-			'controller' => 'admin',
-			'parent_id'  => $hr->id(),
-		));
-		$route->save();
-
 		// Setup routes
 		$num = array(
 			'page' => 1,
@@ -402,6 +391,7 @@ class Controller_install extends Controller {
 				$route->save();
 			}
 		}
+		unset($_SESSION['config']);
 		$this->display('complete');
 	}
 }

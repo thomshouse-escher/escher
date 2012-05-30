@@ -1,3 +1,4 @@
+/config.php
 /plugins/*
 !/plugins/bootstrap
 !/plugins/facebook

@@ -12,7 +12,6 @@ class Plugin_google_Helper_userauth extends Helper_userauth {
 
 		// Get the user if it exists
 		if ($user = $this->findUser($gu,$token)) {
-			$_SESSION['user_id'] = $user->user_id;
 			return $user;
 		}
 

@@ -46,7 +46,10 @@ class Helper_session_datasource extends Helper_session {
 		}
 	}
 	function regenerate() {
-		$session = Load::Model('session',array('session_id'=>session_id()));
+		if (!session_id()) { return; }
+		if (!$session = Load::Model('session',array('session_id'=>session_id()))) {
+			return;
+		}
 		$session->expire();
 		session_regenerate_id();
 		$session->session_id = session_id();

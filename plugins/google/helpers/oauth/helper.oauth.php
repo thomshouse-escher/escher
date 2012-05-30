@@ -57,7 +57,7 @@ class Plugin_google_Helper_oauth extends Helper {
 				.'&redirect_uri='.urlencode($redirect)
 				.'&response_type=code'
 				.$scope
-			);
+			,TRUE);
 		}
 		// Once we have the code from the service provider, get the token
 		$curl = curl_init($this->tokenURL);

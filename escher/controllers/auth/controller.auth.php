@@ -3,9 +3,7 @@
 class Controller_auth extends Controller {
 	
 	function action_login($args) {
-		$session = Load::Session();
 		$hooks = Load::Hooks();
-		$session->remember_current_request = FALSE;
 		if (Load::User()) { $this->postLoginRedirect(); }
 
 		if(!empty($args)) {
@@ -33,12 +31,12 @@ class Controller_auth extends Controller {
 				$user = Load::Model('user',array('username'=>$input->post['username']));
 				if (!empty($user)) { $userauth = $user->getUserAuth(); }
 				if (!empty($userauth) && $userauth->login($input->post['username'],@$input->post['password'])) {
-					$session->regenerate();
+					$this->session->regenerate();
 					$_SESSION['user_id'] = $user->user_id;
 					if (!empty($input->post['persist'])) {
 						$_SESSION['persist'] = 1;
 					}
-					$session->updateCookie();
+					$this->session->updateCookie();
 					$hooks->runEvent('login_success');
 					$this->postLoginRedirect();
 				} else {
@@ -46,21 +44,20 @@ class Controller_auth extends Controller {
 					$hooks->runEvent('login_failure');
 				}
 			}
+		} elseif (!$this->input->get('continue')
+			&& ($referer = $this->headers->getReferer())
+			&& $referer != '/'
+		) {
+			$this->headers->redirect('@auth>login/?continue='.$referer);
 		}
 		return true;
 	}
 
 	function postLoginRedirect() {
-		$continue = $this->input->get('continue');
-		if (!empty($continue)
-			&& is_array($_SESSION['post_login_urls'])
-			&& in_array($continue,$_SESSION['post_login_urls'])
-		) {
-			unset($_SESSION['post_login_urls'][array_search($continue,
-				$_SESSION['post_login_urls'])]);
+		if ($continue = $this->input->get('continue')) {
 			$this->headers->redirect($continue);
 		} else {
-			$this->headers->redirect();
+			$this->headers->redirect('~/');
 		}
 	}
 
@@ -73,7 +70,6 @@ class Controller_auth extends Controller {
 		unset($_SESSION['user_id']);
 		unset($_SESSION['persist']);
 		$session->regenerate();
-		$session->remember_current_request = FALSE;
 		$session->updateCookie();
 		$session->setFlash('logout_complete',TRUE);
 		$this->headers->redirect();

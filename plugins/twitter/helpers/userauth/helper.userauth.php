@@ -30,7 +30,7 @@ class Plugin_twitter_Helper_userauth extends Helper_userauth {
 		if ($connection->http_code==200) {
 			/* Build authorize URL and redirect user to Twitter. */
 			$url = $connection->getAuthorizeURL($token);
-			$headers->redirect($url);
+			$headers->redirect($url,TRUE);
 		}
 		return false;
 	}

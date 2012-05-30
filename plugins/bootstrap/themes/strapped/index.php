@@ -20,10 +20,10 @@ $E($this->headers->getHeaders()); ?>
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span>
 			</a>
-			<a class="brand" href="<?php $E($www); ?>"><?php $UI->title(); ?></a>
+			<a class="brand" href="<?php $E($U('~/')); ?>"><?php $UI->title(); ?></a>
 			<div class="nav-collapse">
 				<ul class="nav">
-				  <li><a href="#">Home</a></li>
+				  <!-- li><a href="#">Link</a></li -->
 				</ul>
 				<ul class="nav pull-right">
 					<?php if($USER) { ?>

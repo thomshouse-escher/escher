@@ -36,19 +36,17 @@ class Controller_errors extends Controller {
 		// Build the redirect string
 		$router = Load::Router();
 		$redirect_back = $router->getCurrentPath(FALSE,TRUE);
-
-		if (!isset($_SESSION['post_login_urls'])) {
-			$_SESSION['post_login_urls'] = array();
+		if (!empty($_SERVER['QUERY_STRING'])) {
+			$redirect_back .= urlencode('?'.$_SERVER['QUERY_STRING']);
 		}
-		$_SESSION['post_login_urls'][] = $redirect_back;
-		
+
 		// Check the login path. If the login path is not set in the config, default to static login.
 		$login = !empty($CFG['login_url']) ? $CFG['login_url'] : '/login/';
 		
-		// If query string use ampersand, if not use question mark.
-		$qstr = (strpos($login,'?')===FALSE) ? '?' : '&';
+		// If query string exists use ampersand, if not use question mark.
+		$qdelim = (strpos($login,'?')===FALSE) ? '?' : '&';
 		
 		// Redirect to login with redirect set.
-		$this->headers->redirect($login.$qstr.'continue='.urlencode($redirect_back));
+		$this->headers->redirect($login.$qdelim.'continue='.$redirect_back);
 	}
 }

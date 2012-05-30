@@ -4,5 +4,5 @@
 </div>
 
 <div style="padding-top: 30px;">
-<a class="btn btn-large btn-primary pull-right" href="<?php $E($U('@admin')); ?>">Admin Center &raquo;</a>
+<a class="btn btn-large btn-primary pull-right" href="<?php $E($U('@admin/')); ?>">Admin Center &raquo;</a>
 </div>

@@ -49,7 +49,7 @@ abstract class Helper_router extends Helper {
 		return array();
 	}
 
-	function getCurrentPath($absolute=TRUE, $args=FALSE) {
+	function getCurrentPath($absolute=TRUE,$args=FALSE,$qsa=FALSE) {
 		if ($absolute) {
 			$CFG = Load::CFG();
 			$root = $CFG['wwwroot'];
@@ -62,6 +62,9 @@ abstract class Helper_router extends Helper {
 		}
 		if ($args) {
 			$current .= '/'.implode('/',$this->args);
+			if ($qsa && !empty($_SERVER['QUERY_STRING'])) {
+				$current.= '?'.$_SERVER['QUERY_STRING'];
+			}
 		}
 		return $current;
 	}

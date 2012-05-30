@@ -1,15 +1,16 @@
 <?php
 
 class Helper_session extends Helper {
-	public $remember_current_request = TRUE;
 	protected $useCustomHandler = FALSE;
 	protected $cookieName = 'escher_session';
 	protected $cookiePath = '/';
 	protected $cookieDomain = NULL;
 	protected $daysToPersist = 30;
+	protected $cookieExists;
 	public $preserveFlash = FALSE;
 	
 	function __construct() {
+		ob_start();
 		parent::__construct();
 		$this->daysToPersist = round($this->daysToPersist);
 		if (empty($this->cookiePath)) {
@@ -29,6 +30,31 @@ class Helper_session extends Helper {
 				array(&$this,'garbageHandler')
 			);
 		}
+
+		// We need to register the shutdown function here
+		register_shutdown_function(array($this,'close'));
+
+		// Start the session if the session cookie exists
+		if (array_key_exists($this->cookieName,$_COOKIE)) {
+			$this->startSession();
+			if(!empty($_SESSION['user_id']) && $user = Load::User()) {
+				$userauth = $user->getUserAuth();
+				if (!$userauth->reauthenticate()) {
+					unset($_SESSION['user_id']);
+					unset($_SESSION['persist']);
+					$this->updateCookie();
+					$this->setFlash('logout_complete',TRUE);
+					$headers = Load::Headers();
+					$headers->redirect();
+				}
+			}
+		}
+	}
+
+	protected function startSession() {
+		// Only run once per request
+		if ($this->cookieExists) { return; }
+
 		// Set the session name, gc, and start!
 		session_name($this->cookieName);
 		session_set_cookie_params(0,$this->cookiePath,$this->cookieDomain);
@@ -40,23 +66,9 @@ class Helper_session extends Helper {
 		of your operating system.  Debian is known to override PHP's default
 		session garbage collection. */
 
-		// We need to register the queue_shutdown function here
-		register_shutdown_function(array($this,'shutdown'));
 		// Create the cookie w/ proper values
 		$this->updateCookie();
-
-		if(!empty($_SESSION['user_id']) && $user = Load::User()) {
-			$userauth = $user->getUserAuth();
-			if (!$userauth->reauthenticate()) {
-				unset($_SESSION['user_id']);
-				unset($_SESSION['persist']);
-				$this->remember_current_request = FALSE;
-				$this->updateCookie();
-				$this->setFlash('logout_complete',TRUE);
-				$headers = Load::Headers();
-				$headers->redirect();
-			}
-		}
+		$this->cookieExists = TRUE;
 	}
 
 	function updateCookie() {				
@@ -96,30 +108,47 @@ class Helper_session extends Helper {
 	}
 	
 	function getFlash($name,$keep=FALSE) {
-		$result = @$_SESSION['_FLASH'][$name];
+		$result = isset($_SESSION['_FLASH'][$name])
+			? $_SESSION['_FLASH'][$name]
+			: NULL;
 		if (!$keep) {
-			unset($_SESSION['_FLASH'][$name]);
+			if (isset($_SESSION)) {
+				unset($_SESSION['_FLASH'][$name]);
+			}
 		}
 		return $result;
 	}
 	
 	protected function pruneFlash() {
-		$_SESSION['_FLASH'] = array();
+		if (isset($_SESSION)) {
+			unset($_SESSION['_FLASH']);
+		}
 	}
 		
-	function shutdown() {
-		if (!$this->preserveFlash) {
-			$this->pruneFlash();
-		}
-		if ($this->remember_current_request && empty($_POST)) {
-			$router = Load::Router();
-			$lastreq = $router->getCurrentPath(FALSE,TRUE);
-			if (!empty($_SERVER['QUERY_STRING'])) {
-				$lastreq .= '?'.$_SERVER['QUERY_STRING'];
+	function close() {
+		// Just run once
+		static $closed;
+		if ($closed) { return; }
+		$closed = TRUE;
+
+		// Prune flash if not explicity preserving it
+		if (!$this->preserveFlash) { $this->pruneFlash(); }
+
+		// Finish handling the session/cookie data
+		if ($this->cookieExists) {
+			if (empty($_SESSION)) {
+				setcookie($this->cookieName,'',NOW-24*60*60,$this->cookiePath,$this->cookieDomain);
 			}
-			$this->setFlash('last_request_url',$lastreq);
+		} elseif (!empty($_SESSION)) {
+			$vars = $_SESSION;
+			$this->startSession();
+			$_SESSION = $vars;
 		}
 		session_write_close();
+
+		// Clear all output buffers
+		while(ob_get_level()) { ob_end_flush(); }
+		flush();
 	}
 
 	function openHandler($save_path,$session_name) {}

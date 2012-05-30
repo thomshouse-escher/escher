@@ -363,8 +363,6 @@ class Load {
 	public function Error($error='404',$args=array()) {
 		$CFG=Load::CFG();
 		array_unshift($args,$error);
-		$session = Load::Session();
-		$session->remember_current_request = FALSE;;
 		// If error controller is set in the config.
 		if (isset($CFG['errorController'])) {
 			$controller = Load::Controller($CFG['errorController'],$args);

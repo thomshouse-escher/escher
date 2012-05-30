@@ -16,7 +16,7 @@ class Plugin_facebook_Helper_userauth_oauth extends Helper_userauth {
 				.$CFG['facebook_appId'].'&redirect_uri='
 				.urlencode($CFG['wwwroot'].'/login/facebook/')
 				.($browser->match('mobile')? '&amp;display=touch' : '')
-			);
+			,TRUE);
 		}
 
 		// Attempt to get Oauth access token using the provided code

@@ -34,11 +34,14 @@ class Helper_router_dispatch extends Helper_router {
 	function getRoute() { return $this->sourceRouter->getRoute(); }
 	function getContext() { return $this->sourceRouter->getRoute(); }
 
-	function getCurrentPath($absolute=TRUE, $args=FALSE) {
+	function getCurrentPath($absolute=TRUE,$args=FALSE,$qsa=FALSE) {
 		$path = $this->getParentPath($absolute);
 		if (!empty($this->base)) { $path .= '/'.$this->base; }
 		if ($args && !empty($this->args)) {
 			$path .= '/'.implode('/',$this->args);
+			if ($qsa && !empty($_SERVER['QUERY_STRING'])) {
+				$current.= '?'.$_SERVER['QUERY_STRING'];
+			}
 		}
 		return $path;
 	}
