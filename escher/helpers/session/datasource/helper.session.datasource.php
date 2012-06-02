@@ -3,7 +3,6 @@
 class Helper_session_datasource extends Helper_session {
 	protected $useCustomHandler = TRUE;
 
-	
 	function openHandler($save_path,$session_name) { return true; }
 	function readHandler($session_id) {
 		$session = Load::Model('session',array('session_id'=>$session_id));
@@ -26,7 +25,7 @@ class Helper_session_datasource extends Helper_session {
 		}
 	}
 	function closeHandler() { return true; }
-	function destroyHandler($id) {
+	function destroyHandler($session_id) {
 		$session = Load::Model('session',array('session_id'=>$session_id));
 		if ($session && $session->delete()) {
 			$this->garbageHandler($this->daysToPersist*24*60*60);
@@ -37,10 +36,13 @@ class Helper_session_datasource extends Helper_session {
 	function garbageHandler($lifetime) {
 		$so = Load::Model('session');
 		$sessions = $so->find(array(
-			'mtime'=>array('<'=>date('Y-m-d H:i:s',strtotime("-$lifetime seconds",NOW)))));
+			'modified_at' => array(
+				'<' => date('Y-m-d H:i:s',strtotime("-$lifetime seconds",NOW)),
+			)
+		));
 		if(!empty($sessions)) {
 			foreach($sessions as $s) {
-				$s = Load::Model('session',$s['id']);
+				$s = Load::Model('session',$s['session_id']);
 				$s->delete();
 			}
 		}
@@ -50,7 +52,8 @@ class Helper_session_datasource extends Helper_session {
 		if (!$session = Load::Model('session',array('session_id'=>session_id()))) {
 			return;
 		}
-		$session->expire();
+		$oldSession = clone $session;
+		$oldSession->delete();
 		session_regenerate_id();
 		$session->session_id = session_id();
 		$session->save();

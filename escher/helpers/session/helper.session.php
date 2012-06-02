@@ -137,14 +137,16 @@ class Helper_session extends Helper {
 		// Finish handling the session/cookie data
 		if ($this->cookieExists) {
 			if (empty($_SESSION)) {
-				setcookie($this->cookieName,'',NOW-24*60*60,$this->cookiePath,$this->cookieDomain);
+				setcookie($this->cookieName,'',NOW-24*60*60,
+					$this->cookiePath,$this->cookieDomain);
+				session_destroy();
 			}
 		} elseif (!empty($_SESSION)) {
 			$vars = $_SESSION;
 			$this->startSession();
 			$_SESSION = $vars;
 		}
-		session_write_close();
+		if (session_id()) { session_write_close(); }
 
 		// Clear all output buffers
 		while(ob_get_level()) { ob_end_flush(); }
@@ -153,8 +155,8 @@ class Helper_session extends Helper {
 
 	function openHandler($save_path,$session_name) {}
 	function closeHandler() {}
-	function readHandler($id) {}
-	function writeHandler($id,$data) {}
-	function destroyHandler($id) {}
+	function readHandler($session_id) {}
+	function writeHandler($session_id,$data) {}
+	function destroyHandler($session_id) {}
 	function garbageHandler($lifetime) {}
 }
