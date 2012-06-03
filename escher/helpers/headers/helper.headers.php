@@ -250,10 +250,6 @@ class Helper_headers extends Helper {
 		} else {
 			$url = $router->resolvePath('~/'); // Site root
 		}
-		if ($qsa && !empty($_SERVER['QUERY_STRING'])) {
-			$url .= ((strpos($url,'?')===FALSE) ? '?' : '&')
-				.$_SERVER['QUERY_STRING'];
-		}
 		$this->addHTTP("Location: $url");
 		$this->sendHTTP();
 		exit();

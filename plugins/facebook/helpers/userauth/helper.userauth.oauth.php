@@ -51,6 +51,7 @@ class Plugin_facebook_Helper_userauth_oauth extends Helper_userauth {
 
 	// If our token expires, we need to redirect the user to authenticate with facebook
 	function reauthenticate($force=FALSE) {
+		if (!empty($_SESSION['skip_reauthentication'])) { return TRUE; }
 		if ($force || empty($_SESSION['facebook_expires']) || $_SESSION['facebook_expires']<NOW) {
 			unset($_SESSION['user_id']);
 			$CFG = Load::Config();

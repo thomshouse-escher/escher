@@ -35,6 +35,7 @@ class Plugin_facebook_Helper_userauth_connect extends Helper_userauth {
 
 	// fbconnect userauth is very closely tied to a user's FB session, reauth is essential.
 	function reauthenticate() {
+		if (!empty($_SESSION['skip_reauthentication'])) { return TRUE; }
 		// Basically, load everything and make sure that the user is still logged in
 		$fb = loadFacebookAPI();
 		$fbsession = $fb->getSession();
