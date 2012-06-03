@@ -118,10 +118,6 @@ class Helper_headers extends Helper {
 			. 'src="http://ajax.googleapis.com/ajax/libs/jqueryui/1/jquery-ui.min.js">'
 			. "</script>\n";
 		}
-		if (in_array('theme',$this->jquery)) {
-			$response .= '<link rel="stylesheet" href="' . $CFG['wwwroot']
-				. '/public/jquery/css/escher/jquery-ui.css" />' . "\n";
-		}
 		$this->jquery = FALSE;
 		return $response;
 	}
