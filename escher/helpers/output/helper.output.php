@@ -44,11 +44,6 @@ abstract class Helper_output extends Helper {
 	function getAssignedVars() {
 		return $this->assigned_vars;
 	}
-	
-	function display($view) {
-		$this->assignReservedVars();
-		return $this->fetch($view);
-	}
 
 	function displayControllerView($controller,$view) {
 		// Force $controller to be an actual Controller object
@@ -121,7 +116,8 @@ abstract class Helper_output extends Helper {
 		$out->assign('notifications',$notifications);
 
 		// Display
-		return $out->display(ESCHER_DOCUMENT_ROOT."$theme_dir/index");
+		$out->assignReservedVars();
+		return $out->fetch(ESCHER_DOCUMENT_ROOT."$theme_dir/index");
 	}	
 	
 	function doEcho($text,$default='') {
