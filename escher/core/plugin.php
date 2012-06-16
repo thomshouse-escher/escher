@@ -16,7 +16,7 @@
  * @package Escher
  * @subpackage Core
  */
-class EscherPlugin extends EscherObject {
+class Plugin extends EscherObject {
 	/**
 	 * Associative array where the key is the event name and
 	 * the value is an array of method names.

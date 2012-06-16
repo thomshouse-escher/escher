@@ -1,6 +1,6 @@
 <?php
 
-class EscherHelper extends EscherObject {
+class Helper extends EscherObject {
 	protected $init_args = array();
 
 	function __construct($args=array()) {
