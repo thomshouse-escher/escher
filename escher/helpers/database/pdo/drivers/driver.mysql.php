@@ -11,8 +11,8 @@ class Escher_PDOdriver_mysql extends EscherObject {
 	}
 
 	function getSchema($table) {
-		// Save the name of the metadata table.  We'll reuse this
-		$metadataTable = $this->pdo->t($table.'_metadata',FALSE);
+		// Prefix the table
+		$table = $this->pdo->t($table,FALSE);
 
 		// Get the column info from information_schema
 		$result = $this->pdo->getAll(
@@ -21,11 +21,11 @@ class Escher_PDOdriver_mysql extends EscherObject {
 			. $this->pdo->n('TABLE_NAME'). '=? DESC,'
 			. $this->pdo->n('TABLE_NAME'). '=? DESC,'
 			. $this->pdo->n('ORDINAL_POSITION') .' ASC', array(
-				$this->pdo->t($table,FALSE),
-				$this->pdo->t($table.'_metadata',FALSE),
-				$this->pdo->t($table.'_content',FALSE),
-				$this->pdo->t($table,FALSE),
-				$this->pdo->t($table.'_metadata',FALSE),
+				$table,
+				$table.'_metadata',
+				$table.'_content',
+				$table,
+				$table.'_metadata',
 			));
 
 		// Build the fields array
@@ -47,7 +47,7 @@ class Escher_PDOdriver_mysql extends EscherObject {
 			if (in_array($field['type'],$this->intTypes)) {
 				$field['length'] = $r['NUMERIC_PRECISION'];
 			}
-			if ($r['TABLE_NAME']==$metadataTable) {
+			if ($r['TABLE_NAME']==$table.'_metadata') {
 				$field['metadata'] = TRUE;
 			}
 			foreach($field as $k => $v) {
@@ -63,7 +63,7 @@ class Escher_PDOdriver_mysql extends EscherObject {
 			$tables
 		);
 		foreach($tables as $t) {
-			$kresult = $this->pdo->getAll('SHOW KEYS FROM ' . $this->pdo->t($t));
+			$kresult = $this->pdo->getAll("SHOW KEYS FROM `$t`");
 			foreach($kresult as $r) {
 				$kname = $r['Key_name'];
 				if ($kname=='PRIMARY') {
