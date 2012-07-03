@@ -95,12 +95,11 @@ abstract class Model extends EscherObject {
 			$this->_runTriggers('modify');
 		}
 
-		$values = array();
 		foreach($this->_schemaFields as $k => $p) {
-			if (isset($this->$k)) {
-				$values[$k] = $this->$k;
-			} elseif (array_key_exists($k,$this->_savedValues)) {
-				$values[$k] = '';
+			if (!isset($this->$k)
+				&& array_key_exists($k,$this->_savedValues)
+			) {
+				$this->$k = '';
 			}
 		}
 
@@ -116,7 +115,7 @@ abstract class Model extends EscherObject {
 		// Note: Only new objects should have to iterate
 		foreach($sources as $s) {
 			$ds = Load::Datasource($s);
-			if ($id = $ds->set($this,$values,$options)) {
+			if ($id = $ds->set($this,NULL,$options)) {
 				$this->_new = FALSE;
 				if ($this->_primaryKey() && !$this->id()) {
 					$this->setValues(array(
