@@ -44,7 +44,6 @@ class Model_blog_entry extends Model {
 			$this->tagline = $this->title;
 		}
 		$this->tagline = preg_replace(array('/\W+/','/^[^a-z0-9]+/i','/[^a-z0-9]+$/i'),array('-','',''),strtolower($this->tagline));
-		$ds = Load::Datasource();
 		$tagline = $this->tagline;
 		$i = 1;
 		do {
@@ -52,7 +51,7 @@ class Model_blog_entry extends Model {
 			$conditions = array('series_type'=>$this->series_type,'series_id'=>$this->series_id,'tagline'=>$tagline);
 			if (!empty($this->blog_entry_id)) { $conditions['blog_entry_id'] = array('!='=>$this->blog_entry_id); }
 			$i++;
-		} while ($check = $ds->get($this->_m(),$conditions));
+		} while ($check = $this->find($this->_m(),$conditions));
 		$this->tagline = $tagline;
 	}
 	

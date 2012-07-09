@@ -19,11 +19,16 @@ class Model_route_static extends Model {
 	public function __construct($key=NULL) {
 		parent::__construct();
 		$this->route_id = $key;
+		$config = Load::Config();
 		if ($this->route_id=='/') {
-			$this->parent_id = '';
+			$this->_savedValues = array('route_id' => '');
 		} else {
+			if (array_key_exists(ltrim($key,'/'),$config['static_routes'])) {
+				$this->_savedValues = $config['static_routes'][ltrim($key,'/')];
+			}
 			$this->parent_id = '/'.implode('/',array_slice(preg_split('#/#',$this->route_id,-1,PREG_SPLIT_NO_EMPTY),0,-1));
 		}
+		$this->setValues($this->_savedValues);
 	}
 	
 	public function getParent() {

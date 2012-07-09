@@ -2,7 +2,7 @@
 
 class Controller_blog extends Controller {
 	protected $allowedModelTypes = array('article');
-	protected $seriesType = 'blog';
+	protected $modelType = 'blog';
 	protected $entryType = 'blog_entry';
 	protected $previewLimit = 140;
 	protected $displayConditions = array('published'=>1);
@@ -36,10 +36,8 @@ class Controller_blog extends Controller {
 	}
 	
 	function action_index($args) {
-		if (empty($this->id)) { Load::Error('500'); }
-		$page = Load::Model($this->seriesType,$this->id);
-		$ds = Load::Datasource();
-		$conditions = array('series_type'=>$this->seriesType,'series_id'=>$this->id);
+		$page = $this->model;
+		$conditions = array('series_type'=>$this->modelType,'series_id'=>$this->id);
 		if (!empty($this->displayConditions)) {
 			$conditions[] = $this->displayConditions;
 		}
@@ -50,15 +48,18 @@ class Controller_blog extends Controller {
 		}
 
 		$this->data['entries'] = array();
-		$entries = $ds->get($this->entryType,$conditions,
+		$model = Load::Model($this->entryType);
+		$entries = $model->find($conditions,
 			array('limit'=>$limit,'order'=>$this->sortOrder));
-		if (empty($entries) && is_array($limit)) {
+		if (empty($entries) && is_array($limit) && reset($limit)!=0) {
 			Load::Error('404');
 		}
-		foreach($entries as $e) {
-			$this->data['entries'][] = Load::Model($this->entryType,$e['model_id']);
+		if (is_array($entries)) {
+			foreach($entries as $e) {
+				$this->data['entries'][] = Load::Model($this->entryType,$e['model_id']);
+			}
 		}
-		$this->data['resource'] = array($this->seriesType,$this->id);
+		$this->data['resource'] = array($this->modelType,$this->id);
 		$this->data['description'] = @$page->blog_description;
 		$this->data['title'] = @$page->blog_title;
 	}
@@ -73,16 +74,19 @@ class Controller_blog extends Controller {
 	}
 	
 	function manage_edit($args) {
-		if (!empty($this->id)) { $page = Load::Model($this->seriesType,$this->id); }
-		if (empty($page)) { $page = Load::Model($this->seriesType); }
+		$page = $this->model;
 		$lockout = Load::Lockout();
 		if ($lockout->isLocked($page)) {
 			$headers = Load::Headers();
 			$headers->addNotification('This page is currently being edited by another user.','error');
 			$headers->redirect('./');
 		}
+		$route = $this->router->getRoute();
 		if (!empty($this->input->post)) {
+			$route->parseInput();
+			$route->save();
 			$page->parseInput();
+			$page->blog_title = $route->title;
 			$page->touch();
 			if ($page->save()) {
 				$this->headers->redirect('./');
@@ -91,13 +95,15 @@ class Controller_blog extends Controller {
 			}
 		}
 		if (!empty($this->id)) { $lockout->lock($page); }
-		$this->data['form'] = $page->display('edit');
+		$this->UI->setContent('route',$route->display('edit'));
+		$this->UI->setContent('blog',$page->display('edit'));
+		return TRUE;
 	}
 	
 	function action_entry($args) {
 		$entry = Load::Model($this->entryType,@$args[0]);
 		$acl = Load::ACL();
-		if (empty($entry->published) && !$acl->check(array($this->seriesType,$this->id),'preview')) {
+		if (empty($entry->published) && !$acl->check($this->model,'preview')) {
 			Load::Error('404');
 		}
 		if (!empty($entry->permalink) && !preg_match('#^entry/'.$entry->id().'$#',$entry->permalink)) {
@@ -107,8 +113,8 @@ class Controller_blog extends Controller {
 		$model = Load::Model($entry->model_type,$entry->model_id);
 		$this->data['model'] = $model->display('index');
 		$this->data['entry'] = $entry;
-		$this->data['resource'] = array($this->seriesType,$this->id);
-		$this->data['page'] = Load::Model($this->seriesType,$this->id);
+		$this->data['resource'] = array($this->modelType,$this->id);
+		$this->data['page'] = $this->model->getValues();
 	}
 	
 	function manage_add_entry($args) {
@@ -130,7 +136,7 @@ class Controller_blog extends Controller {
 	
 	function manage_edit_entry($args) {
 		$entry = Load::Model($this->entryType,@$args[0]);
-		if (!empty($entry->series_type) && !empty($entry->series_id) && ($entry->series_type != $this->seriesType || $entry->series_id != $this->id)) {
+		if (!empty($entry->series_type) && !empty($entry->series_id) && ($entry->series_type != $this->modelType || $entry->series_id != $this->id)) {
 			Load::Error('403');
 		}
 		if (!empty($this->input->post)) {
@@ -140,7 +146,7 @@ class Controller_blog extends Controller {
 			if (!empty($this->input->post['delete_entry'])) {
 				$entry->delete();
 				$model->delete();
-				$series = Load::Model($this->seriesType,$this->id);
+				$series = $this->model;
 				$series->touch(); $series->save();
 				$headers = Load::Headers();
 				$headers->addNotification('The entry was successfully deleted.','success');
@@ -148,10 +154,10 @@ class Controller_blog extends Controller {
 			}
 			$model->touch(); $model->save();
 			$this->parseEntryDataFromModel($entry,$model);
-			$entry->series_type = $this->seriesType;
+			$entry->series_type = $this->modelType;
 			$entry->series_id = $this->id;
 			$entry->touch(); $entry->save();
-			$series = Load::Model($this->seriesType,$this->id);
+			$series = $this->model;
 			$series->touch(); $series->save();
 			$headers = Load::Headers();
 			$headers->redirect('./entry/'.$entry->id());
@@ -178,10 +184,10 @@ class Controller_blog extends Controller {
 		$permalink = implode('/',$args);
 		$entry = Load::Model($this->entryType,array('permalink'=>$permalink));
 		$acl = Load::ACL();
-		if (empty($entry->published) && !$acl->check(array($this->seriesType,$this->id),'preview')) {
+		if (empty($entry->published) && !$acl->check($this->model,'preview')) {
 			Load::Error('404');
 		}
-		if ($entry->id()) {
+		if (!empty($entry->id)) {
 			$this->calledAction = 'entry';
 			return parent::action_entry(array($entry->id()));
 		}

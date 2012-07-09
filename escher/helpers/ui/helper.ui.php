@@ -8,6 +8,7 @@ class Helper_ui extends Helper {
 	protected $menus = array();
 	protected $nullUrl = '#';
 	protected $inputStatus = array();
+	protected $content = array();
 	
 	function __construct($args=array()) {
 		parent::__construct($args);
@@ -95,6 +96,31 @@ class Helper_ui extends Helper {
 		if (is_null($out)) { $out = $this->directOutput; }
 		if ($out) { echo $this->siteTitle; }
 		return $this->siteTitle;
+	}
+
+	function setContent($name,$content) {
+		if (array_key_exists($name,$this->content)) {
+			$this->content[$name] .= $content;
+		} else {
+			$this->content[$name] = $content;
+		}
+	}
+
+	function getContent($name,$out=NULL) {
+		if (!array_key_exists($name,$this->content)) { return; }
+
+		if (is_null($out)) { $out = $this->directOutput; }
+		if ($out) { echo $this->content[$name]; }
+		return $this->content[$name];
+
+	}
+
+	function clearContent($name=NULL) {
+		if (is_null($name)) {
+			$this->content = array();
+		} else {
+			unset($this->content[$name]);
+		}
 	}
 
 	function setInputStatus($name,$status='message',$message=NULL) {

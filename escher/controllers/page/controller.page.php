@@ -1,19 +1,19 @@
 <?php
 
 class Controller_page extends Controller {
+	protected $modelType = 'page';
+
 	function action_index($args) {
 		if (empty($this->id)) { Load::Error('500'); }
 		$this->data['resource'] = array('page',$this->id);
-		if ($page = Load::Model('page',$this->id)) {
-			$this->data['body'] = !empty($page->body) ? $page->body : '';
-			$this->data['title'] = $page->page_title;
-		}
+		$page = $this->model;
+		$this->data['body'] = $page->body;
 	}
 	
 	function manage_edit($args) {
-		// Attempt to load the page if we have an id
-		if (!empty($this->id)) { $page = Load::Model('page',@$this->id); }
-		if (!empty($page)) {
+		// Load the page model
+		$page = $this->model;
+		if (!empty($page->id)) {
 			// If the page exists, let's check/set lockout status
 			$lockout = Load::Lockout();
 			if ($lockout->isLocked($page)) {
@@ -21,14 +21,15 @@ class Controller_page extends Controller {
 				$this->headers->redirect('./');
 			}
 			$lockout->lock($page);
-		} else {
-			// Otherwise, let's load a new page and set the id
-			$page = Load::Model('page');
-			if (!empty($this->id)) { $page->page_id = $this->id; }
 		}
+		$route = $this->router->getRoute();
 
 		// Process form data
 		if (!empty($this->input->post)) {
+			// Parse and save route data
+			$route->parseInput();
+			$route->save();
+
 			// If discarding draft, empty, save, and redirect to edit
 			if (!empty($this->input->post['discard_draft'])) {
 				unset($page->draft);
@@ -41,11 +42,13 @@ class Controller_page extends Controller {
 				// If we're saving a draft, clone the page model, parse, and serialize
 				$draft = clone($page);
 				$draft->parseInput();
+				$draft->page_title = $route->title; // Copy title from route
 				$page->draft = serialize($draft);
 			} else {
 				// Otherwise, empty draft data, parse input
 				unset($page->draft);
 				$page->parseInput();
+				$page->page_title = $route->title; // Copy title from route
 				$page->touch();
 			}
 
@@ -63,7 +66,9 @@ class Controller_page extends Controller {
 			$this->data['draft'] = TRUE;
 		}
 
-		// Pass the model form
-		$this->data['form'] = $page->display('edit');
+		// Pass the form views
+		$this->UI->setContent('route',$route->display('edit'));
+		$this->UI->setContent('page',$page->display('edit'));
+		return TRUE;
 	}
 }

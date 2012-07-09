@@ -1,9 +1,11 @@
+<h1>Edit Page</h1>
 <?php
 	$FORM->open(array(
 		'method' => 'POST',
 		'onsubmit' => $_unload(),
 	));
-	$E($F($form,'decode'));
+	$UI->getContent('route');
+	$UI->getContent('page');
 	$FORM->openFieldset(NULL,array('class'=>'form-vertical'));
 	$FORM->openActions();
 	$FORM->submit('Save and Publish',array('class' => 'btn-large'));
