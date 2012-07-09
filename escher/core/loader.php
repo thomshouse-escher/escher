@@ -96,8 +96,7 @@ class Load {
 			return new $classname();
 		} else {
 			$result = new $classname($key);
-			$diff = array_diff_assoc(get_object_vars($result),get_class_vars(get_class($result)));
-			if (empty($diff)) {
+			if (sizeof($result->_savedValues)==0) {
 				return false;
 			}
 			return $result;

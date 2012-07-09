@@ -126,7 +126,8 @@ abstract class Model extends EscherObject {
 					$this->_datasource = $s;
 				}
 				$this->expire();
-				$this->_savedValues = $values;
+				$this->notifyObservers('save');
+				$this->_savedValues = $this->getValues();
 				return true;
 			}
 		}
@@ -250,15 +251,17 @@ abstract class Model extends EscherObject {
 	}
 
 	// Display a view for this model, using provided data or object data
-	final function display($view,$data=NULL,$type=NULL) {
+	function display($view,$data=NULL,$type=NULL) {
 		if (is_null($type)) { $type = $this->_outputType; }
-		$out = Load::Output($type,$this);
-		$out->assignVars($data);
+		$out = Load::Output($type);
 		if (is_null($data)) {
 			$nameFormat = !empty($this->id)
 				? "model[{$this->_m()}][{$this->id}][%s]"
 				: "model[{$this->_m()}][new][".uniqid()."][%s]";
+			$out->assignVars($this->getValues());
 			$out->assignModelVars($this,$nameFormat);
+		} else {
+			$out->assignVars($data);
 		}
 		return $out->displayModelView($this,$view);
 	}
@@ -340,12 +343,16 @@ abstract class Model extends EscherObject {
 					: NULL;
 				break;
 			default:
-				$trace = debug_backtrace();
-				trigger_error('Undefined property: '
-					. get_class($this) . '::$' .$name .
-					' in ' . $trace[0]['file'] .
-					' on line ' . $trace[0]['line'],
-					E_USER_NOTICE);
+				if (array_key_exists($name,$this->_schemaFields)) {
+					$this->$name = NULL;
+				} else {
+					$trace = debug_backtrace();
+					trigger_error('Undefined property: '
+						. get_class($this) . '::$' .$name .
+						' (from ' . $trace[0]['file'] .
+						' on line ' . $trace[0]['line'] . ')',
+						E_USER_NOTICE);
+				}
 				return NULL; break;
 		}
 	}
@@ -359,6 +366,13 @@ abstract class Model extends EscherObject {
 				if(isset($this->$name)) { return; }
 				$this->$name = $value;
 				break;
+		}
+	}
+
+	final function __unset($name) {
+		$id = "{$this->_m()}_id";
+		switch ($name) {
+			case 'id': unset($this->$id); break;
 		}
 	}
 
@@ -498,6 +512,11 @@ abstract class Model extends EscherObject {
 		// Clean up the keys
 		foreach($this->_schemaKeys as $k => $v) {
 			$this->_schemaKeys[$k]['fields'] = (array)$v['fields'];
+		}
+
+		// Initialize fields
+		foreach($this->_schemaFields as $k => $v) {
+			$this->$k = isset($v['default']) ? $v['default'] : NULL;
 		}
 	}
 
