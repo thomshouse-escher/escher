@@ -165,11 +165,10 @@ abstract class Helper_router extends Helper {
 		if (empty($this->controller)) { Load::Error('404'); }
 		$args = !empty($this->args) ? $this->args : NULL;
 		$controller = Load::Controller($this->controller,$args);
-		$controller->router = $this;
-		$vars = array();
+		$vars = array('router' => $this);
 		if (isset($this->action)) { $vars['action'] = $this->action; }
 		if (isset($this->instance_id)) { $vars['id'] = $this->instance_id; }
-		$controller->assignVars($vars);
+		$controller->initialize($vars);
 		return $controller;
 	}
 

@@ -24,6 +24,9 @@ class Controller extends EscherObject {
 	protected $ACLRestrictedActions = array();
 	protected $input = array();
 	protected $dispatchBase = array();
+	protected $modelType;
+	protected $model;
+	public $id;
 	public $data = array();
 	
 	/**
@@ -42,6 +45,26 @@ class Controller extends EscherObject {
 		$this->session = Load::Session();
 		$this->USER = Load::User();
 		$this->UI = Load::UI();
+	}
+
+	function initialize($vars) {
+		$this->assignVars($vars);
+		if (!empty($this->modelType)) {
+			$this->model = Load::Model($this->modelType,$this->id);
+			$this->observeObject($this->model);
+		}
+	}
+
+	function onObservation($object,$event=NULL) {
+		if ($event=='save' && $object===$this->model) {
+			$route = $this->router->getRoute();
+			if ($route->_m()=='route_dynamic'
+				&& $object->id()!=$route->instance_id
+			) {
+				$route->instance_id = $object->id();
+				$route->save();
+			}
+		}
 	}
 	
 	/**

@@ -46,6 +46,8 @@ class Helper_router_dynamic extends Helper_router {
 		$route['args'] = $args;
 		$route['route'] = $model;
 
+		$this->observeObject($model);
+
 		return $route;
 	}
 
@@ -83,5 +85,18 @@ class Helper_router_dynamic extends Helper_router {
 		$path = implode('/',$path);
 
 		return $this->getRootPath($absolute)."/$path";
+	}
+
+	function onObservation($object,$event=NULL) {
+		switch ($event) {
+			case 'save':
+				if ($object===$this->route && $object->_m()=='route_dynamic') {
+					$this->current_path = implode('/',array_merge(
+						array_slice(explode('/',$this->current_path),0,-1),
+						array($object->tag)
+					));
+				}
+				break;
+		}
 	}
 }
