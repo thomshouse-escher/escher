@@ -100,13 +100,13 @@ class Helper_acl extends Helper {
 			$cpath = $ro->resolvePath($context,FALSE);
 			$router = Load::Router($cpath);
 			$context = $router->getRoute();
-		} elseif (!is_a($context,'Model_route_static')
+		}
+		
+		if (!is_a($context,'Model_route_static')
 			&& !is_a($context,'Model_route_dynamic')
 		) {
 			return false;
 		}
-
-		if (!$context->id()) { return false; }
 
 		if (is_array($action) && sizeof($action)==1) {
 			$action = reset($action);
