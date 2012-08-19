@@ -382,12 +382,16 @@ class Escher_PDOdriver_mysql extends EscherObject {
 	}
 
 	protected function _fieldSQL($field) {
-		$sql = $field['type'];
+		$sql = strtoupper($field['type']);
 		if ((in_array($field['type'],$this->intTypes)
 				|| in_array($field['type'],$this->stringTypes))
 			&& !empty($field['length'])
 		) {
 			$sql .= "({$field['length']})";
+		} elseif ($field['type']=='decimal') {
+			$dp = isset($field['precision']) ? $field['precision'] : 10;
+			$ds = isset($field['scale']) ? $field['scale'] : 0;
+			$sql .= "($dp,$ds)";
 		}
 		if (!empty($field['unsigned'])) { $sql .= " UNSIGNED"; }
 		if (!empty($field['zerofill'])) { $sql .= " ZEROFILL"; }

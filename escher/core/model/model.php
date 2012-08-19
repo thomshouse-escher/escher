@@ -462,6 +462,14 @@ abstract class Model extends EscherObject {
 					case 'email':
 						$default['length'] = 255;
 						$attrs['type'] = 'string'; break;
+					// Decimal types and shorthands
+					case 'decimal':
+						$default['precision'] = 10;
+						$default['scale'] = 0; break;
+					case 'currency':
+						$default['precision'] = 10;
+						$default['scale'] = 2;
+						$attrs['type'] = 'decimal'; break;
 					// Content types and shorthands
 					case 'array':
 					case 'content':
