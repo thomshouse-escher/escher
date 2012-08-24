@@ -143,7 +143,7 @@ abstract class Helper_output extends Helper {
 
 	protected function getViewPath($object,$view) {
 		$ref = new ReflectionClass(get_class($object));
-		while ($ref && $ref->getShortName() != 'EscherObject') {
+		while ($ref && $ref->getName() != 'EscherObject') {
 			$path = dirname($ref->getFileName())."/views/$view";
 			if (file_exists("$path{$this->extension}")) {
 				return $path;

@@ -213,9 +213,9 @@ abstract class Model extends EscherObject {
 		} elseif (!empty($input->post['model'][$this->_m()]['new'])) {
 			$uniqid = reset(array_diff(
 				array_keys($input->post['model'][$this->_m()]['new']),
-				static::$_parsedNew
+				self::$_parsedNew
 			));
-			static::$_parsedNew[] = $uniqid;
+			self::$_parsedNew[] = $uniqid;
 			$data = $input->post['model'][$this->_m()]['new'][$uniqid];
 		} else {
 			return false;
