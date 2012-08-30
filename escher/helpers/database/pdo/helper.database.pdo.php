@@ -4,6 +4,7 @@ class Helper_database_pdo extends Helper_database {
 	protected static $schemas = array();
 	protected $driver = 'mysql';
 	protected $host = '127.0.0.1';
+	protected $port;
 	protected $database;
 	protected $username;
 	protected $password;
@@ -19,7 +20,7 @@ class Helper_database_pdo extends Helper_database {
 		if (!$this->isConnected()) {
 			try {
 				$this->db = new PDO(
-					"{$this->driver}:host={$this->host};dbname={$this->database}",
+					"{$this->driver}:host={$this->host};".(!empty($this->port) ? "port={$this->port};" : '')."dbname={$this->database}",
 					$this->username,$this->password);
 			} catch(PDOException $e) {
 				$this->db = NULL;

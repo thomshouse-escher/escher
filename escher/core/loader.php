@@ -274,8 +274,8 @@ class Load {
 			}
 			if (is_null($name)) { return FALSE; }
 		} elseif (array_key_exists($name,$CFG['datasource'])
-			&& !empty($args['helper'])
-			&& $args['helper']=='cache'
+			&& !empty($CFG['datasource'][$name]['helper'])
+			&& $CFG['datasource'][$name]['helper']=='cache'
 		) {
 			$args = $CFG['datasource'][$name];
 		} else {
@@ -317,8 +317,8 @@ class Load {
 			}
 			if (is_null($name)) { return FALSE; }
 		} elseif (array_key_exists($name,$CFG['datasource'])
-			&& !empty($args['helper'])
-			&& $args['helper']=='database'
+			&& !empty($CFG['datasource'][$name]['helper'])
+			&& $CFG['datasource'][$name]['helper']=='database'
 		) {
 			$args = $CFG['datasource'][$name];
 		} else {
