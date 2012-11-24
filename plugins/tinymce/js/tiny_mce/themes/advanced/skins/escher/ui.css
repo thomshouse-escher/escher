@@ -17,19 +17,19 @@
 
 /* Layout */
 .escherSkin table.mceLayout {
-	border:1px solid #CCC; background: #DDD url(iimg/toolbar-bg.png) top center repeat-x;
-	-webkit-border-radius: 6px; -webkit-border-bottom-right-radius: 0px; -moz-border-radius: 6px 6px 0px 6px;
+	border:1px solid #ddd; background: #eee;
+	-webkit-border-radius: 4px; -webkit-border-bottom-right-radius: 0px; -moz-border-radius: 4px 4px 0px 4px;
 }
 /*.escherSkin table.mceLayout tr.mceFirst td {border-top:1px solid #CCC}*/
 /*.escherSkin table.mceLayout tr.mceLast td {border-bottom:1px solid #CCC}*/
 .escherSkin table.mceToolbar, .escherSkin tr.mceFirst .mceToolbar tr td, .escherSkin tr.mceLast .mceToolbar tr td {border:0; margin:1px; padding:0;}
 .escherSkin td.mceToolbar {padding:2px 0px 1px; vertical-align:top}
-.escherSkin .mceIframeContainer {border-top:1px solid #CCC; border-bottom:1px solid #CCC}
+.escherSkin .mceIframeContainer {border-top:1px solid #ddd; border-bottom:1px solid #ddd}
 .escherSkin .mceStatusbar {
 	position: relative;
-	font-family:'MS Sans Serif',sans-serif,Verdana,Arial; font-size:9pt; line-height:16px;
-	width: 100%; overflow-x:hidden; overflow-y: visible color:#000; display:block; hheight:20px;
-	background: #DDD; -webkit-border-bottom-left-radius: 8px; -moz-border-radius-bottomleft: 8px;
+	font-family:'MS Sans Serif',Verdana,Arial,sans-serif; font-size:9pt; line-height:16px;
+	width: 100%; overflow-x:hidden; overflow-y: visible; color:#000; display:block; height:20px;
+	background: #eee; -webkit-border-bottom-left-radius: 4px; -moz-border-radius-bottomleft: 4px;
 }
 .escherSkin .mceStatusbar, .escherSkin .mceStatusbar * { white-space: normal; }
 .escherSkin .mceStatusbar div {float:left; margin:2px}
@@ -48,14 +48,13 @@
 /* Button */
 .escherSkin .mceButton {
 	display:block; --border:1px solid #AAA; width:20px; height:22px; margin-right:1px; padding: 0px 2px;
-	--background: #E6E6E6 url(img/button-bg.png) top center repeat-x; -webkit-border-radius: 4px; -moz-border-radius: 4px;
+	background: #eee; -webkit-border-radius: 2px; -moz-border-radius: 2px;
 }
 .escherSkin a.mceButtonEnabled:hover {
-	border:1px solid #AAA; background: #E6E6E6 url(img/button-bg.png) top center repeat-x; padding: 0px 1px; }
-.escherSkin a.mceButtonActive, .escherSkin a.mceButtonSelected {border:1px solid #AAA; background-color:#AAA; background-image: none;  padding: 0px 1px;}
-.escherSkin a.mceButtonActive:hover, .escherSkin a.mceButtonSelected:hover {border:1px solid #888; background-color:#888; background-image: none; }
-.escherSkin .mmceButtonDisabled {opacity:0.3; -ms-filter:'alpha(opacity=30)'; filter:alpha(opacity=30)}
-.escherSkin .mceButtonDisabled .mceIcon {opacity:0.5; -ms-filter:'alpha(opacity=50)'; filter:alpha(opacity=50)}
+	border:1px solid #BBB; border-top: 1px solid #CCC; border-bottom: 1px solid #888; background: #f5f5f5; padding: 0px 1px; }
+.escherSkin a.mceButtonActive, .escherSkin a.mceButtonSelected {border:1px solid #CCC; background-color:#DDD; padding: 0px 1px;}
+.escherSkin a.mceButtonActive:hover, .escherSkin a.mceButtonSelected:hover {border:1px solid #888; background-color:#CCC; }
+.escherSkin .mceButtonDisabled {opacity:0.3; -ms-filter:'alpha(opacity=30)'; filter:alpha(opacity=30)}
 .escherSkin .mceButtonLabeled {width:auto}
 .escherSkin .mceButtonLabeled span.mceIcon {float:left}
 .escherSkin span.mceButtonLabel {display:block; font-size:10px; padding:4px 6px 0 22px; font-family:Tahoma,Verdana,Arial,Helvetica}
@@ -67,19 +66,23 @@
 /* ListBox */
 .escherSkin .mceListBox, .escherSkin .mceListBox a {display:block}
 .escherSkin .mceListBox .mceText {
-	padding-left:4px; width:70px; text-align:left; border:1px solid #AAA; border-right:0;
-	background: #E6E6E6 url(img/button-bg.png) top center repeat-x;
+	padding-left:4px; width:70px; text-align:left; border:1px solid #eee; border-right:0;
+	background: #eee;
 	font-family:Tahoma,Verdana,Arial,Helvetica; font-size:11px; height:22px; line-height:22px; overflow:hidden;
-	-webkit-border-top-left-radius: 4px; -webkit-border-bottom-left-radius: 4px;
-	-moz-border-radius: 4px 0px 0px 4px;
+	-webkit-border-top-left-radius: 3px; -webkit-border-bottom-left-radius: 3px;
+	-moz-border-radius: 3px 0px 0px 3px;
 }
 .escherSkin .mceListBox .mceOpen {
-	width:9px; height:22px; background: #E6E6E6 url(img/button-dropdown.png) top center repeat-x; margin-right:2px;
-	border:1px solid #AAA; -webkit-border-top-right-radius: 4px; -webkit-border-bottom-right-radius: 4px;
-	-moz-border-radius: 0px 4px 4px 0px;
+	width:9px; height:22px; background: #eee url('../../img/icons.gif') -741px 0; margin-right:2px;
+	border:1px solid #eee; border-left: 0; -webkit-border-top-right-radius: 3px; -webkit-border-bottom-right-radius: 3px;
+	-moz-border-radius: 0px 3px 3px 0px;
 }
-.escherSkin table.mceListBoxEnabled:hover .mceText, .escherSkin .mceListBoxHover .mceText, .escherSkin .mceListBoxSelected .mceText {border:1px solid #888; border-right:0; background:#E6E6E6}
-.escherSkin table.mceListBoxEnabled:hover .mceOpen, .escherSkin .mceListBoxHover .mceOpen, .escherSkin .mceListBoxSelected .mceOpen {background: #E6E6E6 url(../../img/icons.gif) -741px 0; border:1px solid #888}
+.escherSkin table.mceListBoxEnabled:hover .mceText, .escherSkin .mceListBoxHover .mceText, .escherSkin .mceListBoxSelected .mceText {
+    border:1px solid #BBB; border-top: 1px solid #CCC; border-bottom: 1px solid #888; border-right:0; background:#f5f5f5
+}
+.escherSkin table.mceListBoxEnabled:hover .mceOpen, .escherSkin .mceListBoxHover .mceOpen, .escherSkin .mceListBoxSelected .mceOpen {
+    background: #f5f5f5 url('../../img/icons.gif') -741px 0; border:1px solid #BBB; border-top: 1px solid #CCC; border-bottom: 1px solid #888; border-left: 0;
+}
 .escherSkin .mceListBoxDisabled a.mceText, .escherSkin .mceListBoxDisabled a.mceOpen {
 	opacity:0.3; -ms-filter:'alpha(opacity=30)'; filter:alpha(opacity=30)
 }
@@ -92,19 +95,23 @@
 .escherSkin .mceSplitButton {width:32px; height:22px; direction:ltr;margin-right: 2px;}
 .escherSkin .mceSplitButton a, .escherSkin .mceSplitButton span {height:22px; display:block}
 .escherSkin .mceSplitButton a.mceAction {
-	width:20px; border:1px solid #AAA; border-right:0; background: #E6E6E6 url(img/button-bg.png) top center repeat-x;
-	-webkit-border-top-left-radius: 4px; -webkit-border-bottom-left-radius: 4px;
-	-moz-border-radius: 4px 0px 0px 4px;
+	width:20px; border:1px solid #eee; border-right:0; background: #eee;
+    -webkit-border-top-left-radius: 3px; -webkit-border-bottom-left-radius: 3px;
+	-moz-border-radius: 3px 0px 0px 3px;
 }
 .escherSkin .mceSplitButton span.mceAction {width:20px; background-image:url(../../img/icons.gif);}
 .escherSkin .mceSplitButton a.mceOpen {
-	width:9px; background:#E6E6E6 url(img/button-dropdown.png) top center repeat-x; border:1px solid #AAA;
-	-webkit-border-top-right-radius: 4px; -webkit-border-bottom-right-radius: 4px;
-	-moz-border-radius: 0px 4px 4px 0px;
+	width:9px; background:#eee url(../../img/icons.gif) -741px 0; border:1px solid #eee; border-left: none;
+	-webkit-border-top-right-radius: 3px; -webkit-border-bottom-right-radius: 3px;
+	-moz-border-radius: 0px 3px 3px 0px;
 }
 .escherSkin .mceSplitButton span.mceOpen {display:none}
-.escherSkin table.mceSplitButtonEnabled:hover a.mceAction, .escherSkin .mceSplitButtonHover a.mceAction, .escherSkin .mceSplitButtonSelected a.mceAction {border:1px solid #888; border-right:0; background-image: none;}
-.escherSkin table.mceSplitButtonEnabled:hover a.mceOpen, .escherSkin .mceSplitButtonHover a.mceOpen, .escherSkin .mceSplitButtonSelected a.mceOpen {background: #E6E6E6 url(../../img/icons.gif) -741px 0; border:1px solid #888;}
+.escherSkin table.mceSplitButtonEnabled:hover a.mceAction, .escherSkin .mceSplitButtonHover a.mceAction, .escherSkin .mceSplitButtonSelected a.mceAction {
+    background: #f5f5f5; border:1px solid #BBB; border-top: 1px solid #CCC; border-bottom: 1px solid #888; border-right:0; background-image: none;
+}
+.escherSkin table.mceSplitButtonEnabled:hover a.mceOpen, .escherSkin .mceSplitButtonHover a.mceOpen, .escherSkin .mceSplitButtonSelected a.mceOpen {
+    background: #f5f5f5 url(../../img/icons.gif) -741px 0; border-top:1px solid #CCC; border-right: 1px solid #CCC; border-bottom: 1px solid #888;
+}
 .escherSkin .mceSplitButtonDisabled .mceAction, .escherSkin .mceSplitButtonDisabled a.mceOpen {opacity:0.3; -ms-filter:'alpha(opacity=30)'; filter:alpha(opacity=30)}
 
 .escherSkin .mceSplitButtonActive a.mceAction {border:1px solid #0A246A; background-color:#C2CBE0}
@@ -112,30 +119,39 @@
 
 /* ColorSplitButton */
 .escherSkin div.mceColorSplitMenu table {
-	background:#EEE; border:1px solid #AAA; padding: 1px;
-	-webkit-border-radius: 4px; -moz-border-radius: 4px;
+	background:#f5f5f5; border:1px solid #BBB; border-top: 1px solid #CCC; border-bottom: 1px solid #888; padding: 1px;
+	-webkit-border-radius: 3px; -moz-border-radius: 3px;
+    -webkit-box-shadow: 0 2px 4px -1px rgba(0,0,0,0.33);
 }
 .escherSkin .mceColorSplitMenu td {padding:2px}
-.escherSkin .mceColorSplitMenu a {display:block; width:9px; height:9px; overflow:hidden; border:1px solid #808080}
+.escherSkin .mceColorSplitMenu a {display:block; width:14px; height:14px; overflow:hidden; border:1px solid #ddd}
+.escherSkin .mceColorSplitMenu a:hover {border:1px solid #888;}
 .escherSkin .mceColorSplitMenu td.mceMoreColors {padding:1px 3px 1px 1px}
 .escherSkin .mceColorSplitMenu a.mceMoreColors {
 	width:100%; height:auto; text-align:center; font-family:Tahoma,Verdana,Arial,Helvetica; font-size:11px;
-	line-height:20px; border:1px solid #CCC;
-	-webkit-border-radius: 4px; -moz-border-radius: 4px;
+	line-height:20px; background: #f5f5f5; border:1px solid #f5f5f5;
+	-webkit-border-radius: 3px; -moz-border-radius: 3px;
 }
-.escherSkin .mceColorSplitMenu a.mceMoreColors:hover {border:1px solid #888; background-color:#E6E6E6}
+.escherSkin .mceColorSplitMenu a.mceMoreColors:hover {
+    border:1px solid #BBB; border-top: 1px solid #CCC; border-bottom: 1px solid #888; background-color:#f5f5f5
+}
 .escherSkin a.mceMoreColors:hover {border:1px solid #0A246A}
 .escherSkin .mceColorPreview {
-	margin-left:0px; width:21px; height:5px; overflow:hidden; background:#9a9b9a;
-	-webkit-border-bottom-left-radius: 3px; -moz-border-radius-bottomleft: 3px;
+    margin: -1px 0 0 1px; width:18px; height:5px; overflow:hidden; background:#9a9b9a;
+    -webkit-border-radius: 2px; -moz-border-radius: 2px;
+}
+.escherSkin table.mceSplitButtonEnabled:hover .mceColorPreview, .escherSkin .mceSplitButtonHover .mceColorPreview, .escherSkin .mceSplitButtonSelected .mceColorPreview {
+    -webkit-border-bottom-left-radius: 2px; -moz-border-radius-bottomleft: 2px;
 }
 .escherSkin .mce_forecolor span.mceAction, .escherSkin .mce_backcolor span.mceAction {overflow:hidden; height:17px}
 
 /* Menu */
 .escherSkin .mceMenu {
-	position:absolute; left:0; top:0; z-index:1000; border:1px solid #AAA;
-	padding: 2px 0px; background: #EEE; -webkit-border-radius: 4px; -moz-border-radius: 4px;
-}
+	position:absolute; left:0; top:0; z-index:1000;
+	padding: 0;
+    background:#f5f5f5; border:1px solid #BBB; border-top: 1px solid #CCC; border-bottom: 1px solid #888;
+    -webkit-border-radius: 3px; -moz-border-radius: 3px;
+    -webkit-box-shadow: 0 2px 4px -1px rgba(0,0,0,0.33);}
 .escherSkin .mceNoIcons span.mceIcon {width:0;}
 .escherSkin .mceNoIcons a .mceText {padding-left:10px}
 .escherSkin .mceMenu table {background:#EEE}
