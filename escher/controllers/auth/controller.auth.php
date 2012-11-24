@@ -28,7 +28,10 @@ class Controller_auth extends Controller {
 		}
 		if (!empty($input->post)) {
 			if (!empty($input->post['username'])) {
-				$user = Load::Model('user',array('username'=>$input->post['username']));
+                $loginField = filter_var($input->post['username'],FILTER_VALIDATE_EMAIL)
+                    ? 'email'
+                    : 'username';
+				$user = Load::Model('user',array($loginField=>$input->post['username']));
 				if (!empty($user)) { $userauth = $user->getUserAuth(); }
 				if (!empty($userauth) && $userauth->login($input->post['username'],@$input->post['password'])) {
 					$this->session->regenerate();

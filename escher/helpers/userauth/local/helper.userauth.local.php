@@ -1,14 +1,36 @@
 <?php
 
 class Helper_userauth_local extends Helper_userauth {
+    protected $authName = 'local';
+    protected $loginField = 'username';
 	protected $enctype = 'best';
 	protected $legacy  = 'md5';
 
-	function login($username,$password) {
-		if (!$user = Load::Model('user',array('username' => $username))) {
+	function __construct($args=array()) {
+        if (!empty($args['name'])) {
+            $this->authName = $args['name'];
+        }
+        if (!empty($args['login'])
+            && in_array($args['login'],array('email','username','both'))
+        ) {
+            $this->loginField = $args['login'];
+        }
+    }
+
+    function login($username,$password) {
+        if ($this->loginField = 'email'
+            || ($this->loginField=='both'
+                && filter_var($username,FILTER_VALIDATE_EMAIL)
+            )
+        ) {
+            $loginField = 'email';
+        } else {
+            $loginField = 'username';
+        }
+		if (!$user = Load::Model('user',array($loginField => $username))) {
 			return false;
 		}
-		if ($user->user_auth!='local') { return false; }
+		if ($user->user_auth!=$this->authName) { return false; }
 		$algo = !empty($user->enctype) ? $user->enctype : $this->legacy;
 		$passhash = $this->encryptPassword($password,$user->user_id,$algo);
 		if ($user->password==$passhash) {
@@ -29,7 +51,7 @@ class Helper_userauth_local extends Helper_userauth {
 
 	function register($username,$password,$vars=array()) {
 		$vars['username'] = $username;
-		$vars['user_auth'] = 'local';
+		$vars['user_auth'] = $this->authName;
 		$user = Load::Model('user');
 		if ($user->register($vars)) {
 			$best = $this->bestEncryption();

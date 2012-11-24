@@ -590,10 +590,11 @@ class Load {
      * @param string $name Userauth helper name (as named in config or hooks).
      * @return object Returns the UserAuth object.
      */
-    public static function UserAuth($name='default') {
+    public static function UserAuth($name='local') {
         $CFG = Load::Config();
         if (array_key_exists($name,$CFG['userauth'])) {
             $auth = $CFG['userauth'][$name];
+            $auth['name'] = $name;
             $helper = !empty($auth['plugin'])
                 ? array($auth['plugin'],'userauth')
                 : 'userauth';
@@ -603,10 +604,10 @@ class Load {
         $authHooks = $hooks->getUserAuths();
         if (array_key_exists($name,$authHooks)) {
             $auth = $authHooks[$name];
+            $auth['name'] = $name;
             return Load::Helper(array($auth[0],'userauth'),$auth[1],$auth[2]);
         }
-        $auth = $CFG['userauth']['default'];
-        return Load::Helper('userauth',$auth['type'],$auth);
+        return Load::Helper('userauth','local');
     }
 
     /**

@@ -16,7 +16,7 @@ $session['type'] = 'default';
 $uploadpath = 'files';
 
 // User authentication
-$userauth['default'] = array('type' =>'local');
+$userauth['local'] = array('type' =>'local');
 
 // Reserved usernames
 $reserved_usernames = array();
