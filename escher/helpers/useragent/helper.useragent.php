@@ -4,64 +4,112 @@ class Helper_useragent extends Helper {
 	function getClasses() {
 		static $result;
 		if (is_null($result)) {
+            $result = array();
 			$all_browsers = array('ie','firefox','safari','chrome','iphone','android','opera');
 			$ua = $_SERVER['HTTP_USER_AGENT'];
 			$browser = ''; $version = '';
+            $phone = false;
+            $tablet = false;
 			$subversion = NULL;
-			if (preg_match('#(Fennec|Windows CE|Smartphone|IEMobile|Opera Mini|BlackBerry)#i',$ua,$match)) {
-				$browser = 'mobile';
-				$version = '';
-			} elseif (preg_match('#msie (\d+)#i',$ua,$match)) {
-				$browser = 'ie';
-				$version = $match[1];
-			} elseif (preg_match('#android (\d+)#i',$ua,$match)) {
-				$browser = 'android';
-				$version = $match[1];
-			} elseif (preg_match('#chrome/(\d+)(?:.(\d+))?#i',$ua,$match)) {
-				$browser = 'chrome';
-				$version = $match[1];
-			} elseif (preg_match('#(?:iphone|ipod).*version/(\d+)#i',$ua,$match)) {
-				$browser = 'iphone';
-				$version = $match[1];
-			} elseif (preg_match('#version/(\d+).*safari/#i',$ua,$match)) {
-				$browser = 'safari';
-				$version = $match[1];
-			} elseif (preg_match('#safari/(\d+)#i',$ua,$match)) {
-				$browser = 'safari';
-				$version = (int)$match[1]>=412 ? 2 : 1;
-			} elseif (preg_match('#(firefox|opera)/(\d+)(?:.(\d+))?#i',$ua,$match)) {
-				$browser = strtolower($match[1]);
-				$version = $match[2];
-				if ($browser=='firefox' && $version==1) {
-					$subversion = $match[3]==5 ? 5 : 0;
-				}
-				if ($browser=='firefox' && $version==3) {
-					$subversion = in_array($match[3],array(5,6)) ? $match[3] : 0;
-				}
-			} else {
-				$browser = 'unknown';
-			}
-			$result = array($browser,$browser.$version);
+            if (preg_match('#chrome/(\d+)(?:.(\d+))?.*googletv#i',$ua,$match)) {
+                $result[] = 'googletv';
+                $browser = 'chrome';
+                $version = '$match[1]';
+            } elseif (preg_match('#(Fennec|Windows CE|Smartphone|IEMobile|Opera Mini|BlackBerry)#i',$ua,$match)) {
+                $browser = 'mobile';
+                $version = '';
+            } elseif (preg_match('#msie (\d+)#i',$ua,$match)) {
+                $browser = 'ie';
+                $version = $match[1];
+            } elseif (preg_match('#chrome/(\d+)(?:.(\d+))?#i',$ua,$match)) {
+                $browser = 'chrome';
+                $version = $match[1];
+                if (preg_match('#Android.*Chrome/[.0-9]* Mobile#i',$ua)) {
+                    $phone = true;
+                } elseif (preg_match('#Android.*Chrome#i',$ua)) {
+                    $tablet = true;
+                }
+            } elseif (preg_match('#android (\d+)#i',$ua,$match)) {
+                $browser = 'android';
+                $version = $match[1];
+                if (preg_match('#Mobile#i',$ua)) {
+                    $phone = true;
+                } else {
+                    $tablet = true;
+                }
+            } elseif (preg_match('#CriOS/(\d+)(?:.(\d+))?#i',$ua,$match)) {
+                $browser = 'chrome';
+                $version = $match[1];
+                if (preg_match('#iPad#i',$ua)) {
+                    $tablet = true;
+                } else {
+                    $phone = true;
+                }
+            } elseif (preg_match('#(?:iphone|ipod|ipad).*version/(\d+)#i',$ua,$match)) {
+                $browser = 'ios';
+                $version = $match[1];
+                if (preg_match('#iPad#i',$ua)) {
+                    $tablet = true;
+                } else {
+                    $phone = true;
+                }
+            } elseif (preg_match('#version/(\d+).*safari/#i',$ua,$match)) {
+                $browser = 'safari';
+                $version = $match[1];
+            } elseif (preg_match('#safari/(\d+)#i',$ua,$match)) {
+                $browser = 'safari';
+                $version = (int)$match[1]>=412 ? 2 : 1;
+            } elseif (preg_match('#(firefox|opera)/(\d+)(?:.(\d+))?#i',$ua,$match)) {
+                $browser = strtolower($match[1]);
+                $version = $match[2];
+                if ($browser=='firefox' && $version==1) {
+                    $subversion = $match[3]==5 ? 5 : 0;
+                }
+                if ($browser=='firefox' && $version==3) {
+                    $subversion = in_array($match[3],array(5,6)) ? $match[3] : 0;
+                }
+            }
+
+			$result[] = $browser;
+            $result[] = $browser.$version;
 			if (!is_null($subversion)) {
 				$result[] = $browser.$version.'-'.$subversion;
 			}
-			foreach($all_browsers as $b) {
-				if ($browser!=$b) {
-					$result[] = "no-$b";
-				}
-			}
-			if (in_array($browser,array('iphone','android'))) {
-				$result[] = 'mobile';
-			}
-			if (!in_array('mobile',$result)) {
-				$result[] = 'no-mobile';
-			}
-			if (preg_match('/\(Escher Client 1.0; ([^)]+?)\s?([\d.]+)\)/i',$ua,$match)) {
-				$result[] = strtolower($match[1]);
-				$result[] = strtolower($match[1]).'-'.(float)$match[2];
-			}
+            if ($browser=='ie') {
+                foreach(array(6,7,8,9,10) as $v) {
+                    if ($version<$v) {
+                        $result[] = "ie-lt$v";
+                    }
+                    if ($version<=$v) {
+                        $result[] = "ie-lte$v";
+                    }
+                    if ($version>=$v) {
+                        $result[] = "ie-gte$v";
+                    }
+                    if ($version>$v) {
+                        $result[] = "ie-gt$v";
+                    }
+                }
+            }
+            foreach($all_browsers as $b) {
+                if ($b!='mobile' && $browser!=$b) {
+                    $result[] = "no-$b";
+                }
+            }
+            if ($phone || $tablet || in_array($browser,array('ios','android','mobile'))) {
+                $result[] = 'mobile';
+            } else {
+                $result[] = 'no-mobile';
+            }
+            if ($phone) {
+                $result[] = 'phone';
+            }
+            if ($tablet) {
+                $result[] = 'tablet';
+            }
+            $result = array_unique($result);
 		}
-		return array_unique($result);
+		return $result;
 	}
 	
 	function supports($feature) {
