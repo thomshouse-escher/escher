@@ -56,7 +56,8 @@ class Helper_headers extends Helper {
 	}
 	
 	function addNotification($string,$status='message') {
-		$types = array('message','warning','success','error');
+		$CFG = Load::CFG();
+		$types = $CFG['notification_types'];
 		if (!in_array($status,$types)) {
 			$status = 'message';
 		}
