@@ -10,6 +10,9 @@ class Plugin_tinymce extends Plugin {
 		static $inits; if (is_null($inits)) { $inits = array(); }
 		static $uploadcode;
 		$CFG = Load::Config();
+        if (!empty($CFG['tinymce_options'])) {
+            $options = array_merge($CFG['tinymce_options'],$options);
+        }
 		$headers = Load::Headers();
         $ua = Load::UserAgent();
         $isPhone = $ua->match('phone');
@@ -17,13 +20,8 @@ class Plugin_tinymce extends Plugin {
 		// Select plugins
 		$plugins = !empty($options['plugins'])
             ? $options['plugins']
-            : '';
-        if (empty($plugins)) {
-            $plugins = !empty($CFG['tinymce_options']['plugins'])
-                ? $CFG['tinymce_options']
-                : array('contextmenu','inlinepopups','paste','safari',
-                    'searchreplace','table','advimage');
-        }
+            : array('contextmenu','inlinepopups','paste','safari',
+                'searchreplace','table','advimage');
         if (is_array($plugins)) { $plugins = implode(',',$plugins); }
 
         // Select buttons
@@ -31,22 +29,13 @@ class Plugin_tinymce extends Plugin {
             ? $options['buttons']
             : '';
         if (empty($buttons)) {
-            $buttons = !empty($CFG['tinymce_options']['buttons'])
-                ? $CFG['tinymce_options']['buttons']
-                : '';
-        }
-        if (empty($buttons)) {
             $buttons = !$isPhone
                 ? 'formatselect,|,lcrf,blockquote,lists,indents,hr,/,'
                     . 'bi,|,links,image,|,forecolor,|,undos,|,removeformat,code'
                 : 'formatselect,lcr,lists,indents,/,bi,links';
         }
-        if ($isPhone) {
-            if (!empty($options['phone_buttons'])) {
-                $buttons = $options['phone_buttons'];
-            } elseif (!empty($CFG['tinymce_options']['phone_buttons'])) {
-                $buttons = $CFG['tinymce_options']['phone_buttons'];
-            }
+        if ($isPhone && !empty($options['phone_buttons'])) {
+            $buttons = $options['phone_buttons'];
         }
         if (is_array($buttons)) { $buttons = implode(',',$buttons);}
         $buttons = str_replace(
@@ -90,15 +79,6 @@ class Plugin_tinymce extends Plugin {
                 'theme_advanced_resize_horizontal' => false,
                 'theme_advanced_blockformats' => 'p,h1,h2,h3,blockquote',
             );
-            if (isset($CFG['tinymce_options'])) {
-                $mceOptions = array_merge(
-                    $mceOptions,
-                    array_diff_key(
-                        $CFG['tinymce_options'],
-                        array_flip(array('plugins','buttons','editor_selector'))
-                    )
-                );
-            }
             $mceOptions = array_merge(
                 $mceOptions,
                 array_diff_key(
