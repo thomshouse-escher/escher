@@ -200,7 +200,10 @@ class Controller extends EscherObject {
 					'args' => $args,
 				)
 			);
+            $router = Load::Router();
+            $router->pushDispatchRouter($controller->router);
 			$result = $controller->execute() || !empty($controller->data);
+            $router->popDispatchRouter();
 		}
 
 		if (!empty($result)) {

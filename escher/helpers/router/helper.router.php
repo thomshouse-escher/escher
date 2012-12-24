@@ -1,6 +1,8 @@
 <?php
 
 abstract class Helper_router extends Helper {
+    protected $dispatchRouters = array();
+
 	function __construct($args='') {
 		// If we only receive one argument and it is scalar, force it to array form
 		if (is_scalar($args)) {
@@ -51,7 +53,10 @@ abstract class Helper_router extends Helper {
 	}
 
 	function getCurrentPath($absolute=TRUE,$args=FALSE,$qsa=FALSE) {
-		if ($absolute) {
+        if (!empty($this->dispatchRouters)) {
+            return $this->dispatchRouters[0]->getCurrentPath($absolute,$args,$qsa);
+        }
+        if ($absolute) {
 			$CFG = Load::CFG();
 			$root = $CFG['wwwroot'];
 		} else {
@@ -71,6 +76,9 @@ abstract class Helper_router extends Helper {
 	}
 
 	function getParentPath($absolute=TRUE) {
+        if (!empty($this->dispatchRouters)) {
+            return $this->dispatchRouters[0]->getParentPath($absolute);
+        }
 		if ($absolute) {
 			$CFG = Load::CFG();
 			$root = $CFG['wwwroot'];
@@ -131,6 +139,9 @@ abstract class Helper_router extends Helper {
 	}
 
 	function resolvePath($url,$absolute=TRUE) {
+        if (!empty($this->dispatchRouters)) {
+            return $this->dispatchRouters[0]->resolvePath($url,$absolute);
+        }
 		if (preg_match('/^#/',$url)) {
 			return $url;
 		} elseif ($absolute && preg_match('#^(/.*)#',$url,$match)) {
@@ -172,6 +183,16 @@ abstract class Helper_router extends Helper {
 		$controller->initialize($vars);
 		return $controller;
 	}
+
+    function pushDispatchRouter($router) {
+        if (is_a($router,'Helper_router_dispatch')) {
+            array_unshift($this->dispatchRouters,$router);
+        }
+    }
+
+    function popDispatchRouter() {
+        return is_null(array_shift($this->dispatchRouters));
+    }
 
 	protected function findRoute() {
 		$routes = $this->getStaticRoutes();
