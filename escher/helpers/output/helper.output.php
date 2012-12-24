@@ -96,7 +96,7 @@ abstract class Helper_output extends Helper {
 		$theme_dir = $plugin_dir.'themes/'.$theme;
 
 		// Get the real output helper
-		include_once(ESCHER_DOCUMENT_ROOT."$theme_dir/theme.php");
+		include(ESCHER_DOCUMENT_ROOT."$theme_dir/theme.php");
 		$out = Load::Output($type);
 
 		// Load Config (for wwwroot)
