@@ -61,6 +61,10 @@ class EscherInit {
 		$this->initSession();
 
 		$router = Load::Router();
+        if (!empty($router->theme)) {
+            $UI = Load::UI();
+            $UI->theme($router->theme);
+        }
 		$controller = $router->getController();
 		if (!$controller->execute() && empty($controller->data)) {
 			Load::Error('404');

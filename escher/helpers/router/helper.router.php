@@ -38,6 +38,7 @@ abstract class Helper_router extends Helper {
 				$route['args'] = $args;
 			}
 			$route['route'] = Load::Model('route_static','/');
+            $route['theme'] = $CFG['theme'];
 		}
 		$this->assignVars($route);
 	}
