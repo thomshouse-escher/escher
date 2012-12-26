@@ -239,8 +239,8 @@ class Helper_headers extends Helper {
 				$url = '/';
 			}
 			$url = $router->resolvePath($url);
-		} elseif ($referer = $this->getReferer()
-			&& $referer != $router->getCurrentPath(FALSE,TRUE,TRUE)
+		} elseif (($referer = $this->getReferer())
+			&& ($referer != $router->getCurrentPath(FALSE,TRUE,TRUE))
 		) {
 			$url = $_SERVER['HTTP_REFERER'];
 		} else {
@@ -251,10 +251,25 @@ class Helper_headers extends Helper {
 		exit();
 	}
 
-	function sendHTTP() {
+	function sendHTTP($addDefaults=TRUE) {
 		foreach($this->http_headers as $h) {
 			header($h[0],$h[1],$h[2]);
 		}
+        if ($addDefaults) {
+            if (function_exists('memory_get_peak_usage')) {
+                $mem = memory_get_peak_usage(1);
+                if ($mem>1024*1024) {
+                    header('X-Escher-Memory: '.floor($mem/(1024*1024)).'MB');
+                } elseif ($mem>1024) {
+                    header('X-Escher-Memory: '.floor($mem/(1024)).'KB');
+                } else {
+                    header('X-Escher-Memory: '.$mem.'B');
+                }
+            }
+            list($ms,$s) = explode(' ',microtime());
+            header('X-Escher-Time: '
+                .round(($s-NOW)+(($ms-NOW_MS)/1000000),3).'s');
+        }
 	}
 
 	function close($response='') {
