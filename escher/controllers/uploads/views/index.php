@@ -51,28 +51,28 @@ function selectFile(form) {
 <input type="file" name="upload" /><input type="submit" />
 </form>
 <ul id="uploads"<?php if($popup) { $E(' class="popup"'); } ?>>
-<?php foreach($uploads as $u) { ?>
+<?php foreach($uploads as $ul) { ?>
 
-<li class="upload-collapsed <?php $E(empty($u['thumburl'])?'no-thumb':'thumb'); ?>" id="upload-<?php $E($u['upload_id']); ?>">
-<?php if(!empty($u['thumburl'])) { ?>
-	<img src="<?php $E($u['thumburl']); ?>" onclick="uploadToggle(<?php $E($u['id']); ?>);" />
+<li class="upload-collapsed <?php $E(empty($ul['thumburl'])?'no-thumb':'thumb'); ?>" id="upload-<?php $E($ul['upload_id']); ?>">
+<?php if(!empty($ul['thumburl'])) { ?>
+	<img src="<?php $E($ul['thumburl']); ?>" onclick="uploadToggle(<?php $E($ul['id']); ?>);" />
 <?php } ?>
-	<div class="filename" onclick="uploadToggle(<?php $E($u['upload_id']); ?>);"><?php $E($u['filename']); ?><span class="filesize">
-		 (<?php $E($F($u['filesize'],'filesize',0)); ?>)</span></div>
+	<div class="filename" onclick="uploadToggle(<?php $E($ul['upload_id']); ?>);"><?php $E($ul['filename']); ?><span class="filesize">
+		 (<?php $E($F($ul['filesize'],'filesize',0)); ?>)</span></div>
 	<div class="details">
 		<?php if($popup) { ?>
 		<form onsubmit="return false;">
-		<?php } if($popup && !empty($u['sizes'])) { ?>
+		<?php } if($popup && !empty($ul['sizes'])) { ?>
 		<label for="url">Image Size:</label> 
 		<select name="url">
-		<?php $i=0; foreach($u['sizes'] as $k => $v) { ?>
+		<?php $i=0; foreach($ul['sizes'] as $k => $v) { ?>
 			<option value="<?php $E($v['url']); ?>"<?php if($i==0) { $E(' checked="checked"'); }
 				?>><?php $E("$k ({$v['w']}x{$v['h']})"); ?></option>
 		<?php $i++; } ?>
 		</select>
 		<?php } else { ?>
-			<div>Uploaded: <?php $E(date('F j, g:ia',strtotime($u['ctime']))); ?></div>
-			<?php if ($popup) { ?><input type="hidden" name="url" value="<?php $E($u['url']); ?>" />
+			<div>Uploaded: <?php $E(date('F j, g:ia',strtotime($ul['ctime']))); ?></div>
+			<?php if ($popup) { ?><input type="hidden" name="url" value="<?php $E($ul['url']); ?>" />
 		<?php }} if($popup) { ?>
 			<div class="buttons"><input type="button" value="Select" onclick="selectFile(this.form);" /></div>
 		</form>
