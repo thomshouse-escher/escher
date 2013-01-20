@@ -206,13 +206,22 @@ class Controller extends EscherObject {
             $router->popDispatchRouter();
 		}
 
-		if (!empty($result)) {
-			if ($display) {
-				return $controller->display($controller->getCalledAction(),$controller->data);
-			} else {
-				return $controller->render($controller->getCalledAction(),$controller->data);
-			}
-		}
+        if (!empty($result)) {
+            $router->pushDispatchRouter($controller->router);
+            if ($display) {
+                if ($output = $controller->render($controller->getCalledAction(),$controller->data,TRUE)) {
+                    $headers = Load::Headers();
+                    $headers->sendHTTP();
+                    exit($output);
+                }
+                $router->popDispatchRouter();
+                Load::Error('404');
+            } else {
+                $result = $controller->render($controller->getCalledAction(),$controller->data);
+                $router->popDispatchRouter();
+                return $result;
+            }
+        }
 	}
 	
 	// Display the specified view for this controller with the data provided
