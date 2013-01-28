@@ -21,6 +21,9 @@ $userauth['local'] = array('type' =>'local');
 // Reserved usernames
 $reserved_usernames = array();
 
+// Default notification types
+$notification_types = array('message','warning','success','error');
+
 // Image resizes
 $resized_images = array(
 	'small' => array(200,200),
