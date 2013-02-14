@@ -5,9 +5,11 @@ class Escher_PDOdriver_mysql extends EscherObject {
 	protected $stringTypes = array('char','binary','varchar','varbinary');
 	protected $contentTypes = array('tinytext','text','mediumtext','longtext');
 	protected $pdo;
+    protected $database;
 
-	function __construct($pdo) {
+	function __construct($pdo,$database) {
 		$this->pdo = $pdo;
+        $this->database = $database;
 	}
 
 	function getSchema($table) {
@@ -17,10 +19,12 @@ class Escher_PDOdriver_mysql extends EscherObject {
 		// Get the column info from information_schema
 		$result = $this->pdo->getAll(
 			'SELECT * FROM ' . $this->pdo->n('information_schema.COLUMNS')
-			. ' WHERE '.$this->pdo->n('TABLE_NAME').' IN(?,?,?) ORDER BY '
+			. ' WHERE '.$this->pdo->n('TABLE_SCHEMA').'=? AND '
+            . $this->pdo->n('TABLE_NAME').' IN(?,?,?) ORDER BY '
 			. $this->pdo->n('TABLE_NAME'). '=? DESC,'
 			. $this->pdo->n('TABLE_NAME'). '=? DESC,'
 			. $this->pdo->n('ORDINAL_POSITION') .' ASC', array(
+                $this->database,
 				$table,
 				$table.'_metadata',
 				$table.'_content',

@@ -313,6 +313,6 @@ class Helper_database_pdo extends Helper_database {
 		include_once($filename);
 		$classname = "Escher_PDOdriver_{$this->driver}";
 		if (!class_exists($classname)) { return false; }
-		return new $classname($this);
+		return new $classname($this,$this->database);
 	}
 }
