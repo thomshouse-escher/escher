@@ -48,7 +48,7 @@ function selectFile(form) {
 
 </script>
 <form action="<?php $E($current_path.'/?'.($popup?'popup=true&':'').'type='.$type); ?>" method="POST" enctype="multipart/form-data">
-<input type="file" name="upload" /><input type="submit" />
+<input type="file" name="uploads[]" multiple="multiple" /><input type="submit" />
 </form>
 <ul id="uploads"<?php if($popup) { $E(' class="popup"'); } ?>>
 <?php foreach($uploads as $ul) { ?>
