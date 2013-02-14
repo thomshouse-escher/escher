@@ -18,7 +18,8 @@ class Helper_userauth_local extends Helper_userauth {
     }
 
     function login($username,$password) {
-        if ($this->loginField=='email'
+        // Login via username or email based on configuration
+		if ($this->loginField=='email'
             || ($this->loginField=='both'
                 && filter_var($username,FILTER_VALIDATE_EMAIL)
             )
@@ -30,15 +31,35 @@ class Helper_userauth_local extends Helper_userauth {
 		if (!$user = Load::Model('user',array($loginField => $username))) {
 			return false;
 		}
+
+		// Make sure user belongs to this auth method
 		if ($user->user_auth!=$this->authName) { return false; }
+		// Determine the encryption algorithm to use
 		$algo = !empty($user->enctype) ? $user->enctype : $this->legacy;
-		$passhash = $this->encryptPassword($password,$user->user_id,$algo);
-		if ($user->password==$passhash) {
+
+		// Attempt to use creation time as seed
+		$passhash = $this->encryptPassword(
+			$password,
+			strtotime($user->created_at),
+			$algo
+		);
+
+		// If creation time seed fails, fall back to user_id
+		if ($user->password!=$passhash) {
+			$passhash = $this->encryptPassword(
+				$password,$user->user_id,$algo
+			);
+			$legacyhash = TRUE; // Track legacy user
+		}
+		if ($user->password==$passhash) { // Passwords match
+			// Convert user to more secure encryption if available
 			$best = $this->bestEncryption();
-			if ($algo!=$best) {
+			if ($algo!=$best || !empty($legacyhash)) {
 				$user->assignVars(array(
 					'password' => $this->encryptPassword(
-						$password, $user->user_id, $best
+						$password,
+						strtotime($user->created_at),
+						$best
 					),
 					'enctype'  => $best,
 				));
@@ -55,9 +76,10 @@ class Helper_userauth_local extends Helper_userauth {
 		$user = Load::Model('user');
 		if ($user->register($vars)) {
 			$best = $this->bestEncryption();
+			$user->touch();
 			$user->setValues(array(
 				'password' => $this->encryptPassword(
-					$password, $user->user_id, $best
+					$password, strtotime($user->created_at), $best
 				),
 				'enctype'  => $best,
 			));
