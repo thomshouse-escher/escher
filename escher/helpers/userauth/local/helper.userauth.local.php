@@ -18,7 +18,7 @@ class Helper_userauth_local extends Helper_userauth {
     }
 
     function login($username,$password) {
-        if ($this->loginField = 'email'
+        if ($this->loginField=='email'
             || ($this->loginField=='both'
                 && filter_var($username,FILTER_VALIDATE_EMAIL)
             )
@@ -91,6 +91,7 @@ class Helper_userauth_local extends Helper_userauth {
 			case 'md5':
 				$password = md5($password);
 				break;
+			case 'cleartext': break;
 			default: $password = ''; break;
 		}
 		return $password;
