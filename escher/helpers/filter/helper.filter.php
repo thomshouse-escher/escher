@@ -43,6 +43,11 @@ class Helper_filter extends Helper {
 			}
 
 		} elseif ($type=='encode') {
+            $enc = mb_detect_encoding((string)$value,'UTF-8,ISO-8859-1',TRUE);
+            if ($enc && $enc!='UTF-8') {
+                $value = $this->perform_filter($value,'nosmart');
+                $value = iconv($enc,'UTF-8//TRANSLIT',$value);
+            }
 			return trim(htmlentities((string)$value,ENT_QUOTES,'UTF-8',TRUE));
 		} elseif ($type=='decode') {
 			$utf8 = trim(html_entity_decode((string)$value,ENT_QUOTES,'UTF-8'));
