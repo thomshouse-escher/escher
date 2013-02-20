@@ -155,7 +155,7 @@ class Controller extends EscherObject {
 
 	final protected function dispatch($dispatch,$display=FALSE,$args=array(),$options=array()) {
 		// Split up the $dispatch string into its component parts
-		if (!preg_match('#^(?:([\w/-]+)@|)(?:(\w+):|)(:?\w+)(?:>(\w+)|)(/[\w/-]+|)$#',
+		if (!preg_match('#^(?:([^@]+)@|)(?:(\w+):|)(:?\w+)(?:>(\w+)|)(/[\w/-]+|)$#',
 			$dispatch,$parts)
 		) { return false; }
 		list(,$base,$plugin,$controller,$action,$dispatchArgs) = $parts;
